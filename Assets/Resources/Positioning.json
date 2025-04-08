@@ -2,13 +2,73 @@
   "boardPositions": [
     {
       "posX": 0,
-      "posY": 0,
+      "posY": 2,
       "piece": "Pawn"
     },
     {
       "posX": 1,
-      "posY": 0,
+      "posY": 2,
       "piece":  "Pawn"
+    },
+    {
+      "posX": 2,
+      "posY": 2,
+      "piece":  "Pawn"
+    },
+    {
+      "posX": 3,
+      "posY": 2,
+      "piece":  "Pawn"
+    },
+    {
+      "posX": 4,
+      "posY": 2,
+      "piece":  "Pawn"
+    },
+    {
+      "posX": 5,
+      "posY": 2,
+      "piece":  "Pawn"
+    },
+    {
+      "posX": 6,
+      "posY": 2,
+      "piece":  "Pawn"
+    },
+    {
+      "posX": 7,
+      "posY": 2,
+      "piece":  "Pawn"
+    },
+    {
+      "posX": 8,
+      "posY": 2,
+      "piece": "Pawn"
+    },
+    {
+      "posX": 2,
+      "posY": 0,
+      "piece": "SilverGeneral"
+    },
+    {
+      "posX": 3,
+      "posY": 0,
+      "piece": "GoldGeneral"
+    },
+    {
+      "posX": 4,
+      "posY": 0,
+      "piece": "King"
+    },
+    {
+      "posX": 5,
+      "posY": 0,
+      "piece": "GoldGeneral"
+    },
+    {
+      "posX": 6,
+      "posY": 0,
+      "piece": "SilverGeneral"
     }
   ]
 }

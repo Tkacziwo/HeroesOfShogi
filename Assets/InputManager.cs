@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static System.Net.Mime.MediaTypeNames;
 
 public class InputManager : MonoBehaviour
 {
@@ -33,10 +32,10 @@ public class InputManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        gameGrid.ClearPossibleMoves(possibleMoves);
         var hoveredCell = MouseOverCell();
         if (hoveredCell != null)
         {
-            gameGrid.ClearPossibleMoves(possibleMoves);
             hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
 
             if (Input.GetMouseButtonDown(0))
@@ -45,26 +44,11 @@ public class InputManager : MonoBehaviour
                 {
                     HandleMovePiece(hoveredCell);
                 }
-                else if(hoveredCell.objectInThisGridSpace != null)
+                else if (hoveredCell.objectInThisGridSpace != null)
                 {
-                    var pieceGameObject = hoveredCell.objectInThisGridSpace;
-                    var piece = pieceGameObject.GetComponent<Piece>();
-                    Vector2Int piecePosition = piece.GetPosition();
-                    possibleMoves = boardManager.CalculatePossibleMoves(piecePosition.x, piecePosition.y, piece.GetMoveset());
-                    foreach (var r in possibleMoves)
-                    {
-                        var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
-                        cell.SetIsPossibleMove();
-                        cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
-                    }
-                    CellWhichHoldsPiece = hoveredCell;
-                    chosenPiece = true;
+                    HandlePieceClicked(hoveredCell);
                 }
             }
-        }
-        else
-        {
-            gameGrid.ClearPossibleMoves(possibleMoves);
         }
     }
 
@@ -72,14 +56,55 @@ public class InputManager : MonoBehaviour
     {
         if (hoveredCell.GetIsPossibleMove())
         {
-            Piece piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
-            piece.MovePiece(hoveredCell.GetPosition());
-            hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.objectInThisGridSpace, hoveredCell.GetWorldPosition());
-
-            CellWhichHoldsPiece.objectInThisGridSpace = null;
-            RemovePossibleMoves();
-            chosenPiece = false;
+            HandlePieceMove(hoveredCell);
         }
+        else if(CellWhichHoldsPiece.GetPosition() == hoveredCell.GetPosition())
+        {
+            HandleUnclickPiece(hoveredCell);
+        }
+        else if (CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack()
+                == hoveredCell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack())
+        {
+            HandlePieceClicked(hoveredCell);
+        }
+    }
+
+    public void HandlePieceClicked(GridCell hoveredCell)
+    {
+        if (chosenPiece)
+        {
+            RemovePossibleMoves();
+        }
+
+        var piece = hoveredCell.objectInThisGridSpace.GetComponent<Piece>();
+        possibleMoves = boardManager.CalculatePossibleMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack());
+        foreach (var r in possibleMoves)
+        {
+            var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
+            cell.SetIsPossibleMove();
+            cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
+        }
+        CellWhichHoldsPiece = hoveredCell;
+        chosenPiece = true;
+    }
+
+    public void HandleUnclickPiece(GridCell hoveredCell)
+    {
+        hoveredCell = CellWhichHoldsPiece;
+        CellWhichHoldsPiece = null;
+        RemovePossibleMoves();
+        chosenPiece = false;
+    }
+
+    public void HandlePieceMove(GridCell hoveredCell)
+    {
+        Piece piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
+        piece.MovePiece(hoveredCell.GetPosition());
+        hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.objectInThisGridSpace, hoveredCell.GetWorldPosition());
+
+        CellWhichHoldsPiece.objectInThisGridSpace = null;
+        RemovePossibleMoves();
+        chosenPiece = false;
     }
 
     private void RemovePossibleMoves()
@@ -91,11 +116,6 @@ public class InputManager : MonoBehaviour
             cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
         }
         possibleMoves = null;
-    }
-
-    private void MovePiece(GameObject pieceGameObject)
-    {
-        Piece piece = pieceGameObject.GetComponent<Piece>();
     }
 
     private GridCell MouseOverCell()

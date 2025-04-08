@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class Piece : MonoBehaviour
 {
@@ -15,10 +14,13 @@ public class Piece : MonoBehaviour
 
     [SerializeField] private float speed;
 
+    private bool isBlack;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         emptyGameObject = new GameObject();
+        emptyGameObject.name = posX + " " + posY + "pieceTargetDestination";
         emptyGameObject.transform.position = transform.position;
     }
 
@@ -28,12 +30,10 @@ public class Piece : MonoBehaviour
         Moveset = moveset;
         posX = x;
         posY = y;
-    }
-
-    public void MovePiece(int x, int y)
-    {
-        posX = x;
-        posY = y;
+        if (posY < 3)
+        {
+            isBlack = false;
+        }
     }
 
     public void MovePiece(Vector2Int vec)
@@ -43,14 +43,15 @@ public class Piece : MonoBehaviour
     }
 
     public int[] GetMoveset()
-    {
-        return Moveset;
-    }
+        => Moveset;
+
 
     public Vector2Int GetPosition()
-    {
-        return new Vector2Int(posX, posY);
-    }
+        => new(posX, posY);
+
+
+    public bool GetIsBlack()
+        => isBlack;
 
     public void SetTargetPosition(Vector3 target)
     {

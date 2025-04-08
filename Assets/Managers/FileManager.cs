@@ -13,7 +13,7 @@ public class FileManager : MonoBehaviour
 
 
     [Serializable]
-    public class Position
+    public class PieceInfo
     {
         public int posX, posY;
         public string  piece;
@@ -27,7 +27,7 @@ public class FileManager : MonoBehaviour
             this.boardPositions = other.boardPositions;
         }
 
-        public Position[] boardPositions;
+        public PieceInfo[] boardPositions;
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -70,8 +70,6 @@ public class FileManager : MonoBehaviour
         {
             var result = JsonUtility.FromJson<PositionCollection>(file.text);
             PiecesPositions = new PositionCollection(result);
-            //BoardPosition[] positions = JsonHelper.getJsonArray<BoardPosition>(file.text);
-            //Console.WriteLine(positions.ToString());
         }
     }
 }

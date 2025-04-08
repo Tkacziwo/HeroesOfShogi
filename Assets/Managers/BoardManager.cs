@@ -1,8 +1,6 @@
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.Rendering.DebugUI.Table;
 
 public class BoardManager : MonoBehaviour
 {
@@ -15,18 +13,18 @@ public class BoardManager : MonoBehaviour
         gameGrid = FindFirstObjectByType<GridGame>();
     }
 
-    public IList<Tuple<int, int>> CalculatePossibleMoves(int posX, int posY, int[] moves)
+    public IList<Tuple<int, int>> CalculatePossibleMoves(Vector2Int piecePos, int[] moveset, bool isBlack)
     {
-        IList<Tuple<int, int>> possibleMoves = new List<Tuple<int, int>>();
+        List<Tuple<int, int>> possibleMoves = new();
         int row = 1;
         int col = 0;
         for (int i = 1; i <= 9; i++)
         {
-            if (moves[i - 1] == 1)
+            if (moveset[i - 1] == 1)
             {
-                int destX = col - 1 + posX;
-                int destY = row + posY;
-                if (IsInBoard(destX, destY))
+                int destX = col - 1 + piecePos.x;
+                int destY = row + piecePos.y;
+                if (IsInBoard(destX, destY) && IsCellFree(destX, destY, isBlack))
                 {
                     possibleMoves.Add(new(destX, destY));
                 }
@@ -39,6 +37,16 @@ public class BoardManager : MonoBehaviour
             }
         }
         return possibleMoves;
+    }
+
+    public bool IsCellFree(int destX, int destY, bool isBlack)
+    {
+        var cell = gameGrid.gameGrid[destX, destY].GetComponent<GridCell>();
+
+        return cell.objectInThisGridSpace != null
+            && cell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack() == isBlack
+            ? false
+            : true;
     }
 
     public bool IsInBoard(int row, int col)

@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class GridCell : MonoBehaviour
 {
@@ -40,7 +39,7 @@ public class GridCell : MonoBehaviour
     }
 
     public Vector2Int GetPosition()
-        => new (posX, posY);
+        => new(posX, posY);
 
 
     public Vector3 GetWorldPosition()
