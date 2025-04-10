@@ -62,21 +62,18 @@ public class GridGame : MonoBehaviour
             var cell = gameGrid[p.posX, p.posY].GetComponent<GridCell>();
             var resource = Resources.Load("ShogiPiece") as GameObject;
             var moveset = fileManager.GetMovesetByPieceName(p.piece);
-            bool isSpecialPiece = SpecialPieceCheck(moveset);
+            bool isSpecialPiece = SpecialPieceCheck(p.piece);
             cell.SetPiece(resource);
             var pieceScript = cell.objectInThisGridSpace.GetComponent<Piece>();
             pieceScript.InitializePiece(p.piece, moveset, cell.GetPosition().x, cell.GetPosition().y, isSpecialPiece);
         }
     }
 
-    private bool SpecialPieceCheck(int[] moveset)
+    private bool SpecialPieceCheck(string name)
     {
-        foreach(var m in moveset)
+        if (name == "Rook" || name == "Bishop")
         {
-            if (m == 2)
-            {
-                return true;
-            }
+            return true;
         }
         return false;
     }

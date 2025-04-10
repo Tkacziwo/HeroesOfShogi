@@ -20,6 +20,8 @@ public class Piece : MonoBehaviour
 
     private bool isBlack;
 
+    private bool isPromoted;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -37,6 +39,7 @@ public class Piece : MonoBehaviour
         posX = x;
         posY = y;
         isSpecial = isSpecialPiece;
+        isPromoted = false;
         if (posY < 3)
         {
             isBlack = false;
@@ -56,7 +59,6 @@ public class Piece : MonoBehaviour
     public int[] GetMoveset()
         => Moveset;
 
-
     public Vector2Int GetPosition()
         => new(posX, posY);
 
@@ -67,9 +69,19 @@ public class Piece : MonoBehaviour
     public bool GetIsSpecial()
         => isSpecial;
 
+    public bool GetIsPromoted()
+        => isPromoted;
+
     public void SetTargetPosition(Vector3 target)
         => emptyGameObject.transform.position = target;
     
+    public void Promote(int[] newMoveset)
+    {
+        originalPieceName = pieceName;
+        Moveset = newMoveset;
+        isPromoted = true;
+        //todo change textures
+    }
 
     // Update is called once per frame
     void Update()

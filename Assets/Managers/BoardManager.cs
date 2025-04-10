@@ -1,10 +1,6 @@
-using NUnit.Framework.Internal;
 using System;
 using System.Collections.Generic;
-using UnityEditor.XR;
 using UnityEngine;
-using UnityEngine.Timeline;
-using static UnityEngine.Rendering.DebugUI.Table;
 
 public class BoardManager : MonoBehaviour
 {
@@ -24,6 +20,7 @@ public class BoardManager : MonoBehaviour
         int col = -1;
         for (int i = 1; i <= 9; i++)
         {
+            //Regular pieces
             if (moveset[i - 1] == 1)
             {
                 int destX = col + piecePos.x;
@@ -33,10 +30,12 @@ public class BoardManager : MonoBehaviour
                     possibleMoves.Add(new(destX, destY));
                 }
             }
+            //Special pieces: Rook, Bishop
             else if (moveset[i - 1] == 2)
             {
                 ExtendSpecialPiecePossibleMoves(row, col, piecePos, isBlack, ref possibleMoves);
             }
+            //Horse
             else if (moveset[i - 1] == 3)
             {
                 int destX = col + piecePos.x;

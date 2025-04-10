@@ -98,11 +98,47 @@ public class InputManager : MonoBehaviour
     public void HandlePieceMove(GridCell hoveredCell)
     {
         Piece piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
+        //check for promotions
+        if (!piece.GetIsPromoted() && CheckForPromotion(hoveredCell, piece.GetIsBlack()))
+        {
+            if (!piece.GetIsSpecial())
+            {
+                piece.Promote(fileManager.GetMovesetByPieceName("GoldGeneral"));
+            }
+            else
+            {
+                int[] moveset = piece.GetMoveset();
+                for (int i = 0; i < 9; i++)
+                {
+                    if (moveset[i] != 2 && i != 4)
+                    {
+                        moveset[i]++;
+                    }
+                }
+                piece.Promote(moveset);
+            }
+        }
         piece.MovePiece(hoveredCell.GetPosition());
         hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.objectInThisGridSpace, hoveredCell.GetWorldPosition());
         CellWhichHoldsPiece.objectInThisGridSpace = null;
         RemovePossibleMoves();
         chosenPiece = false;
+    }
+
+    public bool CheckForPromotion(GridCell hoveredCell, bool isBlack)
+    {
+        if (!isBlack && hoveredCell.GetPosition().y > 5)
+        {
+            return true;
+        }
+        else if (isBlack && hoveredCell.GetPosition().y < 3)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     private void RemovePossibleMoves()
