@@ -46,7 +46,18 @@ public class Piece : MonoBehaviour
         }
         else
         {
+            ReverseMovementMatrix();
             isBlack = true;
+        }
+    }
+
+    public void ReverseMovementMatrix()
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            int temp = Moveset[i];
+            Moveset[i] = Moveset[i + 6];
+            Moveset[i + 6] = temp;
         }
     }
 
@@ -74,7 +85,7 @@ public class Piece : MonoBehaviour
 
     public void SetTargetPosition(Vector3 target)
         => emptyGameObject.transform.position = target;
-    
+
     public void Promote(int[] newMoveset)
     {
         originalPieceName = pieceName;

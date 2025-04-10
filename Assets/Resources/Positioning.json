@@ -8,37 +8,37 @@
     {
       "posX": 1,
       "posY": 2,
-      "piece":  "Pawn"
+      "piece": "Pawn"
     },
     {
       "posX": 2,
       "posY": 2,
-      "piece":  "Pawn"
+      "piece": "Pawn"
     },
     {
       "posX": 3,
       "posY": 2,
-      "piece":  "Pawn"
+      "piece": "Pawn"
     },
     {
       "posX": 4,
       "posY": 2,
-      "piece":  "Pawn"
+      "piece": "Pawn"
     },
     {
       "posX": 5,
       "posY": 2,
-      "piece":  "Pawn"
+      "piece": "Pawn"
     },
     {
       "posX": 6,
       "posY": 2,
-      "piece":  "Pawn"
+      "piece": "Pawn"
     },
     {
       "posX": 7,
       "posY": 2,
-      "piece":  "Pawn"
+      "piece": "Pawn"
     },
     {
       "posX": 8,
@@ -99,7 +99,106 @@
       "posX": 7,
       "posY": 0,
       "piece": "Horse"
+    },
+    {
+      "posX": 0,
+      "posY": 8,
+      "piece": "Lance"
+    },
+    {
+      "posX": 1,
+      "posY": 8,
+      "piece": "Horse"
+    },
+    {
+      "posX": 2,
+      "posY": 8,
+      "piece": "SilverGeneral"
+    },
+    {
+      "posX": 3,
+      "posY": 8,
+      "piece": "GoldGeneral"
+    },
+    {
+      "posX": 4,
+      "posY": 8,
+      "piece": "King"
+    },
+    {
+      "posX": 5,
+      "posY": 8,
+      "piece": "GoldGeneral"
+    },
+    {
+      "posX": 6,
+      "posY": 8,
+      "piece": "SilverGeneral"
+    },
+    {
+      "posX": 7,
+      "posY": 8,
+      "piece": "Horse"
+    },
+    {
+      "posX": 8,
+      "posY": 8,
+      "piece": "Lance"
+    },
+    {
+      "posX": 1,
+      "posY": 7,
+      "piece": "Rook"
+    },
+    {
+      "posX": 7,
+      "posY": 7,
+      "piece": "Bishop"
+    },
+    {
+      "posX": 0,
+      "posY": 6,
+      "piece": "Pawn"
+    },
+    {
+      "posX": 1,
+      "posY": 6,
+      "piece": "Pawn"
+    },
+    {
+      "posX": 2,
+      "posY": 6,
+      "piece": "Pawn"
+    },
+    {
+      "posX": 3,
+      "posY": 6,
+      "piece": "Pawn"
+    },
+    {
+      "posX": 4,
+      "posY": 6,
+      "piece": "Pawn"
+    },
+    {
+      "posX": 5,
+      "posY": 6,
+      "piece": "Pawn"
+    },
+    {
+      "posX": 6,
+      "posY": 6,
+      "piece": "Pawn"
+    },
+    {
+      "posX": 7,
+      "posY": 6,
+      "piece": "Pawn"
+    },
+    {
+      "posX": 8,
+      "posY": 6,
+      "piece": "Pawn"
     }
-
   ]
 }
