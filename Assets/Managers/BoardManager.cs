@@ -1,6 +1,10 @@
+using NUnit.Framework.Internal;
 using System;
 using System.Collections.Generic;
+using UnityEditor.XR;
 using UnityEngine;
+using UnityEngine.Timeline;
+using static UnityEngine.Rendering.DebugUI.Table;
 
 public class BoardManager : MonoBehaviour
 {
@@ -13,17 +17,30 @@ public class BoardManager : MonoBehaviour
         gameGrid = FindFirstObjectByType<GridGame>();
     }
 
-    public IList<Tuple<int, int>> CalculatePossibleMoves(Vector2Int piecePos, int[] moveset, bool isBlack)
+    public List<Tuple<int, int>> CalculatePossibleMoves(Vector2Int piecePos, int[] moveset, bool isBlack)
     {
         List<Tuple<int, int>> possibleMoves = new();
         int row = 1;
-        int col = 0;
+        int col = -1;
         for (int i = 1; i <= 9; i++)
         {
             if (moveset[i - 1] == 1)
             {
-                int destX = col - 1 + piecePos.x;
+                int destX = col + piecePos.x;
                 int destY = row + piecePos.y;
+                if (IsInBoard(destX, destY) && IsCellFree(destX, destY, isBlack))
+                {
+                    possibleMoves.Add(new(destX, destY));
+                }
+            }
+            else if (moveset[i - 1] == 2)
+            {
+                ExtendSpecialPiecePossibleMoves(row, col, piecePos, isBlack, ref possibleMoves);
+            }
+            else if (moveset[i - 1] == 3)
+            {
+                int destX = col + piecePos.x;
+                int destY = row + 1 + piecePos.y;
                 if (IsInBoard(destX, destY) && IsCellFree(destX, destY, isBlack))
                 {
                     possibleMoves.Add(new(destX, destY));
@@ -33,10 +50,30 @@ public class BoardManager : MonoBehaviour
             if (i % 3 == 0 && i != 0)
             {
                 row--;
-                col = 0;
+                col = -1;
             }
         }
         return possibleMoves;
+    }
+
+    public void ExtendSpecialPiecePossibleMoves(int row, int col, Vector2Int piecePos,
+                                                bool isBlack, ref List<Tuple<int, int>> possibleMoves)
+    {
+        int destX = col + piecePos.x;
+        int destY = row + piecePos.y;
+        while (true)
+        {
+            if (IsInBoard(destX, destY) && IsCellFree(destX, destY, isBlack))
+            {
+                possibleMoves.Add(new(destX, destY));
+                destX += col;
+                destY += row;
+            }
+            else
+            {
+                break;
+            }
+        }
     }
 
     public bool IsCellFree(int destX, int destY, bool isBlack)

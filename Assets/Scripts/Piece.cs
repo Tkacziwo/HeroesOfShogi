@@ -2,13 +2,17 @@ using UnityEngine;
 
 public class Piece : MonoBehaviour
 {
-    private string PieceName;
+    private string pieceName;
+
+    private string originalPieceName;
 
     private int[] Moveset;
 
     private int posX;
 
     private int posY;
+
+    private bool isSpecial;
 
     private GameObject emptyGameObject;
 
@@ -19,20 +23,27 @@ public class Piece : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        emptyGameObject = new GameObject();
-        emptyGameObject.name = posX + " " + posY + "pieceTargetDestination";
+        emptyGameObject = new()
+        {
+            name = posX + " " + posY + "pieceTargetDestination"
+        };
         emptyGameObject.transform.position = transform.position;
     }
 
-    public void InitializePiece(string name, int[] moveset, int x, int y)
+    public void InitializePiece(string name, int[] moveset, int x, int y, bool isSpecialPiece)
     {
-        PieceName = name;
+        pieceName = name;
         Moveset = moveset;
         posX = x;
         posY = y;
+        isSpecial = isSpecialPiece;
         if (posY < 3)
         {
             isBlack = false;
+        }
+        else
+        {
+            isBlack = true;
         }
     }
 
@@ -53,10 +64,12 @@ public class Piece : MonoBehaviour
     public bool GetIsBlack()
         => isBlack;
 
+    public bool GetIsSpecial()
+        => isSpecial;
+
     public void SetTargetPosition(Vector3 target)
-    {
-        emptyGameObject.transform.position = target;
-    }
+        => emptyGameObject.transform.position = target;
+    
 
     // Update is called once per frame
     void Update()

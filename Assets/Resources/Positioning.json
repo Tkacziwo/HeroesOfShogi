@@ -69,6 +69,37 @@
       "posX": 6,
       "posY": 0,
       "piece": "SilverGeneral"
+    },
+    {
+      "posX": 1,
+      "posY": 1,
+      "piece": "Rook"
+    },
+    {
+      "posX": 7,
+      "posY": 1,
+      "piece": "Bishop"
+    },
+    {
+      "posX": 0,
+      "posY": 0,
+      "piece": "Lance"
+    },
+    {
+      "posX": 8,
+      "posY": 0,
+      "piece": "Lance"
+    },
+    {
+      "posX": 1,
+      "posY": 0,
+      "piece": "Horse"
+    },
+    {
+      "posX": 7,
+      "posY": 0,
+      "piece": "Horse"
     }
+
   ]
 }

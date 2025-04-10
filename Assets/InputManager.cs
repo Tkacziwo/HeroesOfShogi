@@ -58,12 +58,12 @@ public class InputManager : MonoBehaviour
         {
             HandlePieceMove(hoveredCell);
         }
-        else if(CellWhichHoldsPiece.GetPosition() == hoveredCell.GetPosition())
+        else if (CellWhichHoldsPiece.GetPosition() == hoveredCell.GetPosition())
         {
             HandleUnclickPiece(hoveredCell);
         }
-        else if (CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack()
-                == hoveredCell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack())
+        else if ((hoveredCell.objectInThisGridSpace != null) && (CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack()
+                == hoveredCell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack()))
         {
             HandlePieceClicked(hoveredCell);
         }
@@ -75,7 +75,6 @@ public class InputManager : MonoBehaviour
         {
             RemovePossibleMoves();
         }
-
         var piece = hoveredCell.objectInThisGridSpace.GetComponent<Piece>();
         possibleMoves = boardManager.CalculatePossibleMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack());
         foreach (var r in possibleMoves)
@@ -101,7 +100,6 @@ public class InputManager : MonoBehaviour
         Piece piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
         piece.MovePiece(hoveredCell.GetPosition());
         hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.objectInThisGridSpace, hoveredCell.GetWorldPosition());
-
         CellWhichHoldsPiece.objectInThisGridSpace = null;
         RemovePossibleMoves();
         chosenPiece = false;

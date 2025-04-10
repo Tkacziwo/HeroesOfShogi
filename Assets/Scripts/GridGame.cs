@@ -62,10 +62,23 @@ public class GridGame : MonoBehaviour
             var cell = gameGrid[p.posX, p.posY].GetComponent<GridCell>();
             var resource = Resources.Load("ShogiPiece") as GameObject;
             var moveset = fileManager.GetMovesetByPieceName(p.piece);
+            bool isSpecialPiece = SpecialPieceCheck(moveset);
             cell.SetPiece(resource);
             var pieceScript = cell.objectInThisGridSpace.GetComponent<Piece>();
-            pieceScript.InitializePiece(p.piece, moveset, cell.GetPosition().x, cell.GetPosition().y);
+            pieceScript.InitializePiece(p.piece, moveset, cell.GetPosition().x, cell.GetPosition().y, isSpecialPiece);
         }
+    }
+
+    private bool SpecialPieceCheck(int[] moveset)
+    {
+        foreach(var m in moveset)
+        {
+            if (m == 2)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void OnHoverExitRestoreDefaultColor()

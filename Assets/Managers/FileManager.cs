@@ -41,7 +41,7 @@ public class FileManager : MonoBehaviour
     {
         MovesetDictionary = new();
         string fileContents = File.text;
-        string pattern = @"([A-Za-z]+)\s([0-2]*)(\n|\r|\r\n)+";
+        string pattern = @"([A-Za-z]+)\s([0-3]*)(\n|\r|\r\n)+";
         var matches = Regex.Matches(fileContents, pattern);
         foreach (Match m in matches)
         {
