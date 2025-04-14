@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class Piece : MonoBehaviour
 {
@@ -8,11 +9,15 @@ public class Piece : MonoBehaviour
 
     private int[] Moveset;
 
+    private int[] originalMoveset;
+
     private int posX;
 
     private int posY;
 
     private bool isSpecial;
+
+    private bool isDrop;
 
     private GameObject emptyGameObject;
 
@@ -35,11 +40,14 @@ public class Piece : MonoBehaviour
     public void InitializePiece(string name, int[] moveset, int x, int y, bool isSpecialPiece)
     {
         pieceName = name;
+        originalPieceName = name;
         Moveset = moveset;
+        BackupOriginalMoveset();
         posX = x;
         posY = y;
         isSpecial = isSpecialPiece;
         isPromoted = false;
+        isDrop = false;
         if (posY < 3)
         {
             isBlack = false;
@@ -61,6 +69,16 @@ public class Piece : MonoBehaviour
         }
     }
 
+    public void ReverseOriginalMovementMatrix()
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            int temp = originalMoveset[i];
+            originalMoveset[i] = originalMoveset[i + 6];
+            originalMoveset[i + 6] = temp;
+        }
+    }
+
     public void MovePiece(Vector2Int vec)
     {
         posX = vec.x;
@@ -77,6 +95,12 @@ public class Piece : MonoBehaviour
     public bool GetIsBlack()
         => isBlack;
 
+    public void SetIsBlack()
+        => isBlack = true;
+
+    public void ResetIsBlack()
+        => isBlack = false;
+
     public bool GetIsSpecial()
         => isSpecial;
 
@@ -88,11 +112,43 @@ public class Piece : MonoBehaviour
 
     public void Promote(int[] newMoveset)
     {
-        originalPieceName = pieceName;
         Moveset = newMoveset;
+        if (isBlack)
+        {
+            ReverseMovementMatrix();
+        }
         isPromoted = true;
         //todo change textures
     }
+
+    public void BackupOriginalMoveset()
+    {
+        originalMoveset = new int[Moveset.Length];
+        for(int i = 0; i < Moveset.Length;i++)
+        {
+            originalMoveset[i] = Moveset[i];
+        }
+    }
+
+    public void Demote()
+    {
+        pieceName = originalPieceName;
+        Moveset = originalMoveset;
+        isPromoted = false;
+    }
+
+    public bool GetIsDrop()
+        => isDrop;
+
+    public void SetIsDrop()
+    {
+        isDrop = true;
+
+        //ReverseMovementMatrix();
+    }
+
+    public void ResetIsDrop()
+        => isDrop = false;
 
     // Update is called once per frame
     void Update()

@@ -22,6 +22,14 @@ public class GridGame : MonoBehaviour
 
     public GameObject[,] playerCamp;
 
+    public int playerCampPos = 0;
+
+    public int playerCampPosY;
+
+    public int enemyCampPos = 0;
+
+    public int enemyCampPosY;
+
     public GameObject[,] enemyCamp;
 
     private FileManager fileManager;
@@ -32,6 +40,8 @@ public class GridGame : MonoBehaviour
         fileManager = FindFirstObjectByType<FileManager>();
         GenerateField();
         InitializePieces();
+        playerCampPosY = 2;
+        enemyCampPosY = 0;
     }
 
     public void GenerateField()
@@ -70,7 +80,7 @@ public class GridGame : MonoBehaviour
             for (int y = 0; y < 3; y++)
             {
                 enemyCamp[x, y] = Instantiate(gridCell, new Vector4(x * gridCellSize, 0, y * gridCellSize + campSpacing), Quaternion.identity);
-                GridCell cell = playerCamp[x, y].GetComponent<GridCell>();
+                GridCell cell = enemyCamp[x, y].GetComponent<GridCell>();
                 cell.InitializeGridCell(x, y, gridCellSize);
                 cell.SetPosition(x, y);
                 enemyCamp[x, y].transform.parent = transform;
@@ -79,10 +89,10 @@ public class GridGame : MonoBehaviour
         }
 
 
-        float xRot = 57.5F;
+        float xRot = 63.0F;
         float yRot = -90;
 
-        cameraPosition.position = new Vector4((float)100, 75, ((height + 6) * gridCellSize + 10.0F) / 2 - gridCellSize / 2);
+        cameraPosition.position = new Vector4((float)100, 80, ((height + 6) * gridCellSize + 10.0F) / 2 - gridCellSize / 2);
         cameraPosition.rotation = Quaternion.Euler(xRot, yRot, 0);
     }
 
@@ -100,10 +110,13 @@ public class GridGame : MonoBehaviour
             var pieceScript = cell.objectInThisGridSpace.GetComponent<Piece>();
             pieceScript.InitializePiece(p.piece, moveset, cell.GetPosition().x, cell.GetPosition().y, isSpecialPiece);
 
-            var isBlack = pieceScript.GetIsBlack();
-            if (isBlack)
+            if (pieceScript.GetIsBlack())
             {
                 cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+            }
+            else
+            {
+                cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
             }
         }
     }
@@ -115,6 +128,45 @@ public class GridGame : MonoBehaviour
             return true;
         }
         return false;
+    }
+
+    public void AddToCamp(GameObject piece)
+    {
+        var pieceScript = piece.GetComponent<Piece>();
+        
+        if (pieceScript.GetIsPromoted())
+        {
+            pieceScript.Demote();
+        }
+
+        pieceScript.SetIsDrop();
+        pieceScript.ReverseOriginalMovementMatrix();
+        pieceScript.ReverseMovementMatrix();
+
+        if (piece.GetComponent<Piece>().GetIsBlack())
+        {
+            piece.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
+            var cell = playerCamp[playerCampPos, playerCampPosY].GetComponent<GridCell>();
+            cell.SetAndMovePiece(piece, cell.GetWorldPosition());
+            playerCampPos++;
+            if (playerCampPos == 9)
+            {
+                playerCampPos = 0;
+                playerCampPosY--;
+            }
+        }
+        else
+        {
+            piece.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+            var cell = enemyCamp[enemyCampPos, enemyCampPosY].GetComponent<GridCell>();
+            cell.SetAndMovePiece(piece, cell.GetWorldPosition());
+            enemyCampPos++;
+            if (enemyCampPos == 9)
+            {
+                enemyCampPos = 0;
+                enemyCampPosY++;
+            }
+        }
     }
 
     public void OnHoverExitRestoreDefaultColor()

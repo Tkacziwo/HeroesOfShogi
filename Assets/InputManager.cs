@@ -76,7 +76,15 @@ public class InputManager : MonoBehaviour
             RemovePossibleMoves();
         }
         var piece = hoveredCell.objectInThisGridSpace.GetComponent<Piece>();
-        possibleMoves = boardManager.CalculatePossibleMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack());
+
+        if (piece.GetIsDrop())
+        {
+            possibleMoves = boardManager.CalculatePossibleDrops();
+        }
+        else
+        {
+            possibleMoves = boardManager.CalculatePossibleMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack());
+        }
         foreach (var r in possibleMoves)
         {
             var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
@@ -98,8 +106,22 @@ public class InputManager : MonoBehaviour
     public void HandlePieceMove(GridCell hoveredCell)
     {
         Piece piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
+
+        //check if drop
+        if (piece.GetIsDrop())
+        {
+            if (piece.GetIsBlack())
+            {
+                piece.ResetIsBlack();
+            }
+            else
+            {
+                piece.SetIsBlack();
+            }
+            piece.ResetIsDrop();
+        }
         //check for promotions
-        if (!piece.GetIsPromoted() && CheckForPromotion(hoveredCell, piece.GetIsBlack()))
+        else if (!piece.GetIsPromoted() && CheckForPromotion(hoveredCell, piece.GetIsBlack()))
         {
             if (!piece.GetIsSpecial())
             {
@@ -107,6 +129,7 @@ public class InputManager : MonoBehaviour
             }
             else
             {
+                piece.BackupOriginalMoveset();
                 int[] moveset = piece.GetMoveset();
                 for (int i = 0; i < 9; i++)
                 {
@@ -118,11 +141,25 @@ public class InputManager : MonoBehaviour
                 piece.Promote(moveset);
             }
         }
+
+        //handle piece kill
+        if (hoveredCell.objectInThisGridSpace != null &&
+            hoveredCell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack() != piece.GetIsBlack())
+        {
+            HandlePieceKill(hoveredCell);
+        }
         piece.MovePiece(hoveredCell.GetPosition());
         hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.objectInThisGridSpace, hoveredCell.GetWorldPosition());
         CellWhichHoldsPiece.objectInThisGridSpace = null;
         RemovePossibleMoves();
         chosenPiece = false;
+    }
+
+    public void HandlePieceKill(GridCell hoveredCell)
+    {
+        //var piece = hoveredCell.objectInThisGridSpace.GetComponent<Piece>();
+        gameGrid.AddToCamp(hoveredCell.objectInThisGridSpace);
+        hoveredCell.objectInThisGridSpace = null;
     }
 
     public bool CheckForPromotion(GridCell hoveredCell, bool isBlack)
