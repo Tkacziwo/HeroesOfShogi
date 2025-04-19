@@ -1,5 +1,5 @@
+using System;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class Piece : MonoBehaviour
 {
@@ -18,6 +18,8 @@ public class Piece : MonoBehaviour
     private bool isSpecial;
 
     private bool isDrop;
+
+    public bool isKing;
 
     private GameObject emptyGameObject;
 
@@ -39,7 +41,15 @@ public class Piece : MonoBehaviour
 
     public void InitializePiece(string name, int[] moveset, int x, int y, bool isSpecialPiece)
     {
-        pieceName = name;
+        if (name == "King")
+        {
+            isKing = true;
+        }
+        else
+        {
+            isKing = false;
+        }
+            pieceName = name;
         originalPieceName = name;
         Moveset = moveset;
         BackupOriginalMoveset();
@@ -91,6 +101,8 @@ public class Piece : MonoBehaviour
     public Vector2Int GetPosition()
         => new(posX, posY);
 
+    public Tuple<int, int> GetPositionTuple()
+        => new(posX, posY);
 
     public bool GetIsBlack()
         => isBlack;

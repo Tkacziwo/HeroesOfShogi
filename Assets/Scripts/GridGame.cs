@@ -24,9 +24,13 @@ public class GridGame : MonoBehaviour
 
     public int playerCampPos = 0;
 
+    public int playerCampPiecesNumber = 0;
+
     public int playerCampPosY;
 
     public int enemyCampPos = 0;
+
+    public int enemyCampPiecesNumber = 0;
 
     public int enemyCampPosY;
 
@@ -34,10 +38,23 @@ public class GridGame : MonoBehaviour
 
     private FileManager fileManager;
 
+    public Camp pCamp;
+
+    public Camp eCamp;
+
     public void Start()
     {
+
         gridCellSize *= 2;
         fileManager = FindFirstObjectByType<FileManager>();
+        //pCamp = FindFirstObjectByType<Camp>();
+        var camps = FindObjectsByType<Camp>(FindObjectsSortMode.InstanceID);
+        pCamp = camps[0];
+        eCamp = camps[1];
+        pCamp.InitializePosY(2);
+        eCamp.InitializePosY(0);
+        //pCamp.InitializeGrid(2, gridCellSize, gridCell);
+        //eCamp.InitializeGrid(0, gridCellSize, gridCell);
         GenerateField();
         InitializePieces();
         playerCampPosY = 2;
@@ -46,19 +63,21 @@ public class GridGame : MonoBehaviour
 
     public void GenerateField()
     {
-        playerCamp = new GameObject[9, 3];
-        for (int x = 0; x < 9; x++)
-        {
-            for (int y = 0; y < 3; y++)
-            {
-                playerCamp[x, y] = Instantiate(gridCell, new Vector4(x * gridCellSize, 0, y * gridCellSize), Quaternion.identity);
-                GridCell cell = playerCamp[x, y].GetComponent<GridCell>();
-                cell.InitializeGridCell(x, y, gridCellSize);
-                cell.SetPosition(x, y);
-                playerCamp[x, y].transform.parent = transform;
-                playerCamp[x, y].transform.rotation = Quaternion.Euler(90, 0, 0);
-            }
-        }
+
+        pCamp.GenerateCamp();
+        //playerCamp = new GameObject[9, 3];
+        //for (int x = 0; x < 9; x++)
+        //{
+        //    for (int y = 0; y < 3; y++)
+        //    {
+        //        playerCamp[x, y] = Instantiate(gridCell, new Vector4(x * gridCellSize, 0, y * gridCellSize), Quaternion.identity);
+        //        GridCell cell = playerCamp[x, y].GetComponent<GridCell>();
+        //        cell.InitializeGridCell(x, y, gridCellSize);
+        //        cell.SetPosition(x, y);
+        //        playerCamp[x, y].transform.parent = transform;
+        //        playerCamp[x, y].transform.rotation = Quaternion.Euler(90, 0, 0);
+        //    }
+        //}
         float campSpacing = 5.0F + gridCellSize * 3;
         gameGrid = new GameObject[width, height];
         for (int y = 0; y < height; y++)
@@ -74,19 +93,21 @@ public class GridGame : MonoBehaviour
             }
         }
         campSpacing += 9 * gridCellSize + 5.0F;
-        enemyCamp = new GameObject[9, 3];
-        for (int x = 0; x < 9; x++)
-        {
-            for (int y = 0; y < 3; y++)
-            {
-                enemyCamp[x, y] = Instantiate(gridCell, new Vector4(x * gridCellSize, 0, y * gridCellSize + campSpacing), Quaternion.identity);
-                GridCell cell = enemyCamp[x, y].GetComponent<GridCell>();
-                cell.InitializeGridCell(x, y, gridCellSize);
-                cell.SetPosition(x, y);
-                enemyCamp[x, y].transform.parent = transform;
-                enemyCamp[x, y].transform.rotation = Quaternion.Euler(90, 0, 0);
-            }
-        }
+
+        eCamp.GenerateCamp(campSpacing);
+        //enemyCamp = new GameObject[9, 3];
+        //for (int x = 0; x < 9; x++)
+        //{
+        //    for (int y = 0; y < 3; y++)
+        //    {
+        //        enemyCamp[x, y] = Instantiate(gridCell, new Vector4(x * gridCellSize, 0, y * gridCellSize + campSpacing), Quaternion.identity);
+        //        GridCell cell = enemyCamp[x, y].GetComponent<GridCell>();
+        //        cell.InitializeGridCell(x, y, gridCellSize);
+        //        cell.SetPosition(x, y);
+        //        enemyCamp[x, y].transform.parent = transform;
+        //        enemyCamp[x, y].transform.rotation = Quaternion.Euler(90, 0, 0);
+        //    }
+        //}
 
 
         float xRot = 63.0F;
@@ -130,43 +151,69 @@ public class GridGame : MonoBehaviour
         return false;
     }
 
-    public void AddToCamp(GameObject piece)
+    public GameObject GetPieceInGrid(int x, int y)
     {
-        var pieceScript = piece.GetComponent<Piece>();
-        
-        if (pieceScript.GetIsPromoted())
+        if (gameGrid[x, y].GetComponent<GridCell>().objectInThisGridSpace != null)
         {
-            pieceScript.Demote();
-        }
-
-        pieceScript.SetIsDrop();
-        pieceScript.ReverseOriginalMovementMatrix();
-        pieceScript.ReverseMovementMatrix();
-
-        if (piece.GetComponent<Piece>().GetIsBlack())
-        {
-            piece.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
-            var cell = playerCamp[playerCampPos, playerCampPosY].GetComponent<GridCell>();
-            cell.SetAndMovePiece(piece, cell.GetWorldPosition());
-            playerCampPos++;
-            if (playerCampPos == 9)
-            {
-                playerCampPos = 0;
-                playerCampPosY--;
-            }
+            return gameGrid[x, y].GetComponentInChildren<GridCell>().objectInThisGridSpace;
         }
         else
         {
-            piece.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
-            var cell = enemyCamp[enemyCampPos, enemyCampPosY].GetComponent<GridCell>();
-            cell.SetAndMovePiece(piece, cell.GetWorldPosition());
-            enemyCampPos++;
-            if (enemyCampPos == 9)
-            {
-                enemyCampPos = 0;
-                enemyCampPosY++;
-            }
+            return null;
         }
+    }
+
+    public GridCell GetGridCell(int x, int y)
+    {
+        return gameGrid[x, y].GetComponent<GridCell>();
+    }
+
+    public void AddToCamp(GameObject piece)
+    {
+        //var pieceScript = piece.GetComponent<Piece>();
+
+        //if (pieceScript.GetIsPromoted())
+        //{
+        //    pieceScript.Demote();
+        //}
+
+        //pieceScript.SetIsDrop();
+        //pieceScript.ReverseOriginalMovementMatrix();
+        //pieceScript.ReverseMovementMatrix();
+
+        if (piece.GetComponent<Piece>().GetIsBlack())
+        {
+            pCamp.AddToCamp(piece);
+            //piece.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
+            //var cell = playerCamp[playerCampPos, playerCampPosY].GetComponent<GridCell>();
+            //cell.SetAndMovePiece(piece, cell.GetWorldPosition());
+            //playerCampPos++;
+            //playerCampPiecesNumber++;
+            //if (playerCampPos == 9)
+            //{
+            //    playerCampPos = 0;
+            //    playerCampPosY--;
+            //}
+        }
+        else
+        {
+            eCamp.AddToCamp(piece);
+            //piece.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+            //var cell = enemyCamp[enemyCampPos, enemyCampPosY].GetComponent<GridCell>();
+            //cell.SetAndMovePiece(piece, cell.GetWorldPosition());
+            //enemyCampPos++;
+            //enemyCampPiecesNumber++;
+            //if (enemyCampPos == 9)
+            //{
+            //    enemyCampPos = 0;
+            //    enemyCampPosY++;
+            //}
+        }
+    }
+
+    public void ReshuffleCamp(GameObject[,] camp)
+    {
+
     }
 
     public void OnHoverExitRestoreDefaultColor()
@@ -182,8 +229,10 @@ public class GridGame : MonoBehaviour
         {
             for (int x = 0; x < width; x++)
             {
-                playerCamp[x, y].GetComponentInChildren<SpriteRenderer>().material.color = Color.white;
-                enemyCamp[x, y].GetComponentInChildren<SpriteRenderer>().material.color = Color.white;
+                pCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = Color.white;
+                eCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = Color.white;
+                //playerCamp[x, y].GetComponentInChildren<SpriteRenderer>().material.color = Color.white;
+                //enemyCamp[x, y].GetComponentInChildren<SpriteRenderer>().material.color = Color.white;
             }
         }
     }

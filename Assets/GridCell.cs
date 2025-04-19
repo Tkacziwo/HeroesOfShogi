@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class GridCell : MonoBehaviour
@@ -39,6 +40,9 @@ public class GridCell : MonoBehaviour
     }
 
     public Vector2Int GetPosition()
+        => new(posX, posY);
+
+    public Tuple<int, int> GetPositionTuple()
         => new(posX, posY);
 
 

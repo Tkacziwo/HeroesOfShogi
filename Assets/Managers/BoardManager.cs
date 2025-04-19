@@ -8,6 +8,7 @@ public class BoardManager : MonoBehaviour
     [SerializeField] private FileManager fileManager;
 
     GridGame gameGrid;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -76,12 +77,13 @@ public class BoardManager : MonoBehaviour
             if (IsInBoard(destX, destY) && IsCellFree(destX, destY, isBlack))
             {
                 possibleMoves.Add(new(destX, destY));
-
+                
                 if (IsEnemy(destX, destY, isBlack))
                 {
-                    possibleMoves.Add(new(destX, destY));
+                    //possibleMoves.Add(new(destX, destY));
                     break;
                 }
+
                 destX += col;
                 destY += row;
             }
@@ -91,6 +93,7 @@ public class BoardManager : MonoBehaviour
             }
         }
     }
+
 
     public List<Tuple<int,int>> CalculatePossibleDrops()
     {
@@ -112,10 +115,20 @@ public class BoardManager : MonoBehaviour
     {
         var cell = gameGrid.gameGrid[destX, destY].GetComponent<GridCell>();
 
-        return cell.objectInThisGridSpace != null
-            && cell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack() == isBlack
-            ? false
-            : true;
+        //if (cell.objectInThisGridSpace != null 
+        //    && cell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack() == isBlack)
+        //{
+        //    return false;
+        //}
+        //else
+        //{
+        //    return true;
+        //}
+
+            return cell.objectInThisGridSpace != null
+                && cell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack() == isBlack
+                ? false
+                : true;
     }
 
     public bool IsCellFree(int destX, int destY)

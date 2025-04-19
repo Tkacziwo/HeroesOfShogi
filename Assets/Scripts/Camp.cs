@@ -1,0 +1,92 @@
+using UnityEngine;
+
+public class Camp : MonoBehaviour
+{
+    public GameObject[,] campGrid;
+
+    [SerializeField] private GameObject gridCell = null;
+
+    [SerializeField] private float gridCellSize;
+
+    public int numberOfPieces = 0;
+
+    public int posX = 0;
+
+    private int posY;
+
+    public int positionOperator;
+
+    void Start()
+    {
+        posX = numberOfPieces = 0;
+    }
+
+    public void InitializePosY(int posY)
+    {
+        this.posY = posY;
+    }
+
+    public void InitializeGrid(int posY, float gridCellSize, GameObject gridCell)
+    {
+        this.gridCellSize = gridCellSize;
+        this.gridCell = gridCell;
+        this.posY = posY;
+        if (this.posY == 2)
+        {
+            positionOperator = -1;
+        }
+        else
+        {
+            positionOperator = 1;
+        }
+    }
+
+    public void GenerateCamp(float spacing = 0)
+    {
+        campGrid = new GameObject[9, 3];
+        for (int x = 0; x < 9; x++)
+        {
+            for (int y = 0; y < 3; y++)
+            {
+                campGrid[x, y] = Instantiate(gridCell, new Vector4(x * gridCellSize, 0, y * gridCellSize + spacing), Quaternion.identity);
+                GridCell cell = campGrid[x, y].GetComponent<GridCell>();
+                cell.InitializeGridCell(x, y, gridCellSize);
+                cell.SetPosition(x, y);
+                campGrid[x, y].transform.parent = transform;
+                campGrid[x, y].transform.rotation = Quaternion.Euler(90, 0, 0);
+            }
+        }
+    }
+
+    public void AddToCamp(GameObject piece)
+    {
+        var pieceScript = piece.GetComponent<Piece>();
+
+        if (pieceScript.GetIsPromoted())
+        {
+            pieceScript.Demote();
+        }
+
+        pieceScript.SetIsDrop();
+        pieceScript.ReverseOriginalMovementMatrix();
+        pieceScript.ReverseMovementMatrix();
+
+        if (piece.GetComponent<Piece>().GetIsBlack())
+        {
+            piece.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
+        }
+        else
+        {
+            piece.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+        }
+        var cell = campGrid[posX, posY].GetComponent<GridCell>();
+        cell.SetAndMovePiece(piece, cell.GetWorldPosition());
+        posX++;
+        numberOfPieces++;
+        if (posX == 9)
+        {
+            posX = 0;
+            posY += positionOperator;
+        }
+    }
+}

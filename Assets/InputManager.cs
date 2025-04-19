@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class InputManager : MonoBehaviour
@@ -13,9 +14,21 @@ public class InputManager : MonoBehaviour
 
     private BoardManager boardManager;
 
+    private KingManager kingManager;
+
     private IList<Tuple<int, int>> possibleMoves;
 
+    public List<Tuple<int, int>> bodyguardsPositions;
+
+    public List<Tuple<int, int>> sacrificesPositions;
+
+    public List<Tuple<int, int>> endangeredMoves;
+
     private bool chosenPiece;
+
+    private bool kingInDanger;
+
+    private Tuple<int, int> kingPos;
 
     private GridCell CellWhichHoldsPiece;
 
@@ -25,7 +38,9 @@ public class InputManager : MonoBehaviour
         gameGrid = FindFirstObjectByType<GridGame>();
         fileManager = FindFirstObjectByType<FileManager>();
         boardManager = FindFirstObjectByType<BoardManager>();
+        kingManager = FindFirstObjectByType<KingManager>();
         chosenPiece = false;
+        kingInDanger = false;
         CellWhichHoldsPiece = null;
     }
 
@@ -71,12 +86,55 @@ public class InputManager : MonoBehaviour
 
     public void HandlePieceClicked(GridCell hoveredCell)
     {
+        //clicked piece
+        var piece = hoveredCell.objectInThisGridSpace.GetComponent<Piece>();
         if (chosenPiece)
         {
             RemovePossibleMoves();
         }
-        var piece = hoveredCell.objectInThisGridSpace.GetComponent<Piece>();
+        //handle king safety
+        if (kingInDanger)
+        {
+            //bodyguard checking
+            foreach (var b in bodyguardsPositions)
+            {
+                if (hoveredCell.GetPositionTuple().Equals(b))
+                {
+                    PossibleMovesCalculationHandler(piece, hoveredCell);
+                    break;
+                }
+            }
+            //drop checking
+            if (piece.GetIsDrop())
+            {
+                PossibleMovesCalculationHandler(piece, hoveredCell);
+            }
+            //sacrifice checking
+            foreach (var s in sacrificesPositions)
+            {
+                if (hoveredCell.GetPositionTuple().Equals(s))
+                {
+                    possibleMoves = kingManager.CalculateProtectionMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack(), endangeredMoves); ;
+                    foreach (var r in possibleMoves)
+                    {
+                        var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
+                        cell.SetIsPossibleMove();
+                        cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
+                    }
+                    CellWhichHoldsPiece = hoveredCell;
+                    chosenPiece = true;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            PossibleMovesCalculationHandler(piece, hoveredCell);
+        }
+    }
 
+    public void PossibleMovesCalculationHandler(Piece piece, GridCell hoveredCell)
+    {
         if (piece.GetIsDrop())
         {
             possibleMoves = boardManager.CalculatePossibleDrops();
@@ -106,7 +164,19 @@ public class InputManager : MonoBehaviour
     public void HandlePieceMove(GridCell hoveredCell)
     {
         Piece piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
-
+        if (kingInDanger)
+        {
+            var scanPieceGM = gameGrid.GetPieceInGrid(kingPos.Item1, kingPos.Item2);
+            if (scanPieceGM.GetComponent<Piece>().GetIsBlack())
+            {
+                scanPieceGM.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+            }
+            else
+            {
+                scanPieceGM.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
+            }
+            kingInDanger = false;
+        }
         //check if drop
         if (piece.GetIsDrop())
         {
@@ -148,11 +218,37 @@ public class InputManager : MonoBehaviour
         {
             HandlePieceKill(hoveredCell);
         }
+
+
         piece.MovePiece(hoveredCell.GetPosition());
         hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.objectInThisGridSpace, hoveredCell.GetWorldPosition());
         CellWhichHoldsPiece.objectInThisGridSpace = null;
         RemovePossibleMoves();
         chosenPiece = false;
+        //handle king endangerment
+
+        var moveScan = boardManager.CalculatePossibleMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack());
+        foreach (var move in moveScan)
+        {
+            //var gridCell = gameGrid.GetGridCell(move.Item1, move.Item2);
+            var scanPieceGM = gameGrid.GetPieceInGrid(move.Item1, move.Item2);
+            if (scanPieceGM != null)
+            {
+                var scanPiece = scanPieceGM.GetComponent<Piece>();
+                if (scanPiece != null && scanPiece.isKing && scanPiece.GetIsBlack() != piece.GetIsBlack())
+                {
+                    //[todo] -> fixing
+                    //found king
+                    kingInDanger = true;
+                    //gridCell.GetComponentInChildren<MeshRenderer>().material.color = Color.magenta
+                    kingPos = new(move.Item1, move.Item2);
+                    scanPieceGM.GetComponentInChildren<MeshRenderer>().material.color = Color.red;
+                    bodyguardsPositions = kingManager.FindBodyguards(scanPiece.GetIsBlack(), piece.GetPositionTuple());
+                    sacrificesPositions = kingManager.FindSacrifices(scanPiece, piece);
+                    endangeredMoves = kingManager.CalculateEndangeredMoves(scanPiece.GetPositionTuple(), piece);
+                }
+            }
+        }
     }
 
     public void HandlePieceKill(GridCell hoveredCell)
