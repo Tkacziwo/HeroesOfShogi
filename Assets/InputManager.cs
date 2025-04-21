@@ -39,6 +39,10 @@ public class InputManager : MonoBehaviour
 
     [SerializeField] private bool playerTurn;
 
+    [SerializeField] private bool botEnabled;
+
+    [SerializeField] private ShogiBot bot;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -55,6 +59,18 @@ public class InputManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!playerTurn)
+        {
+            bot.GetBoardState();
+            bot.CalculateAllPossibleMoves();
+            bot.MakeRandomMove();
+            var botResult = bot.GetSourceAndDestination();
+
+            CellWhichHoldsPiece = gameGrid.GetGridCell(botResult[0].Item1, botResult[0].Item2);
+            var cell = gameGrid.GetGridCell(botResult[1].Item1, botResult[1].Item2);
+            HandlePieceMove(cell);
+            playerTurn = true;
+        }
         gameGrid.ClearPossibleMoves(possibleMoves);
         var hoveredCell = MouseOverCell();
         if (hoveredCell != null)
@@ -387,13 +403,16 @@ public class InputManager : MonoBehaviour
 
     private void RemovePossibleMoves()
     {
-        foreach (var r in possibleMoves)
+        if (possibleMoves != null)
         {
-            var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
-            cell.ResetIsPossibleMove();
-            cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
+            foreach (var r in possibleMoves)
+            {
+                var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
+                cell.ResetIsPossibleMove();
+                cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
+            }
+            possibleMoves = null;
         }
-        possibleMoves = null;
     }
 
     private GridCell MouseOverCell()
