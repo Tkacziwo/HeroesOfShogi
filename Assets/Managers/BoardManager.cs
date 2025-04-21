@@ -67,6 +67,41 @@ public class BoardManager : MonoBehaviour
         return possibleMoves;
     }
 
+    public List<Tuple<int, int>> CalculateOverlappingMoves(List<Tuple<int, int>> first, List<Tuple<int, int>> comparer, bool overlap)
+    {
+        List<Tuple<int, int>> overlappingMoves = new();
+        for (int i = 0; i < first.Count; i++)
+        {
+            for (int j = 0; j < comparer.Count; j++)
+            {
+                if (first[i].Equals(comparer[j]))
+                {
+                    overlappingMoves.Add(first[i]);
+                }
+            }
+        }
+        if (overlap)
+        {
+            return overlappingMoves;
+        }
+        else
+        {
+            for (int i = 0; i < first.Count; i++)
+            {
+                for(int j = 0; j < overlappingMoves.Count; j++)
+                {
+                    if (first[i].Equals(overlappingMoves[j]))
+                    {
+                        first.Remove(overlappingMoves[j]);
+                    }
+                }
+            }
+
+            return first;
+        }
+    }
+
+
     public void ExtendSpecialPiecePossibleMoves(int row, int col, Vector2Int piecePos,
                                                 bool isBlack, ref List<Tuple<int, int>> possibleMoves)
     {
@@ -77,7 +112,7 @@ public class BoardManager : MonoBehaviour
             if (IsInBoard(destX, destY) && IsCellFree(destX, destY, isBlack))
             {
                 possibleMoves.Add(new(destX, destY));
-                
+
                 if (IsEnemy(destX, destY, isBlack))
                 {
                     //possibleMoves.Add(new(destX, destY));
@@ -95,12 +130,12 @@ public class BoardManager : MonoBehaviour
     }
 
 
-    public List<Tuple<int,int>> CalculatePossibleDrops()
+    public List<Tuple<int, int>> CalculatePossibleDrops()
     {
         List<Tuple<int, int>> moves = new();
-        for(int y = 0; y < 9; y++)
+        for (int y = 0; y < 9; y++)
         {
-            for(int x = 0; x < 9; x++)
+            for (int x = 0; x < 9; x++)
             {
                 if (IsCellFree(x, y))
                 {
@@ -125,10 +160,10 @@ public class BoardManager : MonoBehaviour
         //    return true;
         //}
 
-            return cell.objectInThisGridSpace != null
-                && cell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack() == isBlack
-                ? false
-                : true;
+        return cell.objectInThisGridSpace != null
+            && cell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack() == isBlack
+            ? false
+            : true;
     }
 
     public bool IsCellFree(int destX, int destY)

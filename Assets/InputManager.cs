@@ -16,13 +16,15 @@ public class InputManager : MonoBehaviour
 
     private KingManager kingManager;
 
-    private IList<Tuple<int, int>> possibleMoves;
+    private List<Tuple<int, int>> possibleMoves;
 
     public List<Tuple<int, int>> bodyguardsPositions;
 
     public List<Tuple<int, int>> sacrificesPositions;
 
     public List<Tuple<int, int>> endangeredMoves;
+
+    public List<Tuple<int, int>> extendedDangerMoves;
 
     private bool chosenPiece;
 
@@ -31,6 +33,8 @@ public class InputManager : MonoBehaviour
     private Tuple<int, int> kingPos;
 
     private GridCell CellWhichHoldsPiece;
+
+    private GridCell CellWhichHoldsAttacker;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -42,6 +46,7 @@ public class InputManager : MonoBehaviour
         chosenPiece = false;
         kingInDanger = false;
         CellWhichHoldsPiece = null;
+        CellWhichHoldsAttacker = null;
     }
 
     // Update is called once per frame
@@ -95,35 +100,73 @@ public class InputManager : MonoBehaviour
         //handle king safety
         if (kingInDanger)
         {
-            //bodyguard checking
-            foreach (var b in bodyguardsPositions)
+            if (piece.isKing)
             {
-                if (hoveredCell.GetPositionTuple().Equals(b))
+                possibleMoves = kingManager.CloseScan(piece.GetPositionTuple());
+                var attacker = CellWhichHoldsAttacker.objectInThisGridSpace.GetComponent<Piece>();
+                var attackerProtected = kingManager
+                    .FarScan(attacker.GetPositionTuple(), attacker.GetIsBlack());
+
+                List<Tuple<int, int>> attackerPos = new()
+                {
+                    attacker.GetPositionTuple()
+                };
+
+                if (attackerProtected)
+                {
+                    possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, attackerPos, false);
+                }
+
+                if (extendedDangerMoves != null)
+                {
+                    possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, extendedDangerMoves, false);
+                }
+                foreach (var r in possibleMoves)
+                {
+                    var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
+                    cell.SetIsPossibleMove();
+                    cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
+                }
+                CellWhichHoldsPiece = hoveredCell;
+                chosenPiece = true;
+            }
+            else
+            {
+
+                //bodyguard checking
+                foreach (var b in bodyguardsPositions)
+                {
+                    if (hoveredCell.GetPositionTuple().Equals(b))
+                    {
+                        PossibleMovesCalculationHandler(piece, hoveredCell);
+                        break;
+                    }
+                }
+                //drop checking
+                if (piece.GetIsDrop())
                 {
                     PossibleMovesCalculationHandler(piece, hoveredCell);
-                    break;
                 }
-            }
-            //drop checking
-            if (piece.GetIsDrop())
-            {
-                PossibleMovesCalculationHandler(piece, hoveredCell);
-            }
-            //sacrifice checking
-            foreach (var s in sacrificesPositions)
-            {
-                if (hoveredCell.GetPositionTuple().Equals(s))
+                //sacrifice checking
+                foreach (var s in sacrificesPositions)
                 {
-                    possibleMoves = kingManager.CalculateProtectionMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack(), endangeredMoves); ;
-                    foreach (var r in possibleMoves)
+                    if (hoveredCell.GetPositionTuple().Equals(s))
                     {
-                        var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
-                        cell.SetIsPossibleMove();
-                        cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
+                        if (endangeredMoves != null)
+                        {
+                            possibleMoves = kingManager.CalculateProtectionMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack(), endangeredMoves); ;
+                        }
+
+                        foreach (var r in possibleMoves)
+                        {
+                            var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
+                            cell.SetIsPossibleMove();
+                            cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
+                        }
+                        CellWhichHoldsPiece = hoveredCell;
+                        chosenPiece = true;
+                        break;
                     }
-                    CellWhichHoldsPiece = hoveredCell;
-                    chosenPiece = true;
-                    break;
                 }
             }
         }
@@ -135,7 +178,23 @@ public class InputManager : MonoBehaviour
 
     public void PossibleMovesCalculationHandler(Piece piece, GridCell hoveredCell)
     {
-        if (piece.GetIsDrop())
+        if (piece.isKing)
+        {
+            possibleMoves = kingManager.CloseScan(piece.GetPositionTuple());
+            //also check FarScan
+            var copy = new List<Tuple<int, int>>();
+            copy.AddRange(possibleMoves);
+            foreach (var p in possibleMoves)
+            {
+                var res = kingManager.FarScanForKing(p, piece.GetIsBlack());
+                if (res)
+                {
+                    copy.Remove(p);
+                }
+            }
+            possibleMoves = copy;
+        }
+        else if (piece.GetIsDrop())
         {
             possibleMoves = boardManager.CalculatePossibleDrops();
         }
@@ -193,22 +252,26 @@ public class InputManager : MonoBehaviour
         //check for promotions
         else if (!piece.GetIsPromoted() && CheckForPromotion(hoveredCell, piece.GetIsBlack()))
         {
-            if (!piece.GetIsSpecial())
+            if (!piece.isKing)
             {
-                piece.Promote(fileManager.GetMovesetByPieceName("GoldGeneral"));
-            }
-            else
-            {
-                piece.BackupOriginalMoveset();
-                int[] moveset = piece.GetMoveset();
-                for (int i = 0; i < 9; i++)
+
+                if (!piece.GetIsSpecial())
                 {
-                    if (moveset[i] != 2 && i != 4)
-                    {
-                        moveset[i]++;
-                    }
+                    piece.Promote(fileManager.GetMovesetByPieceName("GoldGeneral"));
                 }
-                piece.Promote(moveset);
+                else
+                {
+                    piece.BackupOriginalMoveset();
+                    int[] moveset = piece.GetMoveset();
+                    for (int i = 0; i < 9; i++)
+                    {
+                        if (moveset[i] != 2 && i != 4)
+                        {
+                            moveset[i]++;
+                        }
+                    }
+                    piece.Promote(moveset);
+                }
             }
         }
 
@@ -240,12 +303,14 @@ public class InputManager : MonoBehaviour
                     //[todo] -> fixing
                     //found king
                     kingInDanger = true;
+                    CellWhichHoldsAttacker = hoveredCell;
                     //gridCell.GetComponentInChildren<MeshRenderer>().material.color = Color.magenta
                     kingPos = new(move.Item1, move.Item2);
                     scanPieceGM.GetComponentInChildren<MeshRenderer>().material.color = Color.red;
                     bodyguardsPositions = kingManager.FindBodyguards(scanPiece.GetIsBlack(), piece.GetPositionTuple());
                     sacrificesPositions = kingManager.FindSacrifices(scanPiece, piece);
-                    endangeredMoves = kingManager.CalculateEndangeredMoves(scanPiece.GetPositionTuple(), piece);
+                    endangeredMoves = kingManager.CalculateEndangeredMoves(piece, scanPiece.GetPositionTuple());
+                    extendedDangerMoves = kingManager.CalculateEndangeredMoves(piece);
                 }
             }
         }

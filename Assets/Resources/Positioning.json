@@ -71,12 +71,12 @@
       "piece": "SilverGeneral"
     },
     {
-      "posX": 1,
+      "posX": 7,
       "posY": 1,
       "piece": "Rook"
     },
     {
-      "posX": 7,
+      "posX": 1,
       "posY": 1,
       "piece": "Bishop"
     },
