@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
+using NUnit.Framework.Constraints;
 
 public class KingManager : MonoBehaviour
 {
@@ -103,14 +105,91 @@ public class KingManager : MonoBehaviour
         return moves;
     }
 
-    public bool FarScanForKing(Tuple<int, int> pos, bool isBlack)
+    public List<Tuple<int, int>> KingDangerMovesScan(List<Tuple<int, int>> pos, bool isBlack)
+    {
+        List<Tuple<int, int>> dangerMoves = new();
+        foreach (var p in pos)
+        {
+            int rowOperator = 1;
+            int colOperator = -1;
+            for (int i = 1; i <= 9; i++)
+            {
+                var res = FarKingDirectionScanDangerMoves(rowOperator, colOperator, p, isBlack);
+                if (res != null)
+                {
+                    dangerMoves.AddRange(res);
+                }
+                colOperator++;
+                if (i % 3 == 0 && i != 0)
+                {
+                    rowOperator--;
+                    colOperator = -1;
+                }
+            }
+        }
+        return dangerMoves;
+    }
+
+    public List<Tuple<int, int>> FarKingDirectionScanDangerMoves(int rowOperator, int colOperator, Tuple<int, int> source, bool isBlack)
+    {
+        int destX = source.Item1 + colOperator;
+        int destY = source.Item2 + rowOperator;
+        List<Tuple<int, int>> temp = new()
+        {
+            new(source.Item1, source.Item2)
+        };
+        while (true)
+        {
+            if(rowOperator == 0 && colOperator == 0)
+            {
+                return null;
+            }
+            if (boardManager.IsInBoard(destX, destY))
+            {
+                if (!boardManager.IsCellFree(destX, destY))
+                {
+                    if (!boardManager.IsEnemy(destX, destY, isBlack))
+                    {
+                        //friend
+                        return null;
+                    }
+                    else
+                    {
+                        //enemy found
+                        var enemyPiece = gridGame.GetPieceInGrid(destX, destY).GetComponent<Piece>();
+                        if (enemyPiece.GetIsSpecial())
+                        {
+                            return temp;
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    }
+                }
+                else
+                {
+                    temp.Add(new(destX, destY));
+                }
+            }
+            else
+            {
+                return null;
+            }
+            destX += colOperator;
+            destY += rowOperator;
+        }
+    }
+
+    public bool FarScanForKing(Tuple<int, int> pos, bool isBlack, ref Tuple<int, int> attackerPos)
     {
         int rowOperator = 1;
         int colOperator = -1;
         for (int i = 1; i <= 9; i++)
         {
-            if (FarKingDirectionScan(rowOperator, colOperator, pos, isBlack))
+            if (FarKingDirectionScan(rowOperator, colOperator, pos, isBlack, ref attackerPos))
             {
+
                 return true;
             }
             colOperator++;
@@ -123,7 +202,7 @@ public class KingManager : MonoBehaviour
         return false;
     }
 
-    public bool FarKingDirectionScan(int rowOperator, int colOperator, Tuple<int, int> source, bool isBlack)
+    public bool FarKingDirectionScan(int rowOperator, int colOperator, Tuple<int, int> source, bool isBlack, ref Tuple<int, int> attackerPos)
     {
         int destX = source.Item1 + colOperator;
         int destY = source.Item2 + rowOperator;
@@ -148,6 +227,7 @@ public class KingManager : MonoBehaviour
                             {
                                 if (m.Equals(source))
                                 {
+                                    attackerPos = new(destX, destY);
                                     return true;
                                 }
                             }
@@ -205,7 +285,7 @@ public class KingManager : MonoBehaviour
                     var piece = gridGame.GetPieceInGrid(destX, destY).GetComponent<Piece>();
                     if (!boardManager.IsEnemy(destX, destY, isBlack))
                     {
-                        if(piece.GetIsSpecial())
+                        if (piece.GetIsSpecial())
                         {
                             return true;
                         }

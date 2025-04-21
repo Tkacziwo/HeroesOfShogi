@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class InputManager : MonoBehaviour
@@ -35,6 +34,8 @@ public class InputManager : MonoBehaviour
     private GridCell CellWhichHoldsPiece;
 
     private GridCell CellWhichHoldsAttacker;
+
+    private Tuple<int, int> attackerPos;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -106,11 +107,16 @@ public class InputManager : MonoBehaviour
                 var attacker = CellWhichHoldsAttacker.objectInThisGridSpace.GetComponent<Piece>();
                 var attackerProtected = kingManager
                     .FarScan(attacker.GetPositionTuple(), attacker.GetIsBlack());
-
+                var additionalDangerMoves = kingManager.KingDangerMovesScan(possibleMoves, piece.GetIsBlack());
                 List<Tuple<int, int>> attackerPos = new()
                 {
                     attacker.GetPositionTuple()
                 };
+
+                if (additionalDangerMoves != null)
+                {
+                    possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, additionalDangerMoves, false);
+                }
 
                 if (attackerProtected)
                 {
@@ -186,7 +192,7 @@ public class InputManager : MonoBehaviour
             copy.AddRange(possibleMoves);
             foreach (var p in possibleMoves)
             {
-                var res = kingManager.FarScanForKing(p, piece.GetIsBlack());
+                var res = kingManager.FarScanForKing(p, piece.GetIsBlack(), ref attackerPos);
                 if (res)
                 {
                     copy.Remove(p);
@@ -288,8 +294,38 @@ public class InputManager : MonoBehaviour
         CellWhichHoldsPiece.objectInThisGridSpace = null;
         RemovePossibleMoves();
         chosenPiece = false;
-        //handle king endangerment
 
+
+        var isBlack = piece.GetIsBlack();
+
+        for (int y = 0; y < 9; y++)
+        {
+            for (int x = 0; x < 9; x++)
+            {
+                if (!boardManager.IsCellFree(x, y)
+                    && boardManager.IsEnemy(x, y, isBlack)
+                    && gameGrid.GetPieceInGrid(x, y).GetComponent<Piece>().isKing)
+                {
+                    var foundKing = gameGrid.GetPieceInGrid(x, y).GetComponent<Piece>();
+
+                    var res = kingManager.FarScanForKing(foundKing.GetPositionTuple(), foundKing.GetIsBlack(),ref attackerPos);
+                    if (res)
+                    {
+                        CellWhichHoldsAttacker = gameGrid.GetGridCell(attackerPos.Item1, attackerPos.Item2);
+                        var attacker = gameGrid.GetPieceInGrid(attackerPos.Item1, attackerPos.Item2).GetComponent<Piece>();
+                        kingInDanger = true;
+                        kingPos = foundKing.GetPositionTuple();
+                        foundKing.GetComponentInChildren<MeshRenderer>().material.color = Color.red;
+                        bodyguardsPositions = kingManager.FindBodyguards(foundKing.GetIsBlack(), attacker.GetPositionTuple());
+                        sacrificesPositions = kingManager.FindSacrifices(foundKing, attacker);
+                        endangeredMoves = kingManager.CalculateEndangeredMoves(attacker, foundKing.GetPositionTuple());
+                        extendedDangerMoves = kingManager.CalculateEndangeredMoves(attacker);
+                    }
+                }
+            }
+        }
+
+        //handle king endangerment
         var moveScan = boardManager.CalculatePossibleMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack());
         foreach (var move in moveScan)
         {
