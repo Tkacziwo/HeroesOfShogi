@@ -37,6 +37,8 @@ public class InputManager : MonoBehaviour
 
     private Tuple<int, int> attackerPos;
 
+    [SerializeField] private bool playerTurn;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -78,6 +80,10 @@ public class InputManager : MonoBehaviour
         if (hoveredCell.GetIsPossibleMove())
         {
             HandlePieceMove(hoveredCell);
+            if (playerTurn)
+                playerTurn = false;
+            else
+                playerTurn = true;
         }
         else if (CellWhichHoldsPiece.GetPosition() == hoveredCell.GetPosition())
         {
@@ -94,91 +100,95 @@ public class InputManager : MonoBehaviour
     {
         //clicked piece
         var piece = hoveredCell.objectInThisGridSpace.GetComponent<Piece>();
-        if (chosenPiece)
+        if ((playerTurn && !piece.GetIsBlack()) || (!playerTurn && piece.GetIsBlack()))
         {
-            RemovePossibleMoves();
-        }
-        //handle king safety
-        if (kingInDanger)
-        {
-            if (piece.isKing)
+            if (chosenPiece)
             {
-                possibleMoves = kingManager.CloseScan(piece.GetPositionTuple());
-                var attacker = CellWhichHoldsAttacker.objectInThisGridSpace.GetComponent<Piece>();
-                var attackerProtected = kingManager
-                    .FarScan(attacker.GetPositionTuple(), attacker.GetIsBlack());
-                var additionalDangerMoves = kingManager.KingDangerMovesScan(possibleMoves, piece.GetIsBlack());
-                List<Tuple<int, int>> attackerPos = new()
+                RemovePossibleMoves();
+            }
+            //handle king safety
+            if (kingInDanger)
+            {
+                if (piece.isKing)
+                {
+                    possibleMoves = kingManager.CloseScan(piece.GetPositionTuple());
+                    var attacker = CellWhichHoldsAttacker.objectInThisGridSpace.GetComponent<Piece>();
+                    var attackerProtected = kingManager
+                        .FarScan(attacker.GetPositionTuple(), attacker.GetIsBlack());
+                    var additionalDangerMoves = kingManager.KingDangerMovesScan(possibleMoves, piece.GetIsBlack());
+                    List<Tuple<int, int>> attackerPos = new()
                 {
                     attacker.GetPositionTuple()
                 };
 
-                if (additionalDangerMoves != null)
+                    if (additionalDangerMoves != null)
+                    {
+                        possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, additionalDangerMoves, false);
+                    }
+
+                    if (attackerProtected)
+                    {
+                        possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, attackerPos, false);
+                    }
+
+                    if (extendedDangerMoves != null)
+                    {
+                        possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, extendedDangerMoves, false);
+                    }
+                    foreach (var r in possibleMoves)
+                    {
+                        var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
+                        cell.SetIsPossibleMove();
+                        cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
+                    }
+                    CellWhichHoldsPiece = hoveredCell;
+                    chosenPiece = true;
+                }
+                else
                 {
-                    possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, additionalDangerMoves, false);
+
+                    //bodyguard checking
+                    foreach (var b in bodyguardsPositions)
+                    {
+                        if (hoveredCell.GetPositionTuple().Equals(b))
+                        {
+                            PossibleMovesCalculationHandler(piece, hoveredCell);
+                            break;
+                        }
+                    }
+                    //drop checking
+                    if (piece.GetIsDrop())
+                    {
+                        PossibleMovesCalculationHandler(piece, hoveredCell);
+                    }
+                    //sacrifice checking
+                    foreach (var s in sacrificesPositions)
+                    {
+                        if (hoveredCell.GetPositionTuple().Equals(s))
+                        {
+                            if (endangeredMoves != null)
+                            {
+                                possibleMoves = kingManager.CalculateProtectionMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack(), endangeredMoves); ;
+                            }
+
+                            foreach (var r in possibleMoves)
+                            {
+                                var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
+                                cell.SetIsPossibleMove();
+                                cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
+                            }
+                            CellWhichHoldsPiece = hoveredCell;
+                            chosenPiece = true;
+                            break;
+                        }
+                    }
                 }
 
-                if (attackerProtected)
-                {
-                    possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, attackerPos, false);
-                }
-
-                if (extendedDangerMoves != null)
-                {
-                    possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, extendedDangerMoves, false);
-                }
-                foreach (var r in possibleMoves)
-                {
-                    var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
-                    cell.SetIsPossibleMove();
-                    cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
-                }
-                CellWhichHoldsPiece = hoveredCell;
-                chosenPiece = true;
             }
             else
             {
-
-                //bodyguard checking
-                foreach (var b in bodyguardsPositions)
-                {
-                    if (hoveredCell.GetPositionTuple().Equals(b))
-                    {
-                        PossibleMovesCalculationHandler(piece, hoveredCell);
-                        break;
-                    }
-                }
-                //drop checking
-                if (piece.GetIsDrop())
-                {
-                    PossibleMovesCalculationHandler(piece, hoveredCell);
-                }
-                //sacrifice checking
-                foreach (var s in sacrificesPositions)
-                {
-                    if (hoveredCell.GetPositionTuple().Equals(s))
-                    {
-                        if (endangeredMoves != null)
-                        {
-                            possibleMoves = kingManager.CalculateProtectionMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack(), endangeredMoves); ;
-                        }
-
-                        foreach (var r in possibleMoves)
-                        {
-                            var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
-                            cell.SetIsPossibleMove();
-                            cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
-                        }
-                        CellWhichHoldsPiece = hoveredCell;
-                        chosenPiece = true;
-                        break;
-                    }
-                }
+                PossibleMovesCalculationHandler(piece, hoveredCell);
             }
-        }
-        else
-        {
-            PossibleMovesCalculationHandler(piece, hoveredCell);
         }
     }
 
@@ -308,7 +318,7 @@ public class InputManager : MonoBehaviour
                 {
                     var foundKing = gameGrid.GetPieceInGrid(x, y).GetComponent<Piece>();
 
-                    var res = kingManager.FarScanForKing(foundKing.GetPositionTuple(), foundKing.GetIsBlack(),ref attackerPos);
+                    var res = kingManager.FarScanForKing(foundKing.GetPositionTuple(), foundKing.GetIsBlack(), ref attackerPos);
                     if (res)
                     {
                         CellWhichHoldsAttacker = gameGrid.GetGridCell(attackerPos.Item1, attackerPos.Item2);

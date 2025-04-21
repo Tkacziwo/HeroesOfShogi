@@ -599,6 +599,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   shogiPiece: {fileID: 7594150127406164993, guid: 1cb404005b525f542990d0835542a848, type: 3}
+  playerTurn: 1
 --- !u!4 &801168601
 Transform:
   m_ObjectHideFlags: 0
