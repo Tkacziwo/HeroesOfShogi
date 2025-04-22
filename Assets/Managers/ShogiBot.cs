@@ -50,15 +50,25 @@ public class ShogiBot : MonoBehaviour
 
 
     //calculate all possibleMoves
-    public void CalculateAllPossibleMoves()
+    public void CalculateAllPossibleMoves(bool kingInDanger,
+        Tuple<int, int> kingPos = null,
+        List<Tuple<int, int>> bodyguards = null,
+        List<Tuple<int, int>> sacrifices = null)
     {
         allPossibleMoves = new();
-        foreach (var p in pieces)
+        if (kingInDanger)
         {
-            var moves = boardManager.CalculatePossibleMoves(p.GetPosition(), p.GetMoveset(), p.GetIsBlack());
-            if (moves != null)
+           
+        }
+        else
+        {
+            foreach (var p in pieces)
             {
-                allPossibleMoves.AddRange(moves);
+                var moves = boardManager.CalculatePossibleMoves(p.GetPosition(), p.GetMoveset(), p.GetIsBlack());
+                if (moves != null)
+                {
+                    allPossibleMoves.AddRange(moves);
+                }
             }
         }
     }

@@ -7,11 +7,14 @@ public class BoardManager : MonoBehaviour
 {
     [SerializeField] private FileManager fileManager;
 
+    private List<MoveInfo> previousMoves;
+
     GridGame gameGrid;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        previousMoves = new();
         gameGrid = FindFirstObjectByType<GridGame>();
     }
 
@@ -88,7 +91,7 @@ public class BoardManager : MonoBehaviour
         {
             for (int i = 0; i < first.Count; i++)
             {
-                for(int j = 0; j < overlappingMoves.Count; j++)
+                for (int j = 0; j < overlappingMoves.Count; j++)
                 {
                     if (first[i].Equals(overlappingMoves[j]))
                     {
@@ -115,7 +118,6 @@ public class BoardManager : MonoBehaviour
 
                 if (IsEnemy(destX, destY, isBlack))
                 {
-                    //possibleMoves.Add(new(destX, destY));
                     break;
                 }
 
@@ -187,6 +189,17 @@ public class BoardManager : MonoBehaviour
         }
     }
 
+    public bool IsCellNotFreeAndContainsEnemy(int destX, int destY, bool isBlack)
+    {
+        var cell = gameGrid.GetGridCell(destX, destY);
+        if (cell.objectInThisGridSpace == null) return false;
+        else
+        {
+            var piece = gameGrid.GetPieceInGrid(destX, destY).GetComponent<Piece>();
+            return piece.GetIsBlack() != isBlack;
+        }
+    }
+
     public bool IsInBoard(int row, int col)
     {
         if (row > -1 && row < 9 && col > -1 && col < 9)
@@ -195,9 +208,46 @@ public class BoardManager : MonoBehaviour
             return false;
     }
 
-    // Update is called once per frame
-    void Update()
+    public void ApplyPromotion(Piece piece)
+    {
+        if (!piece.isKing)
+        {
+            if (!piece.GetIsSpecial())
+            {
+                piece.Promote(fileManager.GetMovesetByPieceName("GoldGeneral"));
+            }
+            else
+            {
+                piece.BackupOriginalMoveset();
+                int[] moveset = piece.GetMoveset();
+                for (int i = 0; i < 9; i++)
+                {
+                    if (moveset[i] != 2 && i != 4)
+                    {
+                        moveset[i]++;
+                    }
+                }
+                piece.Promote(moveset);
+            }
+        }
+    }
+
+    public void HandleRegisterMove(Tuple<MoveInfo, MoveInfo> sourceDestination, bool isDrop)
+    {
+    }
+
+    public void RegisterMove(Tuple<Tuple<int, int>, Tuple<int, int>> sourceDestination, bool isDrop)
     {
 
+        MoveInfo i = new(sourceDestination, isDrop);
+        previousMoves.Add(i);
+    }
+
+    public MoveInfo UndoMove()
+    {
+        int top = previousMoves.Count - 1;
+        var move =  previousMoves[top];
+        previousMoves.RemoveAt(top);
+        return move;
     }
 }

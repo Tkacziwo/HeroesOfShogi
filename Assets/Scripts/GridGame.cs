@@ -170,44 +170,13 @@ public class GridGame : MonoBehaviour
 
     public void AddToCamp(GameObject piece)
     {
-        //var pieceScript = piece.GetComponent<Piece>();
-
-        //if (pieceScript.GetIsPromoted())
-        //{
-        //    pieceScript.Demote();
-        //}
-
-        //pieceScript.SetIsDrop();
-        //pieceScript.ReverseOriginalMovementMatrix();
-        //pieceScript.ReverseMovementMatrix();
-
         if (piece.GetComponent<Piece>().GetIsBlack())
         {
             pCamp.AddToCamp(piece);
-            //piece.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
-            //var cell = playerCamp[playerCampPos, playerCampPosY].GetComponent<GridCell>();
-            //cell.SetAndMovePiece(piece, cell.GetWorldPosition());
-            //playerCampPos++;
-            //playerCampPiecesNumber++;
-            //if (playerCampPos == 9)
-            //{
-            //    playerCampPos = 0;
-            //    playerCampPosY--;
-            //}
         }
         else
         {
             eCamp.AddToCamp(piece);
-            //piece.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
-            //var cell = enemyCamp[enemyCampPos, enemyCampPosY].GetComponent<GridCell>();
-            //cell.SetAndMovePiece(piece, cell.GetWorldPosition());
-            //enemyCampPos++;
-            //enemyCampPiecesNumber++;
-            //if (enemyCampPos == 9)
-            //{
-            //    enemyCampPos = 0;
-            //    enemyCampPosY++;
-            //}
         }
     }
 

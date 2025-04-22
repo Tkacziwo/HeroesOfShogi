@@ -1,3 +1,5 @@
+using NUnit.Framework;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Camp : MonoBehaviour
@@ -16,8 +18,11 @@ public class Camp : MonoBehaviour
 
     public int positionOperator;
 
+    public List<Piece> capturedPieces;
+
     void Start()
     {
+        capturedPieces = new();
         posX = numberOfPieces = 0;
     }
 
@@ -71,13 +76,15 @@ public class Camp : MonoBehaviour
         pieceScript.ReverseOriginalMovementMatrix();
         pieceScript.ReverseMovementMatrix();
 
-        if (piece.GetComponent<Piece>().GetIsBlack())
+        if (pieceScript.GetIsBlack())
         {
-            piece.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
+            pieceScript.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
+            pieceScript.ResetIsBlack();
         }
         else
         {
-            piece.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+            pieceScript.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+            pieceScript.SetIsBlack();
         }
         var cell = campGrid[posX, posY].GetComponent<GridCell>();
         cell.SetAndMovePiece(piece, cell.GetWorldPosition());
@@ -88,5 +95,6 @@ public class Camp : MonoBehaviour
             posX = 0;
             posY += positionOperator;
         }
+        capturedPieces.Add(pieceScript);
     }
 }

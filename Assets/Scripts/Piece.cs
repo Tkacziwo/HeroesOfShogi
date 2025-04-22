@@ -19,6 +19,8 @@ public class Piece : MonoBehaviour
 
     private bool isDrop;
 
+    private bool isBodyguard;
+
     public bool isKing;
 
     private GameObject emptyGameObject;
@@ -58,6 +60,7 @@ public class Piece : MonoBehaviour
         isSpecial = isSpecialPiece;
         isPromoted = false;
         isDrop = false;
+        isBodyguard = false;
         if (posY < 3)
         {
             isBlack = false;
@@ -158,6 +161,15 @@ public class Piece : MonoBehaviour
 
         //ReverseMovementMatrix();
     }
+
+    public bool GetIsBodyguard()
+        => isBodyguard;
+
+    public bool SetIsBodyguard()
+        => isBodyguard = true;
+
+    public bool ResetIsBodyguard()
+        => isBodyguard = false;
 
     public void ResetIsDrop()
         => isDrop = false;

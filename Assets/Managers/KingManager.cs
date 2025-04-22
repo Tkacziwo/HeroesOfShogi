@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
-using NUnit.Framework.Constraints;
 
 public class KingManager : MonoBehaviour
 {
@@ -26,7 +24,7 @@ public class KingManager : MonoBehaviour
                 //is not free and is not enemy - [todo] -> make one function for that
                 if (!boardManager.IsCellFree(x, y) && !boardManager.IsEnemy(x, y, isBlack))
                 {
-                    GameObject potentialGuard = gridGame.GetPieceInGrid(x, y);
+                    Piece potentialGuard = gridGame.GetPieceInGrid(x, y).GetComponent<Piece>();
                     if (potentialGuard != null && CanPieceKillAttacker(potentialGuard, attackerPos))
                     {
                         bodyguardsPos.Add(potentialGuard.GetComponent<Piece>().GetPositionTuple());
@@ -36,6 +34,27 @@ public class KingManager : MonoBehaviour
             }
         }
         return bodyguardsPos;
+    }
+
+    public List<Piece> FindBodyguardsPieces(bool isBlack, Tuple<int, int> attackerPos)
+    {
+        List<Piece> bodyguards = new();
+        for (int y = 0; y < 9; y++)
+        {
+            for (int x = 0; x < 9; x++)
+            {
+                if (!boardManager.IsCellFree(x, y) && !boardManager.IsEnemy(x, y, isBlack))
+                {
+                    Piece potentialGuard = gridGame.GetPieceInGrid(x, y).GetComponent<Piece>();
+                    if (potentialGuard != null && CanPieceKillAttacker(potentialGuard, attackerPos))
+                    {
+                        bodyguards.Add(potentialGuard.GetComponent<Piece>());
+                    }
+                }
+
+            }
+        }
+        return bodyguards;
     }
 
     public List<Tuple<int, int>> FindSacrifices(Piece king, Piece attacker)
@@ -414,10 +433,9 @@ public class KingManager : MonoBehaviour
         }
     }
 
-    public bool CanPieceKillAttacker(GameObject guardPiece, Tuple<int, int> attackerPos)
+    public bool CanPieceKillAttacker(Piece guardPiece, Tuple<int, int> attackerPos)
     {
-        var gPiece = guardPiece.GetComponent<Piece>();
-        var gMoves = boardManager.CalculatePossibleMoves(gPiece.GetPosition(), gPiece.GetMoveset(), gPiece.GetIsBlack());
+        var gMoves = boardManager.CalculatePossibleMoves(guardPiece.GetPosition(), guardPiece.GetMoveset(), guardPiece.GetIsBlack());
         foreach (var m in gMoves)
         {
             if (m.Equals(attackerPos))
