@@ -181,24 +181,27 @@ public class InputManager : MonoBehaviour
                         PossibleMovesCalculationHandler(piece, hoveredCell);
                     }
                     //sacrifice checking
-                    foreach (var s in sacrifices)
+                    if (sacrifices != null)
                     {
-                        if (hoveredCell.GetPositionTuple().Equals(s.GetPositionTuple()))
+                        foreach (var s in sacrifices)
                         {
-                            if (endangeredMoves != null)
+                            if (hoveredCell.GetPositionTuple().Equals(s.GetPositionTuple()))
                             {
-                                possibleMoves = kingManager.CalculateProtectionMoves(piece.GetPositionClass(), piece.GetMoveset(), piece.GetIsBlack(), endangeredMoves); ;
-                            }
+                                if (endangeredMoves != null)
+                                {
+                                    possibleMoves = kingManager.CalculateProtectionMoves(piece.GetPositionClass(), piece.GetMoveset(), piece.GetIsBlack(), endangeredMoves); ;
+                                }
 
-                            foreach (var r in possibleMoves)
-                            {
-                                var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
-                                cell.SetIsPossibleMove();
-                                cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
+                                foreach (var r in possibleMoves)
+                                {
+                                    var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
+                                    cell.SetIsPossibleMove();
+                                    cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
+                                }
+                                CellWhichHoldsPiece = hoveredCell;
+                                chosenPiece = true;
+                                break;
                             }
-                            CellWhichHoldsPiece = hoveredCell;
-                            chosenPiece = true;
-                            break;
                         }
                     }
                 }
