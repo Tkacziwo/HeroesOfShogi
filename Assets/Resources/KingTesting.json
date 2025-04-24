@@ -1,0 +1,65 @@
+{
+  "boardPositions": [
+    {
+      "posX": 2,
+      "posY": 0,
+      "piece": "SilverGeneral"
+    },
+    {
+      "posX": 3,
+      "posY": 0,
+      "piece": "GoldGeneral"
+    },
+    {
+      "posX": 4,
+      "posY": 0,
+      "piece": "King"
+    },
+    {
+      "posX": 5,
+      "posY": 0,
+      "piece": "GoldGeneral"
+    },
+    {
+      "posX": 6,
+      "posY": 0,
+      "piece": "SilverGeneral"
+    },
+    {
+      "posX": 7,
+      "posY": 1,
+      "piece": "Rook"
+    },
+    {
+      "posX": 1,
+      "posY": 1,
+      "piece": "Bishop"
+    },
+    
+    {
+      "posX": 2,
+      "posY": 8,
+      "piece": "SilverGeneral"
+    },
+    {
+      "posX": 3,
+      "posY": 8,
+      "piece": "GoldGeneral"
+    },
+    {
+      "posX": 4,
+      "posY": 8,
+      "piece": "King"
+    },
+    {
+      "posX": 5,
+      "posY": 8,
+      "piece": "GoldGeneral"
+    },
+    {
+      "posX": 6,
+      "posY": 8,
+      "piece": "SilverGeneral"
+    }
+  ]
+}

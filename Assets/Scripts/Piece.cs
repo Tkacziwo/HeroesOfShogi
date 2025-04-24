@@ -1,4 +1,5 @@
 using System;
+using System.Xml.Schema;
 using UnityEngine;
 
 public class Piece : MonoBehaviour
@@ -31,6 +32,8 @@ public class Piece : MonoBehaviour
 
     private bool isPromoted;
 
+    public int value;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -43,6 +46,38 @@ public class Piece : MonoBehaviour
 
     public void InitializePiece(string name, int[] moveset, int x, int y, bool isSpecialPiece)
     {
+        switch(name)
+        {
+            case "Pawn":
+                value = 100;
+                break;
+            case "GoldGeneral":
+                value = 500;
+                break;
+            case "SilverGeneral":
+                value = 400;
+                break;
+            case "Bishop":
+                value = 800;
+                break;
+            case "Rook":
+                value = 800;
+                break;
+            case "Lance":
+                value = 400;
+                break;
+            case "Horse":
+                value = 300;
+                break;
+            case "King":
+                value = 10000;
+                break;
+            default:
+                value = 0;
+                break;
+        }
+
+
         if (name == "King")
         {
             isKing = true;
@@ -51,7 +86,7 @@ public class Piece : MonoBehaviour
         {
             isKing = false;
         }
-            pieceName = name;
+        pieceName = name;
         originalPieceName = name;
         Moveset = moveset;
         BackupOriginalMoveset();
@@ -101,10 +136,16 @@ public class Piece : MonoBehaviour
     public int[] GetMoveset()
         => Moveset;
 
+    public string GetName()
+        => pieceName;
+
     public Vector2Int GetPosition()
         => new(posX, posY);
 
     public Tuple<int, int> GetPositionTuple()
+        => new(posX, posY);
+
+    public Position GetPositionClass()
         => new(posX, posY);
 
     public bool GetIsBlack()
@@ -139,7 +180,7 @@ public class Piece : MonoBehaviour
     public void BackupOriginalMoveset()
     {
         originalMoveset = new int[Moveset.Length];
-        for(int i = 0; i < Moveset.Length;i++)
+        for (int i = 0; i < Moveset.Length; i++)
         {
             originalMoveset[i] = Moveset[i];
         }

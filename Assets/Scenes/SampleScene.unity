@@ -153,6 +153,7 @@ MonoBehaviour:
   numberOfPieces: 0
   posX: 0
   positionOperator: 0
+  capturedPieces: []
 --- !u!4 &307997461
 Transform:
   m_ObjectHideFlags: 0
@@ -551,6 +552,7 @@ MonoBehaviour:
   numberOfPieces: 0
   posX: 0
   positionOperator: 0
+  capturedPieces: []
 --- !u!4 &608483106
 Transform:
   m_ObjectHideFlags: 0
@@ -600,8 +602,9 @@ MonoBehaviour:
     m_Bits: 256
   shogiPiece: {fileID: 7594150127406164993, guid: 1cb404005b525f542990d0835542a848, type: 3}
   bodyguards: []
+  sacrifices: []
   playerTurn: 1
-  botEnabled: 0
+  botEnabled: 1
   bot: {fileID: 1689434999}
 --- !u!4 &801168601
 Transform:
@@ -802,7 +805,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   boardManager: {fileID: 1678579888}
-  pieces: []
+  kingManager: {fileID: 367049262}
+  depth: 4
 --- !u!4 &1689435000
 Transform:
   m_ObjectHideFlags: 0

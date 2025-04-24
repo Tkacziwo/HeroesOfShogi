@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using NUnit.Framework.Internal;
 
 public class KingManager : MonoBehaviour
 {
@@ -14,29 +15,7 @@ public class KingManager : MonoBehaviour
         gridGame = FindFirstObjectByType<GridGame>();
     }
 
-    public List<Tuple<int, int>> FindBodyguards(bool isBlack, Tuple<int, int> attackerPos)
-    {
-        List<Tuple<int, int>> bodyguardsPos = new();
-        for (int y = 0; y < 9; y++)
-        {
-            for (int x = 0; x < 9; x++)
-            {
-                //is not free and is not enemy - [todo] -> make one function for that
-                if (!boardManager.IsCellFree(x, y) && !boardManager.IsEnemy(x, y, isBlack))
-                {
-                    Piece potentialGuard = gridGame.GetPieceInGrid(x, y).GetComponent<Piece>();
-                    if (potentialGuard != null && CanPieceKillAttacker(potentialGuard, attackerPos))
-                    {
-                        bodyguardsPos.Add(potentialGuard.GetComponent<Piece>().GetPositionTuple());
-                    }
-                }
-
-            }
-        }
-        return bodyguardsPos;
-    }
-
-    public List<Piece> FindBodyguardsPieces(bool isBlack, Tuple<int, int> attackerPos)
+    public List<Piece> FindBodyguards(bool isBlack, Tuple<int, int> attackerPos)
     {
         List<Piece> bodyguards = new();
         for (int y = 0; y < 9; y++)
@@ -57,15 +36,15 @@ public class KingManager : MonoBehaviour
         return bodyguards;
     }
 
-    public List<Tuple<int, int>> FindSacrifices(Piece king, Piece attacker)
+    public List<Piece> FindSacrifices(Piece king, Piece attacker)
     {
         if (!attacker.GetIsSpecial())
         {
-            return new List<Tuple<int, int>>();
+            return new List<Piece>();
         }
         else
         {
-            List<Tuple<int, int>> sacrificesPositions = new();
+            List<Piece> sacrifices = new();
             List<Tuple<int, int>> endangeredMoves = CalculateEndangeredMoves(attacker, king.GetPositionTuple());
             for (int y = 0; y < 9; y++)
             {
@@ -81,14 +60,14 @@ public class KingManager : MonoBehaviour
                         }
                         if (endangeredMoves != null)
                         {
-                            var pieceMoves = boardManager.CalculatePossibleMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack());
+                            var pieceMoves = boardManager.CalculatePossibleMoves(piece.GetPositionClass(), piece.GetMoveset(), piece.GetIsBlack());
                             for (int z = 0; z < pieceMoves.Count; z++)
                             {
                                 for (int k = 0; k < endangeredMoves.Count; k++)
                                 {
                                     if (pieceMoves[z].Equals(endangeredMoves[k]))
                                     {
-                                        sacrificesPositions.Add(piece.GetPositionTuple());
+                                        sacrifices.Add(piece);
                                     }
                                 }
                             }
@@ -96,11 +75,11 @@ public class KingManager : MonoBehaviour
                     }
                 }
             }
-            return sacrificesPositions;
+            return sacrifices;
         }
     }
 
-    public List<Tuple<int, int>> CalculateProtectionMoves(Vector2Int pos, int[] moveset, bool isBlack, List<Tuple<int, int>> dangerMoves)
+    public List<Tuple<int, int>> CalculateProtectionMoves(Position pos, int[] moveset, bool isBlack, List<Tuple<int, int>> dangerMoves)
     {
         var moves = boardManager.CalculatePossibleMoves(pos, moveset, isBlack);
         List<Tuple<int, int>> protectionMoves = new();
@@ -115,13 +94,6 @@ public class KingManager : MonoBehaviour
             }
         }
         return protectionMoves;
-    }
-
-    public List<Tuple<int, int>> CalculateEscapeMoves(Tuple<int, int> kingPos, List<Tuple<int, int>> dangerMoves)
-    {
-        List<Tuple<int, int>> moves = new();
-
-        return moves;
     }
 
     public List<Tuple<int, int>> KingDangerMovesScan(List<Tuple<int, int>> pos, bool isBlack)
@@ -149,8 +121,80 @@ public class KingManager : MonoBehaviour
         return dangerMoves;
     }
 
+    public List<Tuple<int, int>> KingDangerMovesDirectionScan(int rowOperator, int colOperator, Tuple<int, int> source, bool isBlack)
+    {
+        if (rowOperator == 0 && colOperator == 0) { return null; }
+
+        //positive direction
+        int posDestX = source.Item1 + colOperator;
+        int posDestY = source.Item2 + rowOperator;
+
+        //opposing direction (negative)
+        int negDestX = source.Item1 - colOperator + 1;
+        int negDestY = source.Item2 - rowOperator - 1;
+
+        List<Tuple<int, int>> posTemp = new();
+        List<Tuple<int, int>> negTemp = new();
+
+        //booleans for checking if there is danger in their direction -> Special piece
+        bool posDanger = false;
+        bool negDanger = false;
+
+        //positive case
+        while (true)
+        {
+            if (!boardManager.IsInBoard(posDestX, posDestY)) { break; }
+            else
+            {
+                if (boardManager.IsCellFree(posDestX, posDestY)) { posTemp.Add(new(posDestX, posDestY)); }
+                else
+                {
+                    if (boardManager.IsEnemy(posDestX, posDestY, isBlack)
+                        && gridGame.GetPieceInGrid(posDestX, posDestY).GetComponent<Piece>().GetIsSpecial())
+                    {
+                        posDanger = true;
+                        break;
+                    }
+                    else { break; }
+                }
+            }
+            posDestX += colOperator;
+            posDestY += rowOperator;
+        }
+
+        //negative case
+        while (true)
+        {
+            if (!boardManager.IsInBoard(negDestX, negDestY)) { break; }
+            else
+            {
+                if (boardManager.IsCellFree(negDestX, negDestY)) { negTemp.Add(new(negDestX, negDestY)); }
+                else
+                {
+                    if (boardManager.IsEnemy(negDestX, negDestY, isBlack)
+                        && gridGame.GetPieceInGrid(negDestX, negDestY).GetComponent<Piece>().GetIsSpecial())
+                    {
+                        negDanger = true;
+                        break;
+                    }
+                    else { break; }
+                }
+            }
+            negDestX -= colOperator;
+            negDestY -= rowOperator;
+        }
+
+        if (posDanger || negDanger)
+        {
+            posTemp.AddRange(negTemp);
+        }
+
+        return posTemp;
+    }
+
     public List<Tuple<int, int>> FarKingDirectionScanDangerMoves(int rowOperator, int colOperator, Tuple<int, int> source, bool isBlack)
     {
+        if (rowOperator == 0 && colOperator == 0) { return null; }
         int destX = source.Item1 + colOperator;
         int destY = source.Item2 + rowOperator;
         List<Tuple<int, int>> temp = new()
@@ -159,10 +203,6 @@ public class KingManager : MonoBehaviour
         };
         while (true)
         {
-            if(rowOperator == 0 && colOperator == 0)
-            {
-                return null;
-            }
             if (boardManager.IsInBoard(destX, destY))
             {
                 if (!boardManager.IsCellFree(destX, destY))
@@ -236,7 +276,7 @@ public class KingManager : MonoBehaviour
                 if (!boardManager.IsCellFree(destX, destY))
                 {
                     var piece = gridGame.GetPieceInGrid(destX, destY).GetComponent<Piece>();
-                    var pieceMoves = boardManager.CalculatePossibleMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack());
+                    var pieceMoves = boardManager.CalculatePossibleMoves(piece.GetPositionClass(), piece.GetMoveset(), piece.GetIsBlack());
 
                     if (boardManager.IsEnemy(destX, destY, isBlack))
                     {
@@ -331,8 +371,7 @@ public class KingManager : MonoBehaviour
     public List<Tuple<int, int>> CloseScan(Tuple<int, int> kingPos)
     {
         var kingPiece = gridGame.GetPieceInGrid(kingPos.Item1, kingPos.Item2).GetComponent<Piece>();
-        var kingPosVector = new Vector2Int(kingPos.Item1, kingPos.Item2);
-        var possibleMoves = boardManager.CalculatePossibleMoves(kingPosVector, kingPiece.GetMoveset(), kingPiece.GetIsBlack());
+        var possibleMoves = boardManager.CalculatePossibleMoves(new(kingPos), kingPiece.GetMoveset(), kingPiece.GetIsBlack());
         List<Tuple<int, int>> overlappingMoves = new();
         List<Tuple<int, int>> enemiesProtectionMoves = new();
         var rowOperator = 2;
@@ -347,7 +386,7 @@ public class KingManager : MonoBehaviour
                 && !boardManager.IsCellFree(destX, destY)
                 && boardManager.IsEnemy(destX, destY, kingPiece.GetIsBlack()))
             {
-                Vector2Int enemyPos = new(destX, destY);
+                Position enemyPos = new(destX, destY);
                 var enemyPiece = gridGame.GetPieceInGrid(destX, destY).GetComponent<Piece>();
                 var enemyPossibleMoves = boardManager.CalculatePossibleMoves(enemyPos, enemyPiece.GetMoveset(), enemyPiece.GetIsBlack());
                 var enemyProtectionMoves = boardManager.CalculatePossibleMoves(enemyPos, enemyPiece.GetMoveset(), !enemyPiece.GetIsBlack());
@@ -435,7 +474,7 @@ public class KingManager : MonoBehaviour
 
     public bool CanPieceKillAttacker(Piece guardPiece, Tuple<int, int> attackerPos)
     {
-        var gMoves = boardManager.CalculatePossibleMoves(guardPiece.GetPosition(), guardPiece.GetMoveset(), guardPiece.GetIsBlack());
+        var gMoves = boardManager.CalculatePossibleMoves(guardPiece.GetPositionClass(), guardPiece.GetMoveset(), guardPiece.GetIsBlack());
         foreach (var m in gMoves)
         {
             if (m.Equals(attackerPos))

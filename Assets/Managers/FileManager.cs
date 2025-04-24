@@ -63,7 +63,7 @@ public class FileManager : MonoBehaviour
         return arr;
     }
     
-    public void LoadPiecesFromFile()
+    private void LoadPiecesFromFile()
     {
         var file = Resources.Load<TextAsset>("Positioning");
         if (file != null)

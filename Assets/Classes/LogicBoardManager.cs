@@ -1,25 +1,12 @@
-using System;
 using System.Collections.Generic;
-using UnityEngine;
+using System;
 
-public class BoardManager : MonoBehaviour
+public class LogicBoardManager
 {
-    [SerializeField] private FileManager fileManager;
-
-    private List<MoveInfo> previousMoves;
-
-    GridGame gameGrid;
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public List<Position> CalculatePossibleMoves(Position pos, 
+        int[] moveset, bool isBlack, LogicCell[,] cells)
     {
-        previousMoves = new();
-        gameGrid = FindFirstObjectByType<GridGame>();
-    }
-
-    public List<Tuple<int, int>> CalculatePossibleMoves(Position pos, int[] moveset, bool isBlack)
-    {
-        List<Tuple<int, int>> possibleMoves = new();
+        List<Position> possibleMoves = new();
         int row = 1;
         int col = -1;
         for (int i = 1; i <= 9; i++)
@@ -30,7 +17,7 @@ public class BoardManager : MonoBehaviour
                 int destX = col + pos.x;
                 int destY = row + pos.y;
                 if (IsInBoard(destX, destY)
-                    && (IsCellFree(destX, destY) || IsEnemy(destX, destY, isBlack)))
+                    && (IsCellFree(destX, destY, cells) || IsEnemy(destX, destY, isBlack, cells)))
                 {
                     possibleMoves.Add(new(destX, destY));
                 }
@@ -49,7 +36,7 @@ public class BoardManager : MonoBehaviour
                 }
                 int destX = col + pos.x;
                 if (IsInBoard(destX, destY)
-                    && (IsCellFree(destX, destY) || IsEnemy(destX, destY, isBlack)))
+                    && (IsCellFree(destX, destY, cells) || IsEnemy(destX, destY, isBlack, cells)))
                 {
                     possibleMoves.Add(new(destX, destY));
                 }
@@ -57,7 +44,7 @@ public class BoardManager : MonoBehaviour
             //Special pieces: Rook, Bishop
             else if (moveset[i - 1] == 2)
             {
-                ExtendSpecialPiecePossibleMoves(row, col, pos, isBlack, ref possibleMoves);
+                ExtendSpecialPiecePossibleMoves(row, col, pos, isBlack, ref possibleMoves, cells);
             }
             col++;
             if (i % 3 == 0 && i != 0)
@@ -106,17 +93,17 @@ public class BoardManager : MonoBehaviour
 
 
     public void ExtendSpecialPiecePossibleMoves(int row, int col, Position pos,
-                                                bool isBlack, ref List<Tuple<int, int>> possibleMoves)
+                                                bool isBlack, ref List<Position> possibleMoves, LogicCell[,] cells)
     {
         int destX = col + pos.x;
         int destY = row + pos.y;
         while (true)
         {
-            if (IsInBoard(destX, destY) && IsCellFree(destX, destY, isBlack))
+            if (IsInBoard(destX, destY) && IsCellFree(destX, destY, isBlack, cells))
             {
                 possibleMoves.Add(new(destX, destY));
 
-                if (IsEnemy(destX, destY, isBlack))
+                if (IsEnemy(destX, destY, isBlack, cells))
                 {
                     break;
                 }
@@ -132,14 +119,14 @@ public class BoardManager : MonoBehaviour
     }
 
 
-    public List<Tuple<int, int>> CalculatePossibleDrops()
+    public List<Tuple<int, int>> CalculatePossibleDrops(LogicCell[,] cells)
     {
         List<Tuple<int, int>> moves = new();
         for (int y = 0; y < 9; y++)
         {
             for (int x = 0; x < 9; x++)
             {
-                if (IsCellFree(x, y))
+                if (IsCellFree(x, y, cells))
                 {
                     moves.Add(new(x, y));
                 }
@@ -148,55 +135,38 @@ public class BoardManager : MonoBehaviour
         return moves;
     }
 
-    public bool IsCellFree(int destX, int destY, bool isBlack)
+    public bool IsCellFree(int destX, int destY, bool isBlack, LogicCell[,] cells)
     {
-        var cell = gameGrid.gameGrid[destX, destY].GetComponent<GridCell>();
+        var cell = cells[destX, destY];
 
-        //if (cell.objectInThisGridSpace != null 
-        //    && cell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack() == isBlack)
-        //{
-        //    return false;
-        //}
-        //else
-        //{
-        //    return true;
-        //}
-
-        return cell.objectInThisGridSpace != null
-            && cell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack() == isBlack
-            ? false
-            : true;
-    }
-
-    public bool IsCellFree(int destX, int destY)
-    {
-        var objectInCell = gameGrid.gameGrid[destX, destY].GetComponent<GridCell>().objectInThisGridSpace;
-        return objectInCell == null;
-    }
-
-    public bool IsEnemy(int destX, int destY, bool isBlack)
-    {
-        var cell = gameGrid.gameGrid[destX, destY].GetComponent<GridCell>();
-        if (cell.objectInThisGridSpace != null)
+        if (cell.piece != null
+            && cell.piece.GetIsBlack() == isBlack)
         {
-            var pieceColorInDestination = gameGrid.gameGrid[destX, destY].GetComponent<GridCell>()
-                .objectInThisGridSpace.GetComponent<Piece>().GetIsBlack();
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    public bool IsCellFree(int destX, int destY, LogicCell[,] cells)
+    {
+        var cell = cells[destX, destY];
+        return cell.piece == null;
+    }
+
+    public bool IsEnemy(int destX, int destY, bool isBlack, LogicCell[,] cells)
+    {
+        var cell = cells[destX, destY];
+        if (cell.piece != null)
+        {
+            var pieceColorInDestination = cell.piece.GetIsBlack();
             return pieceColorInDestination != isBlack;
         }
         else
         {
             return false;
-        }
-    }
-
-    public bool IsCellNotFreeAndContainsEnemy(int destX, int destY, bool isBlack)
-    {
-        var cell = gameGrid.GetGridCell(destX, destY);
-        if (cell.objectInThisGridSpace == null) return false;
-        else
-        {
-            var piece = gameGrid.GetPieceInGrid(destX, destY).GetComponent<Piece>();
-            return piece.GetIsBlack() != isBlack;
         }
     }
 
@@ -214,7 +184,8 @@ public class BoardManager : MonoBehaviour
         {
             if (!piece.GetIsSpecial())
             {
-                piece.Promote(fileManager.GetMovesetByPieceName("GoldGeneral"));
+                int[] gg = { 1, 1, 1, 1, 0, 1, 0, 1, 0 };
+                piece.Promote(gg);
             }
             else
             {
@@ -230,20 +201,5 @@ public class BoardManager : MonoBehaviour
                 piece.Promote(moveset);
             }
         }
-    }
-
-    public void RegisterMove(Tuple<Tuple<int, int>, Tuple<int, int>> sourceDestination, bool isDrop)
-    {
-
-        MoveInfo i = new(sourceDestination, isDrop);
-        previousMoves.Add(i);
-    }
-
-    public MoveInfo UndoMove()
-    {
-        int top = previousMoves.Count - 1;
-        var move =  previousMoves[top];
-        previousMoves.RemoveAt(top);
-        return move;
     }
 }
