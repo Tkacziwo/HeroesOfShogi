@@ -42,19 +42,23 @@ public class GridGame : MonoBehaviour
 
     public Camp eCamp;
 
+    public List<Piece> playerPieces = new();
+
+    public Piece playerKing;
+
+    public List<Piece> botPieces = new();
+
+    public Piece botKing;
+
     public void Start()
     {
-
         gridCellSize *= 2;
         fileManager = FindFirstObjectByType<FileManager>();
-        //pCamp = FindFirstObjectByType<Camp>();
         var camps = FindObjectsByType<Camp>(FindObjectsSortMode.InstanceID);
         pCamp = camps[0];
         eCamp = camps[1];
         pCamp.InitializePosY(2);
         eCamp.InitializePosY(0);
-        //pCamp.InitializeGrid(2, gridCellSize, gridCell);
-        //eCamp.InitializeGrid(0, gridCellSize, gridCell);
         GenerateField();
         InitializePieces();
         playerCampPosY = 2;
@@ -65,19 +69,7 @@ public class GridGame : MonoBehaviour
     {
 
         pCamp.GenerateCamp();
-        //playerCamp = new GameObject[9, 3];
-        //for (int x = 0; x < 9; x++)
-        //{
-        //    for (int y = 0; y < 3; y++)
-        //    {
-        //        playerCamp[x, y] = Instantiate(gridCell, new Vector4(x * gridCellSize, 0, y * gridCellSize), Quaternion.identity);
-        //        GridCell cell = playerCamp[x, y].GetComponent<GridCell>();
-        //        cell.InitializeGridCell(x, y, gridCellSize);
-        //        cell.SetPosition(x, y);
-        //        playerCamp[x, y].transform.parent = transform;
-        //        playerCamp[x, y].transform.rotation = Quaternion.Euler(90, 0, 0);
-        //    }
-        //}
+
         float campSpacing = 5.0F + gridCellSize * 3;
         gameGrid = new GameObject[width, height];
         for (int y = 0; y < height; y++)
@@ -95,20 +87,6 @@ public class GridGame : MonoBehaviour
         campSpacing += 9 * gridCellSize + 5.0F;
 
         eCamp.GenerateCamp(campSpacing);
-        //enemyCamp = new GameObject[9, 3];
-        //for (int x = 0; x < 9; x++)
-        //{
-        //    for (int y = 0; y < 3; y++)
-        //    {
-        //        enemyCamp[x, y] = Instantiate(gridCell, new Vector4(x * gridCellSize, 0, y * gridCellSize + campSpacing), Quaternion.identity);
-        //        GridCell cell = enemyCamp[x, y].GetComponent<GridCell>();
-        //        cell.InitializeGridCell(x, y, gridCellSize);
-        //        cell.SetPosition(x, y);
-        //        enemyCamp[x, y].transform.parent = transform;
-        //        enemyCamp[x, y].transform.rotation = Quaternion.Euler(90, 0, 0);
-        //    }
-        //}
-
 
         float xRot = 63.0F;
         float yRot = -90;
@@ -133,10 +111,14 @@ public class GridGame : MonoBehaviour
 
             if (pieceScript.GetIsBlack())
             {
+                if (pieceScript.isKing) { botKing = pieceScript; }
+                else { botPieces.Add(pieceScript); }
                 cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
             }
             else
             {
+                if (pieceScript.isKing) { playerKing = pieceScript; }
+                else { playerPieces.Add(pieceScript); }
                 cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
             }
         }
@@ -187,15 +169,32 @@ public class GridGame : MonoBehaviour
 
     public void AddToCamp(GameObject piece)
     {
-        if (piece.GetComponent<Piece>().GetIsBlack())
+        Piece p = piece.GetComponent<Piece>();
+        if (p.GetIsBlack())
         {
+            playerPieces.Add(p);
+            botPieces.Remove(p);
             pCamp.AddToCamp(piece);
         }
         else
         {
+            botPieces.Add(p);
+            playerPieces.Remove(p);
             eCamp.AddToCamp(piece);
         }
     }
+
+    public List<Piece> GetPlayerPieces()
+        => playerPieces;
+
+    public List<Piece> GetBotPieces()
+        => botPieces;
+
+    public Piece GetPlayerKing()
+        => playerKing;
+
+    public Piece GetBotKing()
+        => botKing;
 
     public void ReshuffleCamp(GameObject[,] camp)
     {
