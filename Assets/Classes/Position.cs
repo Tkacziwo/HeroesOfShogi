@@ -1,6 +1,6 @@
 using System;
 
-public class Position
+public class Position : IEquatable<Position>
 {
     public int x;
     public int y;
@@ -17,8 +17,16 @@ public class Position
 
     public Position(Tuple<int, int> newPos)
     {
-        this.x = newPos.Item1;
-        this.y = newPos.Item2;
+        if (newPos == null)
+        {
+            this.x = 100;
+            this.y = 100;
+        }
+        else
+        {
+            this.x = newPos.Item1;
+            this.y = newPos.Item2;
+        }
     }
 
     public Position GetPosition()
@@ -32,5 +40,10 @@ public class Position
     public void SetPosition(Tuple<int, int> pos)
     {
         x = pos.Item1; y = pos.Item2;
+    }
+
+    public bool Equals(Position other)
+    {
+        return other != null && other.x == this.x && other.y == this.y;
     }
 }

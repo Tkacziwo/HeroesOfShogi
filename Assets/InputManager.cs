@@ -58,7 +58,16 @@ public class InputManager : MonoBehaviour
     {
         if (!playerTurn && botEnabled)
         {
-            bot.GetBoardState(gameGrid);
+            Position aPosition = new(attackerPos);
+            List<Position> extendedDangerMovesPositions = new();
+            if (extendedDangerMoves != null)
+            {
+                foreach (var e in extendedDangerMoves)
+                {
+                    extendedDangerMovesPositions.Add(new(e));
+                }
+            }
+            bot.GetBoardState(gameGrid, kingInDanger, aPosition, extendedDangerMovesPositions);
             var botResult = bot.ApplyMoveToRealBoard();
             CellWhichHoldsPiece = gameGrid.GetGridCell(botResult.Item1.x, botResult.Item1.y);
             var cell = gameGrid.GetGridCell(botResult.Item2.x, botResult.Item2.y);

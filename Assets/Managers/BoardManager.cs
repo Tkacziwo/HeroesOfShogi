@@ -208,6 +208,9 @@ public class BoardManager : MonoBehaviour
             return false;
     }
 
+    public bool IsInBoard(Position p)
+        => p.y > -1 && p.y < 9 && p.x > -1 && p.x < 9;
+
     public void ApplyPromotion(Piece piece)
     {
         if (!piece.isKing)

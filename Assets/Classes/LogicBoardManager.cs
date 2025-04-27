@@ -56,10 +56,10 @@ public class LogicBoardManager
         return possibleMoves;
     }
 
-    public List<Tuple<int, int>> CalculateOverlappingMoves(List<Tuple<int, int>> first, List<Tuple<int, int>> comparer, bool overlap)
+    public List<Position> CalculateOverlappingMoves(List<Position> first, List<Position> comparer, bool overlap)
     {
-        List<Tuple<int, int>> overlappingMoves = new();
-        List<Tuple<int, int>> firstCopy = new(first);
+        List<Position> overlappingMoves = new();
+        List<Position> firstCopy = new(first);
         for (int i = 0; i < first.Count; i++)
         {
             for (int j = 0; j < comparer.Count; j++)

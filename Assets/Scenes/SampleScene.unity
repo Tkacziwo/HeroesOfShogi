@@ -715,6 +715,10 @@ MonoBehaviour:
   enemyCampPosY: 0
   pCamp: {fileID: 0}
   eCamp: {fileID: 0}
+  playerPieces: []
+  playerKing: {fileID: 0}
+  botPieces: []
+  botKing: {fileID: 0}
 --- !u!4 &1593945635
 Transform:
   m_ObjectHideFlags: 0
@@ -806,7 +810,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   boardManager: {fileID: 1678579888}
   kingManager: {fileID: 367049262}
-  depth: 4
+  depth: 3
 --- !u!4 &1689435000
 Transform:
   m_ObjectHideFlags: 0

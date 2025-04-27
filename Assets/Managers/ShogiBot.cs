@@ -20,118 +20,12 @@ public class ShogiBot : MonoBehaviour
 
     private LogicBoard logicBoard = new();
 
-    //get board state on initialization (maybe)
-    //for now get board state every turn (not optimal)
-    //create logicBoard to apply minimax
-    public void GetBoardState(GridGame grid)
+    public void GetBoardState(GridGame grid, bool kingInDanger, Position attackerPos, List<Position> extendedDangerMoves)
     {
-        logicBoard.CloneFromReal(grid);
+        logicBoard.CloneFromReal(grid, kingInDanger, attackerPos, extendedDangerMoves);
     }
 
     //include in board state captured pieces for drops
-
-
-    //calculate all possibleMoves
-    public void CalculateAllPossibleMoves(bool kingInDanger,
-        Tuple<int, int> kingPos = null,
-        List<Piece> bodyguards = null,
-        List<Piece> sacrifices = null,
-        GridCell cellWhichHoldsAttacker = null,
-        List<Tuple<int, int>> extendedDangerMoves = null)
-    {
-        allPossibleMoves = new();
-
-        //if (kingInDanger)
-        //{
-        //    Piece king = grid.GetPieceInGrid(kingPos).GetComponent<Piece>();
-
-        //    var kingMoves = kingManager.CloseScan(kingPos);
-        //    var attacker = cellWhichHoldsAttacker.objectInThisGridSpace.GetComponent<Piece>();
-        //    var attackerProtected = kingManager
-        //        .FarScan(attacker.GetPositionTuple(), attacker.GetIsBlack());
-        //    var additionalDangerMoves = kingManager.KingDangerMovesScan(kingMoves, king.GetIsBlack());
-        //    List<Tuple<int, int>> attackerPos = new()
-        //        {
-        //            attacker.GetPositionTuple()
-        //        };
-
-        //    if (additionalDangerMoves != null)
-        //    {
-        //        kingMoves = boardManager.CalculateOverlappingMoves(kingMoves, additionalDangerMoves, false);
-        //    }
-
-        //    if (attackerProtected)
-        //    {
-        //        kingMoves = boardManager.CalculateOverlappingMoves(kingMoves, attackerPos, false);
-        //    }
-
-        //    if (extendedDangerMoves != null)
-        //    {
-        //        kingMoves = boardManager.CalculateOverlappingMoves(kingMoves, extendedDangerMoves, false);
-        //    }
-
-        //    List<Tuple<int, int>> bodyguardsPossibleMoves = new();
-        //    //bodyguardsPossibleMoves.Add(attacker.GetPositionTuple());
-
-        //    foreach (var b in bodyguards)
-        //    {
-        //        bodyguardsPossibleMoves.Add(attacker.GetPositionTuple());
-        //    }
-        //    allPossibleMoves.AddRange(kingMoves);
-        //    allPossibleMoves.AddRange(bodyguardsPossibleMoves);
-        //}
-        //else
-        //{
-        //    foreach (var p in pieces)
-        //    {
-        //        if (p.GetIsBlack() && p.isKing)
-        //        {
-        //            Piece king = grid.GetPieceInGrid(p.GetPositionTuple()).GetComponent<Piece>();
-
-        //            var kingMoves = kingManager.CloseScan(p.GetPositionTuple());
-
-        //            var additionalDangerMoves = kingManager.KingDangerMovesScan(kingMoves, king.GetIsBlack());
-
-        //            if (additionalDangerMoves != null)
-        //            {
-        //                kingMoves = boardManager.CalculateOverlappingMoves(kingMoves, additionalDangerMoves, false);
-        //            }
-
-        //            if (extendedDangerMoves != null)
-        //            {
-        //                kingMoves = boardManager.CalculateOverlappingMoves(kingMoves, extendedDangerMoves, false);
-        //            }
-        //            allPossibleMoves.AddRange(kingMoves);
-        //        }
-        //        else
-        //        {
-        //            var moves = boardManager.CalculatePossibleMoves(p.GetPositionClass(), p.GetMoveset(), p.GetIsBlack());
-        //            if (moves != null)
-        //            {
-        //                allPossibleMoves.AddRange(moves);
-        //            }
-        //        }
-        //    }
-        //}
-    }
-
-
-    public void CalculateLogicPossibleMoves()
-    {
-        logicPossibleMoves.Clear();
-        foreach (var p in logicBoard.pieces)
-        {
-            if (p.GetIsBlack())
-            {
-                var moves = boardManager.CalculatePossibleMoves(p.GetPosition(), p.GetMoveset(), p.GetIsBlack());
-                if (moves != null)
-                {
-                    logicPossibleMoves.AddRange(moves);
-                }
-            }
-        }
-    }
-
     //calculate all possibleMoves and include drops
 
     //do random move for now
@@ -195,6 +89,7 @@ public class ShogiBot : MonoBehaviour
         if (moves.Count == 0)
         {
             //no more pieces left
+            Debug.Log("koniec gry");
             return new(board.EvaluateBoard(), null);
         }
 
@@ -204,7 +99,7 @@ public class ShogiBot : MonoBehaviour
         foreach (var m in moves)
         {
             LogicBoard simulatedBoard = new();
-            simulatedBoard.CloneFromLogic(board);
+            simulatedBoard.CloneFromLogic(board, board.kingInDanger, board.attackerPos, board.extendedDangerMoves);
 
             simulatedBoard.ApplyMove(m.Item1, m.Item2);
 

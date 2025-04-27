@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using NUnit.Framework.Internal;
+using UnityEditor.Rendering;
 
 public class KingManager : MonoBehaviour
 {
@@ -92,18 +93,67 @@ public class KingManager : MonoBehaviour
     public List<Position> KingDangerMovesScanImproved(Position pos, bool isBlack)
     {
         List<Position> dangerMoves = new();
+        int rowOperator = 1;
+        int colOperator = -1;
 
-        for(int i = 1; i <= 9; i++)
+        //first check for king position
+        for (int i = 1; i <= 9; i++)
         {
+            var res = KingDangerMovesDirectionScanImproved(rowOperator, colOperator, pos, isBlack);
+            if (res != null)
+            { dangerMoves.AddRange(res); }
 
+            colOperator++;
+            if (i % 3 == 0 && i != 0)
+            {
+                rowOperator--;
+                colOperator = -1;
+            }
         }
 
+        //check for king possiblemoves
 
         return dangerMoves;
     }
 
-    public List<Position> KingDangerMovesDirectionScanImproved()
+    public List<Position> KingDangerMovesDirectionScanImproved(int rowOperator, int colOperator, Position pos, bool isBlack)
     {
+        if (colOperator == 0 && rowOperator == 0) { return null; }
+        Position dest = new(pos.x + colOperator, pos.y + rowOperator);
+
+        List<Position> scan = new();
+        while (true)
+        {
+            if (!boardManager.IsInBoard(dest.x, dest.x))
+            {
+                return scan;
+            }
+            else
+            {
+                if (boardManager.IsCellFree(dest.x, dest.x))
+                {
+                    scan.Add(dest);
+                }
+                else if (boardManager.IsEnemy(dest.x, dest.y, isBlack))
+                {
+                    //enemy found
+                    var piece = gridGame.GetPieceInGrid(dest.x, dest.y).GetComponent<Piece>();
+                    if (piece.GetIsSpecial())
+                    {
+                        //special piece found
+                        return scan;
+                    }
+
+                }
+                else
+                {
+                    //friend
+
+                }
+            }
+
+            dest.x += colOperator; dest.y += rowOperator;
+        }
         return new();
     }
 
@@ -339,7 +389,7 @@ public class KingManager : MonoBehaviour
             {
                 if (kingPos != null)
                 {
-                    moves = ScanMoves(rowOperator, colOperator, kingPos, attacker.GetPositionTuple());
+                    moves = ScanMoves(rowOperator, colOperator, attacker.GetPositionTuple(), kingPos);
                     if (moves != null)
                     {
                         return moves;
@@ -347,7 +397,7 @@ public class KingManager : MonoBehaviour
                 }
                 else
                 {
-                    moves.AddRange(ScanMoves(rowOperator, colOperator, kingPos, attacker.GetPositionTuple()));
+                    moves.AddRange(ScanMoves(rowOperator, colOperator, attacker.GetPositionTuple(), kingPos));
                 }
             }
             colOperator++;
@@ -360,7 +410,7 @@ public class KingManager : MonoBehaviour
         return moves;
     }
 
-    public List<Tuple<int, int>> ScanMoves(int rowOperator, int colOperator, Tuple<int, int> destination, Tuple<int, int> source)
+    public List<Tuple<int, int>> ScanMoves(int rowOperator, int colOperator, Tuple<int, int> source, Tuple<int, int> destination = null)
     {
         if (rowOperator == 0 && colOperator == 0) { return null; }
         int destX = source.Item1 + colOperator;

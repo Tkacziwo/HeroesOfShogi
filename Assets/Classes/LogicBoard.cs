@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditorInternal;
 using UnityEngine;
 
 public class LogicBoard
@@ -12,8 +13,19 @@ public class LogicBoard
 
     private readonly LogicBoardManager manager = new();
 
-    public void CloneFromReal(GridGame grid)
+    private readonly LogicKingManager kingManager = new();
+
+    public bool kingInDanger;
+
+    public Position attackerPos = null;
+
+    public List<Position> extendedDangerMoves = new();
+
+    public void CloneFromReal(GridGame grid, bool kingInDanger, Position attackerPos, List<Position> extendedDangerMoves)
     {
+        this.kingInDanger = kingInDanger;
+        this.attackerPos = new(attackerPos);
+        this.extendedDangerMoves = new(extendedDangerMoves);
         pieces.Clear();
         allPieces.Clear();
         cells = new LogicCell[9, 9];
@@ -39,8 +51,11 @@ public class LogicBoard
         }
     }
 
-    public void CloneFromLogic(LogicBoard grid)
+    public void CloneFromLogic(LogicBoard grid, bool kingInDanger, Position attackerPos, List<Position> extendedDangerMoves)
     {
+        this.kingInDanger = kingInDanger;
+        this.attackerPos = new(attackerPos);
+        this.extendedDangerMoves = new(extendedDangerMoves);
         pieces.Clear();
         allPieces.Clear();
         cells = new LogicCell[9, 9];
@@ -87,11 +102,35 @@ public class LogicBoard
     public List<Tuple<Position, Position>> CalculateLogicPossibleMoves()
     {
         List<Tuple<Position, Position>> logicSrcDstMoves = new();
-        foreach (var p in pieces)
+        if (kingInDanger)
         {
-            if (p.GetIsBlack())
+            return HandleKingInDanger();
+        }
+        else
+        {
+            foreach (var p in pieces)
             {
-                var moves = manager.CalculatePossibleMoves(p.GetPosition(), p.GetMoveset(), p.GetIsBlack(), cells);
+                List<Position> moves = new();
+                if (p.isKing)
+                {
+                    moves = kingManager.CloseScan(p.GetPosition(), cells);
+
+                    var copy = new List<Position>();
+                    copy.AddRange(moves);
+                    foreach (var pMoves in moves)
+                    {
+                        var res = kingManager.FarScanForKing(pMoves, p.GetIsBlack(), ref attackerPos, cells);
+                        if (res)
+                        {
+                            copy.Remove(pMoves);
+                        }
+                    }
+                    moves = copy;
+                }
+                else
+                {
+                    moves = manager.CalculatePossibleMoves(p.GetPosition(), p.GetMoveset(), p.GetIsBlack(), cells);
+                }
                 if (moves != null)
                 {
                     Position src = p.GetPosition();
@@ -106,6 +145,92 @@ public class LogicBoard
                 }
             }
         }
+        return logicSrcDstMoves;
+    }
+
+    private List<Tuple<Position, Position>> HandleKingInDanger()
+    {
+        List<Tuple<Position, Position>> logicSrcDstMoves = new();
+        foreach (var p in pieces)
+        {
+            if (p.isKing)
+            {
+                var moves = kingManager.CloseScan(p.GetPosition(), cells);
+                var attacker = cells[attackerPos.x, attackerPos.y].piece;
+                var attackerProtected = kingManager.FarScan(attackerPos, attacker.GetIsBlack(), cells);
+                var additionalDangerMoves = kingManager.KingDangerMovesScan(moves, p.GetIsBlack(), cells);
+
+                List<Position> aPos = new()
+                {
+                    attackerPos
+                };
+
+                if (additionalDangerMoves != null)
+                {
+                    moves = manager.CalculateOverlappingMoves(moves, additionalDangerMoves, false);
+                }
+
+                if (attackerProtected)
+                {
+                    moves = manager.CalculateOverlappingMoves(moves, aPos, false);
+                }
+
+                if (extendedDangerMoves != null)
+                {
+                    moves = manager.CalculateOverlappingMoves(moves, extendedDangerMoves, false);
+                }
+
+                Position src = p.GetPosition();
+                foreach (var m in moves)
+                {
+                    if (m != null)
+                    {
+                        Position dst = m;
+                        logicSrcDstMoves.Add(new(src, dst));
+                    }
+                }
+            }
+            else
+            {
+                //bodyguard checking
+                //foreach (var b in bodyguards)
+                //{
+                //    if (hoveredCell.GetPositionTuple().Equals(b.GetPositionTuple()))
+                //    {
+                //        PossibleMovesCalculationHandler(piece, hoveredCell, true);
+                //        break;
+                //    }
+                //}
+                //drop checking
+                //if (piece.GetIsDrop())
+                //{
+                //    PossibleMovesCalculationHandler(piece, hoveredCell);
+                //}
+                //sacrifice checking
+                //if (sacrifices != null)
+                //{
+                //    foreach (var s in sacrifices)
+                //    {
+                //        if (hoveredCell.GetPositionTuple().Equals(s.GetPositionTuple()))
+                //        {
+                //            if (endangeredMoves != null)
+                //            {
+                //                possibleMoves = kingManager.CalculateProtectionMoves(piece.GetPositionClass(), piece.GetMoveset(), piece.GetIsBlack(), endangeredMoves); ;
+                //            }
+
+                //            foreach (var r in possibleMoves)
+                //            {
+                //                var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
+                //                cell.SetIsPossibleMove();
+                //                cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
+                //            }
+                //            break;
+                //        }
+                //    }
+                //}
+            }
+        }
+
         return logicSrcDstMoves;
     }
 
