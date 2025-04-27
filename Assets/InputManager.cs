@@ -69,7 +69,14 @@ public class InputManager : MonoBehaviour
             }
             bot.GetBoardState(gameGrid, kingInDanger, aPosition, extendedDangerMovesPositions);
             var botResult = bot.ApplyMoveToRealBoard();
-            CellWhichHoldsPiece = gameGrid.GetGridCell(botResult.Item1.x, botResult.Item1.y);
+            if (botResult.Item1.x > 9 || botResult.Item1.y > 9)
+            {
+                CellWhichHoldsPiece = gameGrid.eCamp.campGrid[botResult.Item1.x - 200, botResult.Item1.y - 200].GetComponent<GridCell>();
+            }
+            else
+            {
+                CellWhichHoldsPiece = gameGrid.GetGridCell(botResult.Item1.x, botResult.Item1.y);
+            }
             var cell = gameGrid.GetGridCell(botResult.Item2.x, botResult.Item2.y);
             playerTurn = true;
             HandlePieceMove(cell);

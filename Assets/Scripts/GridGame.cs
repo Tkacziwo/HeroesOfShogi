@@ -172,12 +172,14 @@ public class GridGame : MonoBehaviour
         Piece p = piece.GetComponent<Piece>();
         if (p.GetIsBlack())
         {
+            p.MovePiece(new(100, 100));
             playerPieces.Add(p);
             botPieces.Remove(p);
             pCamp.AddToCamp(piece);
         }
         else
         {
+            p.MovePiece(new(200, 200));
             botPieces.Add(p);
             playerPieces.Remove(p);
             eCamp.AddToCamp(piece);

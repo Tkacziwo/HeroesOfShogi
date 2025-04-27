@@ -21,6 +21,8 @@ public class LogicBoard
 
     public List<Position> extendedDangerMoves = new();
 
+    public LogicCell[,] dropCells = new LogicCell[9, 3];
+
     public void CloneFromReal(GridGame grid, bool kingInDanger, Position attackerPos, List<Position> extendedDangerMoves)
     {
         this.kingInDanger = kingInDanger;
@@ -46,6 +48,29 @@ public class LogicBoard
                     }
                     allPieces.Add(p);
                     cells[x, y].piece = p;
+                }
+            }
+        }
+
+        //if (grid.eCamp.capturedPieces.Count != 0)
+        //{
+        //    foreach (var d in grid.eCamp.capturedPieces)
+        //    {
+        //        drops.Add(new(d));
+        //    }
+        //}
+
+        var campGrid = grid.eCamp.campGrid;
+
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                var cell = campGrid[j, i].GetComponent<GridCell>();
+                dropCells[j, i] = new(cell);
+                if (cell.objectInThisGridSpace != null)
+                {
+                    dropCells[j, i].piece = new(cell.objectInThisGridSpace.GetComponent<Piece>());
                 }
             }
         }
@@ -78,6 +103,30 @@ public class LogicBoard
                 }
             }
         }
+
+        //if (grid.drops.Count != 0)
+        //{
+        //    foreach (var d in grid.drops)
+        //    {
+        //        drops.Add(new(d));
+        //    }
+        //}
+
+        var campGrid = grid.dropCells;
+
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                dropCells[j, i] = new(campGrid[j, i]);
+                if (campGrid[j, i].piece != null)
+                {
+                    LogicPiece logicPiece = new(campGrid[j, i].piece);
+                    dropCells[j, i].piece = new();
+                    dropCells[j, i].piece = logicPiece;
+                }
+            }
+        }
     }
 
     public int EvaluateBoard()
@@ -93,21 +142,56 @@ public class LogicBoard
 
     public void ApplyMove(Position src, Position dst)
     {
-        var movedPiece = cells[src.x, src.y].piece;
-        cells[src.x, src.y].piece = null;
-        movedPiece.MovePiece(dst);
-        cells[dst.x, dst.y].piece = new(movedPiece);
+        if (src.x > 9 || src.y > 9)
+        {
+            var movedPiece = dropCells[src.x - 200, src.y - 200].piece;
+            dropCells[src.x - 200, src.y - 200].piece = null;
+            movedPiece.MovePiece(dst);
+            //drops.Remove(movedPiece);
+            cells[dst.x, dst.y].piece = new(movedPiece);
+        }
+        else
+        {
+            var movedPiece = cells[src.x, src.y].piece;
+            cells[src.x, src.y].piece = null;
+            movedPiece.MovePiece(dst);
+            cells[dst.x, dst.y].piece = new(movedPiece);
+        }
     }
 
     public List<Tuple<Position, Position>> CalculateLogicPossibleMoves()
     {
         List<Tuple<Position, Position>> logicSrcDstMoves = new();
+        List<Tuple<LogicPiece, Position>> logicDropDstMoves = new();
         if (kingInDanger)
         {
             return HandleKingInDanger();
         }
         else
         {
+            for (int y = 0; y < 3; y++)
+            {
+                for (int x = 0; x < 9; x++)
+                {
+                    if (dropCells[x,y] != null && dropCells[x, y].piece != null)
+                    {
+                        var piece = dropCells[x, y].piece;
+                        var dropsMoves = manager.CalculatePossibleDrops(cells);
+                        if (dropsMoves != null)
+                        {
+                            Position src = piece.GetPosition();
+                            foreach (var m in dropsMoves)
+                            {
+                                if (m != null)
+                                {
+                                    Position dst = m;
+                                    logicSrcDstMoves.Add(new(src, dst));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             foreach (var p in pieces)
             {
                 List<Position> moves = new();

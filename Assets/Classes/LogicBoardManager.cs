@@ -119,9 +119,9 @@ public class LogicBoardManager
     }
 
 
-    public List<Tuple<int, int>> CalculatePossibleDrops(LogicCell[,] cells)
+    public List<Position> CalculatePossibleDrops(LogicCell[,] cells)
     {
-        List<Tuple<int, int>> moves = new();
+        List<Position> moves = new();
         for (int y = 0; y < 9; y++)
         {
             for (int x = 0; x < 9; x++)
