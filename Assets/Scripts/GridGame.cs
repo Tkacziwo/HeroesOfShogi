@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class GridGame : MonoBehaviour
@@ -11,8 +12,6 @@ public class GridGame : MonoBehaviour
     [SerializeField] private Transform cameraPosition;
 
     [SerializeField] private float gridCellSize;
-
-    [SerializeField] private GameObject piecePrefab;
 
     public float xRot = 40;
 
@@ -101,25 +100,32 @@ public class GridGame : MonoBehaviour
 
         foreach (var p in piecesPositions)
         {
-            var cell = gameGrid[p.posX, p.posY].GetComponent<GridCell>();
-            var resource = Resources.Load("ShogiPiece") as GameObject;
-            var moveset = fileManager.GetMovesetByPieceName(p.piece);
-            bool isSpecialPiece = SpecialPieceCheck(p.piece);
-            cell.SetPiece(resource);
-            var pieceScript = cell.objectInThisGridSpace.GetComponent<Piece>();
-            pieceScript.InitializePiece(p.piece, moveset, cell.GetPosition().x, cell.GetPosition().y, isSpecialPiece);
+            var name = p.piece;
+            var resource = Resources.Load(name + "Piece") as GameObject;
+            if (resource != null)
+            {
+                var cell = gameGrid[p.posX, p.posY].GetComponent<GridCell>();
+                var moveset = fileManager.GetMovesetByPieceName(p.piece);
+                bool isSpecialPiece = SpecialPieceCheck(p.piece);
+                cell.SetPiece(resource);
+                var pieceScript = cell.objectInThisGridSpace.GetComponent<Piece>();
+                pieceScript.InitializePiece(p.piece, moveset, cell.GetPosition().x, cell.GetPosition().y, isSpecialPiece);
 
-            if (pieceScript.GetIsBlack())
-            {
-                if (pieceScript.isKing) { botKing = pieceScript; }
-                else { botPieces.Add(pieceScript); }
-                cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
-            }
-            else
-            {
-                if (pieceScript.isKing) { playerKing = pieceScript; }
-                else { playerPieces.Add(pieceScript); }
-                cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
+                var r = resource.GetComponentInChildren<Transform>().Find(name);
+                r.rotation = Quaternion.Euler(0, 0, 0);
+                if (pieceScript.GetIsBlack())
+                {
+                    if (pieceScript.isKing) { botKing = pieceScript; }
+                    else { botPieces.Add(pieceScript); }
+                    cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+                }
+                else
+                {
+                    if (pieceScript.isKing) { playerKing = pieceScript; }
+                    else { playerPieces.Add(pieceScript); }
+                    cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
+                    cell.objectInThisGridSpace.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 180, 0);
+                }
             }
         }
     }
@@ -172,6 +178,7 @@ public class GridGame : MonoBehaviour
         Piece p = piece.GetComponent<Piece>();
         if (p.GetIsBlack())
         {
+            p.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 180, 0);
             p.MovePiece(new(100, 100));
             playerPieces.Add(p);
             botPieces.Remove(p);
@@ -179,6 +186,7 @@ public class GridGame : MonoBehaviour
         }
         else
         {
+            p.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 0, 0);
             p.MovePiece(new(200, 200));
             botPieces.Add(p);
             playerPieces.Remove(p);

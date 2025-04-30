@@ -349,6 +349,10 @@ public class InputManager : MonoBehaviour
         var farRes = kingManager.FarScanForKing(king.GetPositionTuple(), king.GetIsBlack(), ref attackerPos);
         if (closeRes || farRes)
         {
+            if (closeRes)
+            {
+                attackerPos = piece.GetPositionTuple();
+            }
             CellWhichHoldsAttacker = gameGrid.GetGridCell(attackerPos.Item1, attackerPos.Item2);
             var attacker = gameGrid.GetPieceInGrid(attackerPos.Item1, attackerPos.Item2).GetComponent<Piece>();
             kingInDanger = true;

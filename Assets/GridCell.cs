@@ -30,13 +30,13 @@ public class GridCell : MonoBehaviour
     public void SetPiece(GameObject piece)
     {
         var pos = GetWorldPosition();
-        objectInThisGridSpace = Instantiate(piece, new Vector4(pos.x, 0.2F, pos.z + cellSize), Quaternion.identity);
+        objectInThisGridSpace = Instantiate(piece, new Vector4(pos.x, 0.2F, pos.z), Quaternion.identity);
     }
 
     public void SetAndMovePiece(GameObject piece, Vector3 position)
     {
         objectInThisGridSpace = piece;
-        objectInThisGridSpace.GetComponent<Piece>().SetTargetPosition(new Vector3(position.x, 0.2F, position.z + cellSize));
+        objectInThisGridSpace.GetComponent<Piece>().SetTargetPosition(new Vector3(position.x, 0.2F, position.z));
     }
 
     public Vector2Int GetPosition()

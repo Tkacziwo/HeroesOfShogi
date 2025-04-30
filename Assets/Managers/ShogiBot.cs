@@ -95,7 +95,10 @@ public class ShogiBot : MonoBehaviour
 
         int maxEval = int.MinValue;
         Tuple<Position, Position> bestMoves = null;
-
+        if (board.kingInDanger)
+        {
+            depth = 1;
+        }
         foreach (var m in moves)
         {
             LogicBoard simulatedBoard = new();
