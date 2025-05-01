@@ -41,6 +41,8 @@ public class InputManager : MonoBehaviour
 
     [SerializeField] private ShogiBot bot;
 
+    [SerializeField] private Canvas canvas;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -56,58 +58,61 @@ public class InputManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!playerTurn && botEnabled)
+        if (!canvas.isActiveAndEnabled)
         {
-            Position aPosition = new(attackerPos);
-            List<Position> extendedDangerMovesPositions = new();
-            if (extendedDangerMoves != null)
+            if (!playerTurn && botEnabled)
             {
-                foreach (var e in extendedDangerMoves)
+                Position aPosition = new(attackerPos);
+                List<Position> extendedDangerMovesPositions = new();
+                if (extendedDangerMoves != null)
                 {
-                    extendedDangerMovesPositions.Add(new(e));
+                    foreach (var e in extendedDangerMoves)
+                    {
+                        extendedDangerMovesPositions.Add(new(e));
+                    }
                 }
+                bot.GetBoardState(gameGrid, kingInDanger, aPosition, extendedDangerMovesPositions);
+                var botResult = bot.ApplyMoveToRealBoard();
+                if (botResult.Item1.x > 9 || botResult.Item1.y > 9)
+                {
+                    CellWhichHoldsPiece = gameGrid.eCamp.campGrid[botResult.Item1.x - 200, botResult.Item1.y - 200].GetComponent<GridCell>();
+                }
+                else
+                {
+                    CellWhichHoldsPiece = gameGrid.GetGridCell(botResult.Item1.x, botResult.Item1.y);
+                }
+                var cell = gameGrid.GetGridCell(botResult.Item2.x, botResult.Item2.y);
+                playerTurn = true;
+                HandlePieceMove(cell);
             }
-            bot.GetBoardState(gameGrid, kingInDanger, aPosition, extendedDangerMovesPositions);
-            var botResult = bot.ApplyMoveToRealBoard();
-            if (botResult.Item1.x > 9 || botResult.Item1.y > 9)
+            gameGrid.ClearPossibleMoves(possibleMoves);
+            var hoveredCell = MouseOverCell();
+            if (hoveredCell != null)
             {
-                CellWhichHoldsPiece = gameGrid.eCamp.campGrid[botResult.Item1.x - 200, botResult.Item1.y - 200].GetComponent<GridCell>();
-            }
-            else
-            {
-                CellWhichHoldsPiece = gameGrid.GetGridCell(botResult.Item1.x, botResult.Item1.y);
-            }
-            var cell = gameGrid.GetGridCell(botResult.Item2.x, botResult.Item2.y);
-            playerTurn = true;
-            HandlePieceMove(cell);
-        }
-        gameGrid.ClearPossibleMoves(possibleMoves);
-        var hoveredCell = MouseOverCell();
-        if (hoveredCell != null)
-        {
-            hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
+                hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
 
-            if (Input.GetMouseButtonDown(0))
-            {
-                if (chosenPiece)
+                if (Input.GetMouseButtonDown(0))
                 {
-                    HandleMovePiece(hoveredCell);
-                }
-                else if (hoveredCell.objectInThisGridSpace != null)
-                {
-                    HandlePieceClicked(hoveredCell);
+                    if (chosenPiece)
+                    {
+                        HandleMovePiece(hoveredCell);
+                    }
+                    else if (hoveredCell.objectInThisGridSpace != null)
+                    {
+                        HandlePieceClicked(hoveredCell);
+                    }
                 }
             }
-        }
-        if (Input.GetKeyDown(KeyCode.Backspace))
-        {
-            //undo move
-            var undo = boardManager.UndoMove();
-            var source = undo.src;
-            var dest = undo.dst;
-            CellWhichHoldsPiece = gameGrid.GetGridCell(dest.Item1, dest.Item2);
-            var cell = gameGrid.GetGridCell(source.Item1, source.Item2);
-            HandlePieceMove(cell, false);
+            if (Input.GetKeyDown(KeyCode.Backspace))
+            {
+                //undo move
+                var undo = boardManager.UndoMove();
+                var source = undo.src;
+                var dest = undo.dst;
+                CellWhichHoldsPiece = gameGrid.GetGridCell(dest.Item1, dest.Item2);
+                var cell = gameGrid.GetGridCell(source.Item1, source.Item2);
+                HandlePieceMove(cell, false);
+            }
         }
     }
 

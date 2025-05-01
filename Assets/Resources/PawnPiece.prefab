@@ -75,7 +75,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b3e41864806e3d34abd6f64a61d9f363, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.25
+      value: 2.05
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b3e41864806e3d34abd6f64a61d9f363, type: 3}
       propertyPath: m_LocalPosition.z
@@ -112,7 +112,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: b3e41864806e3d34abd6f64a61d9f363, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: f96821bbefeea864b9b418af4b8615ac, type: 2}
+      objectReference: {fileID: 2100000, guid: 1e0619fd86959be4fa15b31d0c413a9e, type: 2}
     - target: {fileID: 919132149155446097, guid: b3e41864806e3d34abd6f64a61d9f363, type: 3}
       propertyPath: m_Name
       value: Pawn
@@ -190,7 +190,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 7e36584b545531f498eb4198146e6ea5, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: a77f2180b8e0796429336ea5c8e764a5, type: 2}
+      objectReference: {fileID: 2100000, guid: cf8551688cb25cc40ba8affa9b503f19, type: 2}
     - target: {fileID: 919132149155446097, guid: 7e36584b545531f498eb4198146e6ea5, type: 3}
       propertyPath: m_Name
       value: ShogiPiece

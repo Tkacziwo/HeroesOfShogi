@@ -100,7 +100,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 7e36584b545531f498eb4198146e6ea5, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: a77f2180b8e0796429336ea5c8e764a5, type: 2}
+      objectReference: {fileID: 2100000, guid: cf8551688cb25cc40ba8affa9b503f19, type: 2}
     - target: {fileID: 919132149155446097, guid: 7e36584b545531f498eb4198146e6ea5, type: 3}
       propertyPath: m_Name
       value: ShogiPiece
@@ -175,6 +175,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 8350fdfec7c922c499ba925988bcd1fe, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1e0619fd86959be4fa15b31d0c413a9e, type: 2}
     - target: {fileID: 919132149155446097, guid: 8350fdfec7c922c499ba925988bcd1fe, type: 3}
       propertyPath: m_Name
       value: GoldGeneral

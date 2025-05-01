@@ -111,8 +111,6 @@ public class GridGame : MonoBehaviour
                 var pieceScript = cell.objectInThisGridSpace.GetComponent<Piece>();
                 pieceScript.InitializePiece(p.piece, moveset, cell.GetPosition().x, cell.GetPosition().y, isSpecialPiece);
 
-                var r = resource.GetComponentInChildren<Transform>().Find(name);
-                r.rotation = Quaternion.Euler(0, 0, 0);
                 if (pieceScript.GetIsBlack())
                 {
                     if (pieceScript.isKing) { botKing = pieceScript; }
