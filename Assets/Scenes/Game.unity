@@ -1276,6 +1276,7 @@ MonoBehaviour:
   playerTurn: 1
   botEnabled: 0
   bot: {fileID: 1689434999}
+  canvas: {fileID: 1340630669}
 --- !u!4 &801168601
 Transform:
   m_ObjectHideFlags: 0
