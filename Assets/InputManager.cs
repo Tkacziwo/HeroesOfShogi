@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using UnityEditor;
 using UnityEngine;
 
 public class InputManager : MonoBehaviour
@@ -14,6 +16,8 @@ public class InputManager : MonoBehaviour
     private KingManager kingManager;
 
     private List<Tuple<int, int>> possibleMoves;
+
+    private List<Tuple<int, int>> cantChangePossibleMoves;
 
     public List<Piece> bodyguards;
 
@@ -43,6 +47,12 @@ public class InputManager : MonoBehaviour
 
     [SerializeField] private Canvas canvas;
 
+    [SerializeField] private AbilitiesManager abilitiesManager;
+
+    private bool specialAbilityInUse;
+
+    private bool cantChangePiece;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -53,6 +63,7 @@ public class InputManager : MonoBehaviour
         kingInDanger = false;
         CellWhichHoldsPiece = null;
         CellWhichHoldsAttacker = null;
+        cantChangePiece = false;
     }
 
     // Update is called once per frame
@@ -93,7 +104,11 @@ public class InputManager : MonoBehaviour
 
                 if (Input.GetMouseButtonDown(0))
                 {
-                    if (chosenPiece)
+                    if (cantChangePiece)
+                    {
+                        HandleExtraMove(hoveredCell);
+                    }
+                    else if (chosenPiece)
                     {
                         HandleMovePiece(hoveredCell);
                     }
@@ -116,6 +131,105 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    private void HandleExtraMove(GridCell hoveredCell)
+    {
+        if (hoveredCell != null)
+        {
+            foreach (var p in cantChangePossibleMoves)
+            {
+                hoveredCell.SetIsPossibleMove();
+                if (hoveredCell.GetPositionTuple().Equals(p))
+                {
+                    HandleMovePiece(hoveredCell);
+                    cantChangePiece = false;
+                    break;
+                }
+            }
+        }
+    }
+
+    public void HandleSpecialAbilityUsage()
+    {
+        if (chosenPiece)
+        {
+            var piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
+            if (piece.abilityCooldown == 0)
+            {
+                switch (piece.GetName())
+                {
+                    case "GoldGeneral":
+                        {
+                            bool turn = playerTurn;
+                            var positions = abilitiesManager.Onward(piece.GetPositionClass(), piece.GetIsBlack());
+                            foreach (var p in positions)
+                            {
+
+                                CellWhichHoldsPiece = gameGrid.GetGridCell(p.Item1.x, p.Item1.y);
+                                HandlePieceMove(gameGrid.GetGridCell(p.Item2.x, p.Item2.y));
+                            }
+                            int destY;
+                            var piecePos = piece.GetPositionClass();
+                            if (piece.GetIsBlack())
+                            {
+                                destY = piecePos.y - 1;
+                            }
+                            else
+                            {
+                                destY = piecePos.y + 1;
+                            }
+                            if (boardManager.IsInBoard(destY, piecePos.x) && boardManager.IsCellFree(piecePos.x, destY))
+                            {
+                                CellWhichHoldsPiece = gameGrid.GetGridCell(piece.GetPositionTuple());
+                                HandlePieceMove(gameGrid.GetGridCell(piecePos.x, destY));
+                            }
+
+                            specialAbilityInUse = false;
+                            piece.abilityCooldown = 2;
+                            playerTurn = !turn;
+                            break;
+                        }
+                    case "Bishop":
+                        {
+                            bool turn = playerTurn;
+                            var positions = abilitiesManager.Regroup(piece.GetPositionClass(), piece.GetIsBlack());
+                            foreach (var p in positions)
+                            {
+
+                                CellWhichHoldsPiece = gameGrid.GetGridCell(p.Item1.x, p.Item1.y);
+                                HandlePieceMove(gameGrid.GetGridCell(p.Item2.x, p.Item2.y));
+                            }
+                            int destY;
+                            var piecePos = piece.GetPositionClass();
+                            if (piece.GetIsBlack())
+                            {
+                                destY = piecePos.y + 1;
+                            }
+                            else
+                            {
+                                destY = piecePos.y - 1;
+                            }
+                            if (boardManager.IsInBoard(destY, piecePos.x) && boardManager.IsCellFree(piecePos.x, destY))
+                            {
+                                CellWhichHoldsPiece = gameGrid.GetGridCell(piece.GetPositionTuple());
+                                HandlePieceMove(gameGrid.GetGridCell(piecePos.x, destY));
+                            }
+
+                            specialAbilityInUse = false;
+                            piece.abilityCooldown = 3;
+                            playerTurn = !turn;
+                            break;
+                        }
+
+                    case "SilverGeneral":
+                        specialAbilityInUse = true;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+
     private void HandleMovePiece(GridCell hoveredCell)
     {
         if (hoveredCell.GetIsPossibleMove())
@@ -128,7 +242,7 @@ public class InputManager : MonoBehaviour
         }
         else if (CellWhichHoldsPiece.GetPosition() == hoveredCell.GetPosition())
         {
-            HandleUnclickPiece(hoveredCell);
+            HandleUnclickPiece();
         }
         else if ((hoveredCell.objectInThisGridSpace != null) && (CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack()
                 == hoveredCell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack()))
@@ -277,12 +391,12 @@ public class InputManager : MonoBehaviour
         chosenPiece = true;
     }
 
-    public void HandleUnclickPiece(GridCell hoveredCell)
+    public void HandleUnclickPiece()
     {
-        hoveredCell = CellWhichHoldsPiece;
         CellWhichHoldsPiece = null;
         RemovePossibleMoves();
         chosenPiece = false;
+        specialAbilityInUse = false;
     }
 
     public void HandlePieceMove(GridCell hoveredCell, bool registerMove = true)
@@ -329,11 +443,22 @@ public class InputManager : MonoBehaviour
             boardManager.ApplyPromotion(piece);
         }
 
+        //check non dangerous special abilities
+
+
         //handle piece kill
+        bool killedPiece = false;
+        bool killedPieceColor;
         if (hoveredCell.objectInThisGridSpace != null &&
             hoveredCell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack() != piece.GetIsBlack())
         {
+            killedPieceColor = hoveredCell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack();
             HandlePieceKill(hoveredCell);
+            killedPiece = true;
+        }
+        else
+        {
+            killedPieceColor = false;
         }
 
         piece.MovePiece(hoveredCell.GetPosition());
@@ -341,6 +466,40 @@ public class InputManager : MonoBehaviour
         CellWhichHoldsPiece.objectInThisGridSpace = null;
         RemovePossibleMoves();
         chosenPiece = false;
+
+        if (specialAbilityInUse)
+        {
+            switch (piece.GetName())
+            {
+                case "SilverGeneral":
+                    var turn = playerTurn;
+                    playerTurn = !turn;
+                    possibleMoves = abilitiesManager.Rush(piece.GetPositionClass());
+                    CellWhichHoldsPiece = gameGrid.GetGridCell(piece.GetPositionTuple());
+                    cantChangePiece = true;
+                    cantChangePossibleMoves = new(possibleMoves);
+                    specialAbilityInUse = false;
+                    piece.abilityCooldown = 4;
+                    break;
+                case "Rook":
+                    {
+                        if (killedPiece)
+                        {
+                            Position p = new(hoveredCell.GetPositionTuple());
+                            var infernoResult = abilitiesManager.Inferno(p, killedPieceColor);
+                            if (infernoResult != null)
+                            {
+                                HandlePieceKill(gameGrid.GetGridCell(infernoResult.x, infernoResult.y));
+                            }
+                            specialAbilityInUse = false;
+                            piece.abilityCooldown = -1;
+                        }
+                        break;
+                    }
+                default:
+                    break;
+            }
+        }
 
         HandleKingEndangerement(piece);
     }
@@ -398,7 +557,7 @@ public class InputManager : MonoBehaviour
         {
             foreach (var r in possibleMoves)
             {
-                var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
+                var cell = gameGrid.GetGridCell(r);
                 cell.ResetIsPossibleMove();
                 cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
             }

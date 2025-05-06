@@ -162,14 +162,16 @@ public class GridGame : MonoBehaviour
     }
 
     public GridCell GetGridCell(int x, int y)
-    {
-        return gameGrid[x, y].GetComponent<GridCell>();
-    }
+        => gameGrid[x, y].GetComponent<GridCell>();
+    
+
+    public GridCell GetGridCell(Position p)
+        => gameGrid[p.x, p.y].GetComponent<GridCell>();
+    
 
     public GridCell GetGridCell(Tuple<int, int> pos)
-    {
-        return gameGrid[pos.Item1, pos.Item2].GetComponent<GridCell>();
-    }
+        => gameGrid[pos.Item1, pos.Item2].GetComponent<GridCell>();
+    
 
     public void AddToCamp(GameObject piece)
     {

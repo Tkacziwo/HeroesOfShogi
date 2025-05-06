@@ -34,6 +34,8 @@ public class Piece : MonoBehaviour
 
     public int value;
 
+    public int abilityCooldown;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
