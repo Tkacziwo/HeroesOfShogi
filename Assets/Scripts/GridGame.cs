@@ -149,6 +149,18 @@ public class GridGame : MonoBehaviour
         }
     }
 
+    public GameObject GetPieceInGrid(Position pos)
+    {
+        if (gameGrid[pos.x, pos.y].GetComponent<GridCell>().objectInThisGridSpace != null)
+        {
+            return gameGrid[pos.x, pos.y].GetComponentInChildren<GridCell>().objectInThisGridSpace;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
     public GameObject GetPieceInGrid(Tuple<int, int> pos)
     {
         if (gameGrid[pos.Item1, pos.Item2].GetComponent<GridCell>().objectInThisGridSpace != null)

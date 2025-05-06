@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -53,6 +54,16 @@ public class InputManager : MonoBehaviour
 
     private bool cantChangePiece;
 
+    private List<Piece> promotedPieces = new();
+
+    private List<Piece> nonPromotedPieces = new();
+
+    private Position srcKingAbilityPiecePosition;
+
+    private Position dstKingAbilityPiecePosition;
+
+    private bool duringKingAbility;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -104,7 +115,11 @@ public class InputManager : MonoBehaviour
 
                 if (Input.GetMouseButtonDown(0))
                 {
-                    if (cantChangePiece)
+                    if (duringKingAbility)
+                    {
+                        HandleKingAbility(hoveredCell);
+                    }
+                    else if (cantChangePiece)
                     {
                         HandleExtraMove(hoveredCell);
                     }
@@ -131,19 +146,45 @@ public class InputManager : MonoBehaviour
         }
     }
 
-    private void HandleExtraMove(GridCell hoveredCell)
+    private void HandleKingAbility(GridCell hoveredCell)
     {
-        if (hoveredCell != null)
+        if (srcKingAbilityPiecePosition == null)
         {
-            foreach (var p in cantChangePossibleMoves)
+            foreach (var p in promotedPieces)
             {
-                hoveredCell.SetIsPossibleMove();
-                if (hoveredCell.GetPositionTuple().Equals(p))
+                if (hoveredCell.GetPositionTuple().Equals(p.GetPositionTuple()))
                 {
-                    HandleMovePiece(hoveredCell);
-                    cantChangePiece = false;
+                    srcKingAbilityPiecePosition = p.GetPositionClass();
                     break;
                 }
+            }
+        }
+        else if (dstKingAbilityPiecePosition == null)
+        {
+            foreach (var p in nonPromotedPieces)
+            {
+                if (hoveredCell.GetPositionTuple().Equals(p.GetPositionTuple()) && srcKingAbilityPiecePosition != null)
+                {
+                    dstKingAbilityPiecePosition = p.GetPositionClass();
+                    abilitiesManager.KingPromote(srcKingAbilityPiecePosition, dstKingAbilityPiecePosition);
+                    srcKingAbilityPiecePosition = dstKingAbilityPiecePosition = null;
+                    duringKingAbility = false;
+                    break;
+                }
+            }
+        }
+    }
+
+    private void HandleExtraMove(GridCell hoveredCell)
+    {
+        foreach (var p in cantChangePossibleMoves)
+        {
+            hoveredCell.SetIsPossibleMove();
+            if (hoveredCell.GetPositionTuple().Equals(p))
+            {
+                HandleMovePiece(hoveredCell);
+                cantChangePiece = false;
+                break;
             }
         }
     }
@@ -157,13 +198,31 @@ public class InputManager : MonoBehaviour
             {
                 switch (piece.GetName())
                 {
+                    case "King":
+                        {
+                            var pieceList = piece.GetIsBlack() ? gameGrid.GetBotPieces() : gameGrid.GetPlayerPieces();
+                            foreach (var p in pieceList)
+                            {
+                                if (p.GetIsPromoted())
+                                {
+                                    promotedPieces.Add(p);
+                                    p.GetComponentInChildren<MeshRenderer>().material.color = Color.yellow;
+                                }
+                                else
+                                {
+                                    p.GetComponentInChildren<MeshRenderer>().material.color = Color.blue;
+                                    nonPromotedPieces.Add(p);
+                                }
+                            }
+                            duringKingAbility = true;
+                            break;
+                        }
                     case "GoldGeneral":
                         {
                             bool turn = playerTurn;
                             var positions = abilitiesManager.Onward(piece.GetPositionClass(), piece.GetIsBlack());
                             foreach (var p in positions)
                             {
-
                                 CellWhichHoldsPiece = gameGrid.GetGridCell(p.Item1.x, p.Item1.y);
                                 HandlePieceMove(gameGrid.GetGridCell(p.Item2.x, p.Item2.y));
                             }

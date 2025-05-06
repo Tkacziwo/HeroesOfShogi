@@ -1,7 +1,5 @@
-using NUnit.Framework.Internal;
 using System;
 using System.Collections.Generic;
-using UnityEditor.Build;
 using UnityEngine;
 
 public class AbilitiesManager : MonoBehaviour
@@ -11,6 +9,8 @@ public class AbilitiesManager : MonoBehaviour
     [SerializeField] private GridGame game;
 
     [SerializeField] private BoardManager boardManager;
+
+    [SerializeField] private FileManager fileManager;
 
     //ability for dragon
     public Position Inferno(Position killedPiecePosition, bool killedPieceColor)
@@ -198,5 +198,27 @@ public class AbilitiesManager : MonoBehaviour
 
         var pMoves = boardManager.CalculatePossibleMoves(silverGenPosition, piece.GetMoveset(), piece.GetIsBlack());
         return pMoves;
+    }
+
+    public void KingPromote(Position src, Position dst)
+    {
+        var srcPiece = game.GetPieceInGrid(src).GetComponent<Piece>();
+        var dstPiece = game.GetPieceInGrid(dst).GetComponent<Piece>();
+        var isBlack = srcPiece.GetIsBlack();
+        srcPiece.Demote();
+        dstPiece.Promote(fileManager.GetMovesetByPieceName("GoldGeneral"));
+
+        var pieceList = isBlack ? game.GetBotPieces() : game.GetPlayerPieces();
+        foreach (var p in pieceList)
+        {
+            if (isBlack)
+            {
+                p.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+            }
+            else
+            {
+                p.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
+            }
+        }
     }
 }

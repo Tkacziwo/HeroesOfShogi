@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
-using NUnit.Framework.Internal;
-using UnityEditor.Rendering;
 
 public class KingManager : MonoBehaviour
 {
