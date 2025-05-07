@@ -1,6 +1,9 @@
+using NUnit.Framework.Internal;
 using System;
 using System.Collections.Generic;
+using UnityEditor.ShaderGraph;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
 
 public class BoardManager : MonoBehaviour
 {
@@ -52,6 +55,49 @@ public class BoardManager : MonoBehaviour
                     && (IsCellFree(destX, destY) || IsEnemy(destX, destY, isBlack)))
                 {
                     possibleMoves.Add(new(destX, destY));
+                }
+            }
+            //Special pieces: Rook, Bishop
+            else if (moveset[i - 1] == 2)
+            {
+                ExtendSpecialPiecePossibleMoves(row, col, pos, isBlack, ref possibleMoves);
+            }
+            col++;
+            if (i % 3 == 0 && i != 0)
+            {
+                row--;
+                col = -1;
+            }
+        }
+        return possibleMoves;
+    }
+
+    public List<Position> CalculatePossibleMoves(Piece piece)
+    {
+        List<Position> possibleMoves = new();
+        int[] moveset = piece.GetMoveset();
+        bool isBlack = piece.GetIsBlack();
+        Position pos = piece.GetPositionClass();
+        int row = 1;
+        int col = -1;
+        for (int i = 1; i <= 9; i++)
+        {
+            //Regular pieces
+            if (moveset[i - 1] == 1)
+            {
+                Position destPos = new(col + pos.x, row + pos.y);
+                if (IsInBoard(destPos) && (IsCellFree(destPos) || IsEnemy(destPos, isBlack)))
+                {
+                    possibleMoves.Add(destPos);
+                }
+            }
+            //Horse
+            else if (moveset[i - 1] == 3)
+            {
+                Position destPos = new(col + pos.x, isBlack ? row - 1 + pos.y : row + 1 + pos.y);
+                if (IsInBoard(destPos) && (IsCellFree(destPos) || IsEnemy(destPos, isBlack)))
+                {
+                    possibleMoves.Add(destPos);
                 }
             }
             //Special pieces: Rook, Bishop
@@ -131,6 +177,31 @@ public class BoardManager : MonoBehaviour
         }
     }
 
+    public void ExtendSpecialPiecePossibleMoves(int row, int col, Position pos,
+                                                bool isBlack, ref List<Position> possibleMoves)
+    {
+        Position destPos = new(col + pos.x, row + pos.y);
+        while (true)
+        {
+            if (IsInBoard(destPos) && IsCellFree(destPos.x, destPos.y, isBlack))
+            {
+                possibleMoves.Add(destPos);
+
+                if (IsEnemy(destPos, isBlack))
+                {
+                    break;
+                }
+
+                destPos.x += col;
+                destPos.y += row;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
 
     public List<Tuple<int, int>> CalculatePossibleDrops()
     {
@@ -174,6 +245,12 @@ public class BoardManager : MonoBehaviour
         return objectInCell == null;
     }
 
+    public bool IsCellFree(Position pos)
+    {
+        var objectInCell = gameGrid.GetGridCell(pos).objectInThisGridSpace;
+        return objectInCell == null;
+    }
+
     public bool IsEnemy(int destX, int destY, bool isBlack)
     {
         var cell = gameGrid.gameGrid[destX, destY].GetComponent<GridCell>();
@@ -189,14 +266,18 @@ public class BoardManager : MonoBehaviour
         }
     }
 
-    public bool IsCellNotFreeAndContainsEnemy(int destX, int destY, bool isBlack)
+    public bool IsEnemy(Position pos, bool isBlack)
     {
-        var cell = gameGrid.GetGridCell(destX, destY);
-        if (cell.objectInThisGridSpace == null) return false;
+        var cell = gameGrid.GetGridCell(pos);
+        if (cell.objectInThisGridSpace != null)
+        {
+            var pieceColorInDestination = gameGrid.GetGridCell(pos)
+                .objectInThisGridSpace.GetComponent<Piece>().GetIsBlack();
+            return pieceColorInDestination != isBlack;
+        }
         else
         {
-            var piece = gameGrid.GetPieceInGrid(destX, destY).GetComponent<Piece>();
-            return piece.GetIsBlack() != isBlack;
+            return false;
         }
     }
 
@@ -245,7 +326,7 @@ public class BoardManager : MonoBehaviour
     public MoveInfo UndoMove()
     {
         int top = previousMoves.Count - 1;
-        var move =  previousMoves[top];
+        var move = previousMoves[top];
         previousMoves.RemoveAt(top);
         return move;
     }

@@ -602,6 +602,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   game: {fileID: 1593945634}
   boardManager: {fileID: 1678579888}
+  fileManager: {fileID: 569600015}
 --- !u!4 &340984947
 Transform:
   m_ObjectHideFlags: 0
