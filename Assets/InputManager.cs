@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class InputManager : MonoBehaviour
 {
@@ -49,6 +51,10 @@ public class InputManager : MonoBehaviour
     [SerializeField] private Canvas canvas;
 
     [SerializeField] private AbilitiesManager abilitiesManager;
+
+    [SerializeField] private Image abilityImage;
+
+    [SerializeField] private Material grayMaterial;
 
     private bool specialAbilityInUse;
 
@@ -194,6 +200,7 @@ public class InputManager : MonoBehaviour
         if (chosenPiece)
         {
             var piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
+            abilityImage.material = grayMaterial;
             if (piece.abilityCooldown == 0)
             {
                 switch (piece.GetName())
@@ -215,6 +222,7 @@ public class InputManager : MonoBehaviour
                                 }
                             }
                             duringKingAbility = true;
+                            piece.abilityCooldown = -1;
                             break;
                         }
                     case "GoldGeneral":
@@ -314,6 +322,17 @@ public class InputManager : MonoBehaviour
     {
         //clicked piece
         var piece = hoveredCell.objectInThisGridSpace.GetComponent<Piece>();
+
+        abilityImage.sprite = Resources.Load<Sprite>("Sprites/" + piece.GetName() + "Ability");
+        if (piece.abilityCooldown > 0)
+        {
+            abilityImage.material = grayMaterial;
+        }
+        else
+        {
+            abilityImage.material = null;
+        }
+
         if ((playerTurn && !piece.GetIsBlack()) || (!playerTurn && piece.GetIsBlack()))
         {
             if (chosenPiece)
@@ -452,6 +471,7 @@ public class InputManager : MonoBehaviour
 
     public void HandleUnclickPiece()
     {
+        abilityImage.sprite = null;
         CellWhichHoldsPiece = null;
         RemovePossibleMoves();
         chosenPiece = false;
@@ -521,6 +541,11 @@ public class InputManager : MonoBehaviour
         }
 
         piece.MovePiece(hoveredCell.GetPosition());
+        if (piece.abilityCooldown > 0)
+        {
+            piece.abilityCooldown--;
+        }
+
         hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.objectInThisGridSpace, hoveredCell.GetWorldPosition());
         CellWhichHoldsPiece.objectInThisGridSpace = null;
         RemovePossibleMoves();
