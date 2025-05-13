@@ -189,7 +189,7 @@ public class LogicBoardManager
             }
             else
             {
-                piece.BackupOriginalMoveset();
+                piece.BackupOriginalMoveset(piece.GetMoveset());
                 int[] moveset = piece.GetMoveset();
                 for (int i = 0; i < 9; i++)
                 {

@@ -223,16 +223,6 @@ public class BoardManager : MonoBehaviour
     {
         var cell = gameGrid.gameGrid[destX, destY].GetComponent<GridCell>();
 
-        //if (cell.objectInThisGridSpace != null 
-        //    && cell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack() == isBlack)
-        //{
-        //    return false;
-        //}
-        //else
-        //{
-        //    return true;
-        //}
-
         return cell.objectInThisGridSpace != null
             && cell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack() == isBlack
             ? false
@@ -240,16 +230,12 @@ public class BoardManager : MonoBehaviour
     }
 
     public bool IsCellFree(int destX, int destY)
-    {
-        var objectInCell = gameGrid.gameGrid[destX, destY].GetComponent<GridCell>().objectInThisGridSpace;
-        return objectInCell == null;
-    }
+        => gameGrid.GetGridCell(destX, destY).objectInThisGridSpace == null;
+
 
     public bool IsCellFree(Position pos)
-    {
-        var objectInCell = gameGrid.GetGridCell(pos).objectInThisGridSpace;
-        return objectInCell == null;
-    }
+        => gameGrid.GetGridCell(pos).objectInThisGridSpace == null;
+    
 
     public bool IsEnemy(int destX, int destY, bool isBlack)
     {
@@ -302,7 +288,7 @@ public class BoardManager : MonoBehaviour
             }
             else
             {
-                piece.BackupOriginalMoveset();
+                piece.BackupOriginalMoveset(piece.GetMoveset());
                 int[] moveset = piece.GetMoveset();
                 for (int i = 0; i < 9; i++)
                 {

@@ -48,7 +48,7 @@ public class Piece : MonoBehaviour
 
     public void InitializePiece(string name, int[] moveset, int x, int y, bool isSpecialPiece)
     {
-        switch(name)
+        switch (name)
         {
             case "Pawn":
                 value = 100;
@@ -91,7 +91,7 @@ public class Piece : MonoBehaviour
         pieceName = name;
         originalPieceName = name;
         Moveset = moveset;
-        BackupOriginalMoveset();
+        BackupOriginalMoveset(moveset);
         posX = x;
         posY = y;
         isSpecial = isSpecialPiece;
@@ -179,18 +179,18 @@ public class Piece : MonoBehaviour
         //todo change textures
     }
 
-    public void BackupOriginalMoveset()
+    public void BackupOriginalMoveset(int[] moveset)
     {
-        originalMoveset = new int[Moveset.Length];
-        for (int i = 0; i < Moveset.Length; i++)
+        originalMoveset = new int[moveset.Length];
+        for (int i = 0; i < moveset.Length; i++)
         {
-            originalMoveset[i] = Moveset[i];
+            originalMoveset[i] = moveset[i];
         }
     }
 
     public void Demote()
     {
-        pieceName = originalPieceName;
+        pieceName = new(originalPieceName);
         Moveset = originalMoveset;
         isPromoted = false;
     }
@@ -201,8 +201,6 @@ public class Piece : MonoBehaviour
     public void SetIsDrop()
     {
         isDrop = true;
-
-        //ReverseMovementMatrix();
     }
 
     public bool GetIsBodyguard()

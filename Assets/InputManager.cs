@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEditor;
@@ -83,8 +84,24 @@ public class InputManager : MonoBehaviour
         cantChangePiece = false;
     }
 
+    public Tuple<Position, Position> HandleBotResult()
+    {
+        Position aPosition = new(attackerPos);
+        List<Position> extendedDangerMovesPositions = new();
+        if (extendedDangerMoves != null)
+        {
+            foreach (var e in extendedDangerMoves)
+            {
+                extendedDangerMovesPositions.Add(new(e));
+            }
+        }
+        bot.GetBoardState(gameGrid, kingInDanger, aPosition, extendedDangerMovesPositions);
+        var botResult = bot.ApplyMoveToRealBoard();
+        return botResult;
+    }
+
     // Update is called once per frame
-    void Update()
+    async void Update()
     {
         if (!canvas.isActiveAndEnabled)
         {
@@ -110,8 +127,8 @@ public class InputManager : MonoBehaviour
                     CellWhichHoldsPiece = gameGrid.GetGridCell(botResult.Item1.x, botResult.Item1.y);
                 }
                 var cell = gameGrid.GetGridCell(botResult.Item2.x, botResult.Item2.y);
-                playerTurn = true;
                 HandlePieceMove(cell);
+                playerTurn = true;
             }
             gameGrid.ClearPossibleMoves(possibleMoves);
             var hoveredCell = MouseOverCell();
@@ -286,8 +303,8 @@ public class InputManager : MonoBehaviour
                             playerTurn = !turn;
                             break;
                         }
-
                     case "SilverGeneral":
+                    case "Rook":
                         specialAbilityInUse = true;
                         break;
                     default:
@@ -318,23 +335,15 @@ public class InputManager : MonoBehaviour
         }
     }
 
+
     public void HandlePieceClicked(GridCell hoveredCell)
     {
         //clicked piece
         var piece = hoveredCell.objectInThisGridSpace.GetComponent<Piece>();
 
-        abilityImage.sprite = Resources.Load<Sprite>("Sprites/" + piece.GetName() + "Ability");
-        if (piece.abilityCooldown > 0)
-        {
-            abilityImage.material = grayMaterial;
-        }
-        else
-        {
-            abilityImage.material = null;
-        }
-
         if ((playerTurn && !piece.GetIsBlack()) || (!playerTurn && piece.GetIsBlack()))
         {
+            HandleAbilityImageColorChange(piece);
             if (chosenPiece)
             {
                 RemovePossibleMoves();
@@ -610,6 +619,19 @@ public class InputManager : MonoBehaviour
             endangeredMoves = kingManager.CalculateEndangeredMoves(attacker, king.GetPositionTuple());
             bodyguards = kingManager.FindGuards(attackerPos, piecesList);
             sacrifices = kingManager.FindSacrifices(endangeredMoves, piecesList);
+        }
+    }
+
+    public void HandleAbilityImageColorChange(Piece piece)
+    {
+        abilityImage.sprite = Resources.Load<Sprite>("Sprites/" + piece.GetName() + "Ability");
+        if (piece.abilityCooldown > 0 || piece.abilityCooldown < 0)
+        {
+            abilityImage.material = grayMaterial;
+        }
+        else
+        {
+            abilityImage.material = null;
         }
     }
 

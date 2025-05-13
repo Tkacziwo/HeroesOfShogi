@@ -73,7 +73,6 @@ public class Camp : MonoBehaviour
         }
 
         pieceScript.SetIsDrop();
-        pieceScript.ReverseOriginalMovementMatrix();
         pieceScript.ReverseMovementMatrix();
 
         if (pieceScript.GetIsBlack())

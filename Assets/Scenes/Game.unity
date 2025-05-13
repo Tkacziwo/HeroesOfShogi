@@ -1332,7 +1332,7 @@ MonoBehaviour:
   bodyguards: []
   sacrifices: []
   playerTurn: 1
-  botEnabled: 0
+  botEnabled: 1
   bot: {fileID: 1689434999}
   canvas: {fileID: 1340630669}
   abilitiesManager: {fileID: 340984946}
