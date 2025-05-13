@@ -94,7 +94,7 @@ public class BoardManager : MonoBehaviour
                 Position destPos = new(col + pos.x, isBlack ? row - 1 + pos.y : row + 1 + pos.y);
                 if (IsInBoard(destPos) && (IsCellFree(destPos) || IsEnemy(destPos, isBlack)))
                 {
-                    possibleMoves.Add(new(destPos.x, destPos.y));
+                   possibleMoves.Add(new(destPos.x, destPos.y));
                 }
             }
             //Special pieces: Rook, Bishop
@@ -285,7 +285,7 @@ public class BoardManager : MonoBehaviour
             }
             else
             {
-                piece.BackupOriginalMoveset();
+                piece.BackupOriginalMoveset(piece.GetMoveset());
                 int[] moveset = piece.GetMoveset();
                 for (int i = 0; i < 9; i++)
                 {

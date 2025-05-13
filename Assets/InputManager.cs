@@ -146,7 +146,7 @@ public class InputManager : MonoBehaviour
             CellWhichHoldsPiece = gameGrid.GetGridCell(botResult.Item1.x, botResult.Item1.y);
         }
         var cell = gameGrid.GetGridCell(botResult.Item2.x, botResult.Item2.y);
-        HandlePieceMove(cell);
+        ExecutePieceMove(cell);
         playerTurn = true;
         botFinishedCalculating = false;
         duringBotMove = false;
@@ -169,7 +169,6 @@ public class InputManager : MonoBehaviour
             {
                 PrepareBotForMinimax();
             }
-
             else if (hoveredCell != null)
             {
                 hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
@@ -184,13 +183,9 @@ public class InputManager : MonoBehaviour
                     {
                         HandleExtraMove(hoveredCell);
                     }
-                    else if (chosenPiece)
+                    else
                     {
-                        HandleMovePiece(hoveredCell);
-                    }
-                    else if (hoveredCell.objectInThisGridSpace != null)
-                    {
-                        HandlePieceClicked(hoveredCell);
+                        HandleBoardClick(hoveredCell);
                     }
                 }
                 else if (Input.GetKeyDown(KeyCode.Backspace))
@@ -201,7 +196,7 @@ public class InputManager : MonoBehaviour
                     var dest = undo.dst;
                     CellWhichHoldsPiece = gameGrid.GetGridCell(dest.Item1, dest.Item2);
                     var cell = gameGrid.GetGridCell(source.Item1, source.Item2);
-                    HandlePieceMove(cell, false);
+                    ExecutePieceMove(cell, false);
                 }
             }
         }
@@ -243,7 +238,7 @@ public class InputManager : MonoBehaviour
             hoveredCell.SetIsPossibleMove();
             if (hoveredCell.GetPositionTuple().Equals(p))
             {
-                HandleMovePiece(hoveredCell);
+                HandleBoardClick(hoveredCell);
                 cantChangePiece = false;
                 break;
             }
@@ -287,7 +282,7 @@ public class InputManager : MonoBehaviour
                             foreach (var p in positions)
                             {
                                 CellWhichHoldsPiece = gameGrid.GetGridCell(p.Item1.x, p.Item1.y);
-                                HandlePieceMove(gameGrid.GetGridCell(p.Item2.x, p.Item2.y));
+                                ExecutePieceMove(gameGrid.GetGridCell(p.Item2.x, p.Item2.y));
                             }
                             int destY;
                             var piecePos = piece.GetPositionClass();
@@ -302,7 +297,7 @@ public class InputManager : MonoBehaviour
                             if (boardManager.IsInBoard(destY, piecePos.x) && boardManager.IsCellFree(piecePos.x, destY))
                             {
                                 CellWhichHoldsPiece = gameGrid.GetGridCell(piece.GetPositionTuple());
-                                HandlePieceMove(gameGrid.GetGridCell(piecePos.x, destY));
+                                ExecutePieceMove(gameGrid.GetGridCell(piecePos.x, destY));
                             }
 
                             specialAbilityInUse = false;
@@ -318,7 +313,7 @@ public class InputManager : MonoBehaviour
                             {
 
                                 CellWhichHoldsPiece = gameGrid.GetGridCell(p.Item1.x, p.Item1.y);
-                                HandlePieceMove(gameGrid.GetGridCell(p.Item2.x, p.Item2.y));
+                                ExecutePieceMove(gameGrid.GetGridCell(p.Item2.x, p.Item2.y));
                             }
                             int destY;
                             var piecePos = piece.GetPositionClass();
@@ -333,7 +328,7 @@ public class InputManager : MonoBehaviour
                             if (boardManager.IsInBoard(destY, piecePos.x) && boardManager.IsCellFree(piecePos.x, destY))
                             {
                                 CellWhichHoldsPiece = gameGrid.GetGridCell(piece.GetPositionTuple());
-                                HandlePieceMove(gameGrid.GetGridCell(piecePos.x, destY));
+                                ExecutePieceMove(gameGrid.GetGridCell(piecePos.x, destY));
                             }
 
                             specialAbilityInUse = false;
@@ -352,22 +347,18 @@ public class InputManager : MonoBehaviour
         }
     }
 
-    private void HandleMovePiece(GridCell hoveredCell)
+    private void HandleBoardClick(GridCell hoveredCell)
     {
         if (hoveredCell.GetIsPossibleMove())
         {
-            HandlePieceMove(hoveredCell);
-            if (playerTurn)
-                playerTurn = false;
-            else
-                playerTurn = true;
+            ExecutePieceMove(hoveredCell);
+            playerTurn = !playerTurn;
         }
-        else if (CellWhichHoldsPiece.GetPosition() == hoveredCell.GetPosition())
+        else if (CellWhichHoldsPiece != null && CellWhichHoldsPiece.GetPosition() == hoveredCell.GetPosition())
         {
             HandleUnclickPiece();
         }
-        else if ((hoveredCell.objectInThisGridSpace != null) && (CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack()
-                == hoveredCell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack()))
+        else if ((hoveredCell.objectInThisGridSpace != null))
         {
             HandlePieceClicked(hoveredCell);
         }
@@ -397,9 +388,9 @@ public class InputManager : MonoBehaviour
                         .FarScan(attacker.GetPositionTuple(), attacker.GetIsBlack());
                     var additionalDangerMoves = kingManager.KingDangerMovesScan(possibleMoves, piece.GetIsBlack());
                     List<Tuple<int, int>> attackerPos = new()
-                {
+                    {
                     attacker.GetPositionTuple()
-                };
+                    };
 
                     if (additionalDangerMoves != null)
                     {
@@ -525,23 +516,18 @@ public class InputManager : MonoBehaviour
         specialAbilityInUse = false;
     }
 
-    public void HandlePieceMove(GridCell hoveredCell, bool registerMove = true)
+    public void ExecutePieceMove(GridCell hoveredCell, bool registerMove = true)
     {
         Piece piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
+
         if (kingInDanger)
         {
             var scanPieceGM = gameGrid.GetPieceInGrid(kingPos.Item1, kingPos.Item2);
-            if (scanPieceGM.GetComponent<Piece>().GetIsBlack())
-            {
-                scanPieceGM.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
-            }
-            else
-            {
-                scanPieceGM.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
-            }
+            scanPieceGM.GetComponentInChildren<MeshRenderer>().material.color =
+                scanPieceGM.GetComponent<Piece>().GetIsBlack() ? Color.black : Color.white;
+
             kingInDanger = false;
         }
-        //check if drop
 
         if (registerMove)
         {
@@ -550,6 +536,7 @@ public class InputManager : MonoBehaviour
             boardManager.RegisterMove(sourceDestination, piece.GetIsDrop());
         }
 
+        //check if drop
         if (piece.GetIsDrop())
         {
             if (piece.GetIsBlack())
@@ -569,12 +556,10 @@ public class InputManager : MonoBehaviour
             boardManager.ApplyPromotion(piece);
         }
 
-        //check non dangerous special abilities
-
-
         //handle piece kill
         bool killedPiece = false;
         bool killedPieceColor;
+
         if (hoveredCell.objectInThisGridSpace != null &&
             hoveredCell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack() != piece.GetIsBlack())
         {
@@ -634,7 +619,7 @@ public class InputManager : MonoBehaviour
 
         HandleKingEndangerement(piece);
     }
-
+   
     public void HandleKingEndangerement(Piece piece)
     {
         Piece king = piece.GetIsBlack() ? gameGrid.GetPlayerKing() : gameGrid.GetBotKing();
