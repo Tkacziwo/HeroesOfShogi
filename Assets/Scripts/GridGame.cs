@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class GridGame : MonoBehaviour
@@ -161,29 +160,17 @@ public class GridGame : MonoBehaviour
         }
     }
 
-    public GameObject GetPieceInGrid(Tuple<int, int> pos)
-    {
-        if (gameGrid[pos.Item1, pos.Item2].GetComponent<GridCell>().objectInThisGridSpace != null)
-        {
-            return gameGrid[pos.Item1, pos.Item2].GetComponentInChildren<GridCell>().objectInThisGridSpace;
-        }
-        else
-        {
-            return null;
-        }
-    }
-
     public GridCell GetGridCell(int x, int y)
         => gameGrid[x, y].GetComponent<GridCell>();
-    
+
 
     public GridCell GetGridCell(Position p)
         => gameGrid[p.x, p.y].GetComponent<GridCell>();
-    
+
 
     public GridCell GetGridCell(Tuple<int, int> pos)
         => gameGrid[pos.Item1, pos.Item2].GetComponent<GridCell>();
-    
+
 
     public void AddToCamp(GameObject piece)
     {
@@ -238,56 +225,19 @@ public class GridGame : MonoBehaviour
             {
                 pCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = Color.white;
                 eCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = Color.white;
-                //playerCamp[x, y].GetComponentInChildren<SpriteRenderer>().material.color = Color.white;
-                //enemyCamp[x, y].GetComponentInChildren<SpriteRenderer>().material.color = Color.white;
             }
         }
     }
 
     public void ClearPossibleMoves(IList<Tuple<int, int>> blacklist = null)
     {
-        if (blacklist == null)
+        OnHoverExitRestoreDefaultColor();
+        if (blacklist != null)
         {
-            OnHoverExitRestoreDefaultColor();
-        }
-        else
-        {
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    gameGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = Color.white;
-                }
-            }
             foreach (var item in blacklist)
             {
                 gameGrid[item.Item1, item.Item2].GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
             }
         }
-    }
-
-    public void DisplayBoardState()
-    {
-        string whole = "";
-        for (int y = 8; y >= 0; y--)
-        {
-            string rowStr = "|";
-            for (var x = 0; x < 9; x++)
-            {
-                var cell = GetGridCell(x, y);
-                if (cell.objectInThisGridSpace != null)
-                {
-                    rowStr += $"[{cell.objectInThisGridSpace.GetComponent<Piece>().GetName().Substring(0, 1)}]";
-                }
-                else
-                {
-                    rowStr += "[ ]";
-                }
-            }
-            rowStr += "|";
-            whole += rowStr + "\n";
-        }
-
-        Debug.Log(whole);
     }
 }

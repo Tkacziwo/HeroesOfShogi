@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Threading;
-using System.Threading.Tasks;
-using Unity.VisualScripting;
-using UnityEditor;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -71,6 +68,16 @@ public class InputManager : MonoBehaviour
 
     private bool duringKingAbility;
 
+    private bool duringBotMove;
+
+    private bool botFinishedCalculating;
+
+    private Tuple<Position, Position> botResult;
+
+    [SerializeField] private TextMeshProUGUI duringBotText;
+
+    private bool paused = false;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -82,10 +89,38 @@ public class InputManager : MonoBehaviour
         CellWhichHoldsPiece = null;
         CellWhichHoldsAttacker = null;
         cantChangePiece = false;
+        duringBotMove = false;
+        botFinishedCalculating = false;
     }
 
-    public Tuple<Position, Position> HandleBotResult()
+    public void PauseGame()
     {
+        Time.timeScale = 0f;
+        paused = true;
+    }
+
+    public void ResumeGame()
+    {
+        paused = false;
+        Time.timeScale = 1f;
+    }
+
+    public void StartBotMinimax()
+    {
+        Thread botThread = new(() =>
+        {
+            botResult = bot.ApplyMoveToRealBoard();
+            botFinishedCalculating = true;
+        });
+
+        botThread.Start();
+    }
+
+    public void PrepareBotForMinimax()
+    {
+        duringBotText.gameObject.SetActive(true);
+        duringBotMove = true;
+        botFinishedCalculating = false;
         Position aPosition = new(attackerPos);
         List<Position> extendedDangerMovesPositions = new();
         if (extendedDangerMoves != null)
@@ -96,47 +131,50 @@ public class InputManager : MonoBehaviour
             }
         }
         bot.GetBoardState(gameGrid, kingInDanger, aPosition, extendedDangerMovesPositions);
-        var botResult = bot.ApplyMoveToRealBoard();
-        return botResult;
+
+        StartBotMinimax();
+    }
+
+    public void ApplyBotMinimaxResult()
+    {
+        if (botResult.Item1.x > 9 || botResult.Item1.y > 9)
+        {
+            CellWhichHoldsPiece = gameGrid.eCamp.campGrid[botResult.Item1.x - 200, botResult.Item1.y - 200].GetComponent<GridCell>();
+        }
+        else
+        {
+            CellWhichHoldsPiece = gameGrid.GetGridCell(botResult.Item1.x, botResult.Item1.y);
+        }
+        var cell = gameGrid.GetGridCell(botResult.Item2.x, botResult.Item2.y);
+        HandlePieceMove(cell);
+        playerTurn = true;
+        botFinishedCalculating = false;
+        duringBotMove = false;
+        duringBotText.gameObject.SetActive(false);
     }
 
     // Update is called once per frame
-    async void Update()
+    void Update()
     {
-        if (!canvas.isActiveAndEnabled)
+        if (!paused)
         {
-            if (!playerTurn && botEnabled)
-            {
-                Position aPosition = new(attackerPos);
-                List<Position> extendedDangerMovesPositions = new();
-                if (extendedDangerMoves != null)
-                {
-                    foreach (var e in extendedDangerMoves)
-                    {
-                        extendedDangerMovesPositions.Add(new(e));
-                    }
-                }
-                bot.GetBoardState(gameGrid, kingInDanger, aPosition, extendedDangerMovesPositions);
-                var botResult = bot.ApplyMoveToRealBoard();
-                if (botResult.Item1.x > 9 || botResult.Item1.y > 9)
-                {
-                    CellWhichHoldsPiece = gameGrid.eCamp.campGrid[botResult.Item1.x - 200, botResult.Item1.y - 200].GetComponent<GridCell>();
-                }
-                else
-                {
-                    CellWhichHoldsPiece = gameGrid.GetGridCell(botResult.Item1.x, botResult.Item1.y);
-                }
-                var cell = gameGrid.GetGridCell(botResult.Item2.x, botResult.Item2.y);
-                HandlePieceMove(cell);
-                playerTurn = true;
-            }
             gameGrid.ClearPossibleMoves(possibleMoves);
             var hoveredCell = MouseOverCell();
-            if (hoveredCell != null)
+
+            if (botFinishedCalculating)
+            {
+                ApplyBotMinimaxResult();
+            }
+            else if (!playerTurn && botEnabled && !duringBotMove)
+            {
+                PrepareBotForMinimax();
+            }
+
+            else if (hoveredCell != null)
             {
                 hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
 
-                if (Input.GetMouseButtonDown(0))
+                if (Input.GetMouseButtonDown(0) && !duringBotMove)
                 {
                     if (duringKingAbility)
                     {
@@ -155,16 +193,16 @@ public class InputManager : MonoBehaviour
                         HandlePieceClicked(hoveredCell);
                     }
                 }
-            }
-            if (Input.GetKeyDown(KeyCode.Backspace))
-            {
-                //undo move
-                var undo = boardManager.UndoMove();
-                var source = undo.src;
-                var dest = undo.dst;
-                CellWhichHoldsPiece = gameGrid.GetGridCell(dest.Item1, dest.Item2);
-                var cell = gameGrid.GetGridCell(source.Item1, source.Item2);
-                HandlePieceMove(cell, false);
+                else if (Input.GetKeyDown(KeyCode.Backspace))
+                {
+                    //undo move
+                    var undo = boardManager.UndoMove();
+                    var source = undo.src;
+                    var dest = undo.dst;
+                    CellWhichHoldsPiece = gameGrid.GetGridCell(dest.Item1, dest.Item2);
+                    var cell = gameGrid.GetGridCell(source.Item1, source.Item2);
+                    HandlePieceMove(cell, false);
+                }
             }
         }
     }

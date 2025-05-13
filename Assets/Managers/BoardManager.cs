@@ -1,9 +1,6 @@
-using NUnit.Framework.Internal;
 using System;
 using System.Collections.Generic;
-using UnityEditor.ShaderGraph;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
 
 public class BoardManager : MonoBehaviour
 {
@@ -72,9 +69,9 @@ public class BoardManager : MonoBehaviour
         return possibleMoves;
     }
 
-    public List<Position> CalculatePossibleMoves(Piece piece)
+    public List<Tuple<int,int>> CalculatePossibleMoves(Piece piece)
     {
-        List<Position> possibleMoves = new();
+        List<Tuple<int, int>> possibleMoves = new();
         int[] moveset = piece.GetMoveset();
         bool isBlack = piece.GetIsBlack();
         Position pos = piece.GetPositionClass();
@@ -88,7 +85,7 @@ public class BoardManager : MonoBehaviour
                 Position destPos = new(col + pos.x, row + pos.y);
                 if (IsInBoard(destPos) && (IsCellFree(destPos) || IsEnemy(destPos, isBlack)))
                 {
-                    possibleMoves.Add(destPos);
+                    possibleMoves.Add(new(destPos.x, destPos.y));
                 }
             }
             //Horse
@@ -97,7 +94,7 @@ public class BoardManager : MonoBehaviour
                 Position destPos = new(col + pos.x, isBlack ? row - 1 + pos.y : row + 1 + pos.y);
                 if (IsInBoard(destPos) && (IsCellFree(destPos) || IsEnemy(destPos, isBlack)))
                 {
-                    possibleMoves.Add(destPos);
+                    possibleMoves.Add(new(destPos.x, destPos.y));
                 }
             }
             //Special pieces: Rook, Bishop
@@ -288,7 +285,7 @@ public class BoardManager : MonoBehaviour
             }
             else
             {
-                piece.BackupOriginalMoveset(piece.GetMoveset());
+                piece.BackupOriginalMoveset();
                 int[] moveset = piece.GetMoveset();
                 for (int i = 0; i < 9; i++)
                 {
