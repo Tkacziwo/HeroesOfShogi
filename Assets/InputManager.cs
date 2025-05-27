@@ -173,7 +173,22 @@ public class InputManager : MonoBehaviour
             }
             else if (hoveredCell != null)
             {
-                hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
+
+                if (possibleMoves != null)
+                {
+                    if (possibleMoves.Contains(hoveredCell.GetPositionTuple()))
+                    {
+                        hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
+                    }
+                    else
+                    {
+                        hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = new(1.0f, 86/255, 83/255);
+                    }
+                }
+                else
+                {
+                    hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.magenta;
+                }
 
                 if (Input.GetMouseButtonDown(0) && !duringBotMove)
                 {
@@ -408,12 +423,9 @@ public class InputManager : MonoBehaviour
                     {
                         possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, extendedDangerMoves, false);
                     }
-                    foreach (var r in possibleMoves)
-                    {
-                        var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
-                        cell.SetIsPossibleMove();
-                        cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
-                    }
+
+                    PossibleMovesDisplayLoop();
+
                     CellWhichHoldsPiece = hoveredCell;
                     chosenPiece = true;
                 }
@@ -445,12 +457,8 @@ public class InputManager : MonoBehaviour
                                     possibleMoves = kingManager.CalculateProtectionMoves(piece.GetPositionClass(), piece.GetMoveset(), piece.GetIsBlack(), endangeredMoves); ;
                                 }
 
-                                foreach (var r in possibleMoves)
-                                {
-                                    var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
-                                    cell.SetIsPossibleMove();
-                                    cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
-                                }
+                                PossibleMovesDisplayLoop();
+
                                 CellWhichHoldsPiece = hoveredCell;
                                 chosenPiece = true;
                                 break;
@@ -499,14 +507,22 @@ public class InputManager : MonoBehaviour
         {
             possibleMoves = boardManager.CalculatePossibleMoves(piece.GetPositionClass(), piece.GetMoveset(), piece.GetIsBlack());
         }
-        foreach (var r in possibleMoves)
-        {
-            var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
-            cell.SetIsPossibleMove();
-            cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
-        }
+
+
+        PossibleMovesDisplayLoop();
+
         CellWhichHoldsPiece = hoveredCell;
         chosenPiece = true;
+    }
+
+    public void PossibleMovesDisplayLoop()
+    {
+        foreach (var p in possibleMoves)
+        {
+            var cell = gameGrid.GetGridCell(p);
+            cell.SetIsPossibleMove();
+            cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
+        }
     }
 
     public void HandleUnclickPiece()

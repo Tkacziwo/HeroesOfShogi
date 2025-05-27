@@ -1363,6 +1363,8 @@ MonoBehaviour:
   abilityImage: {fileID: 91168971}
   grayMaterial: {fileID: 2100000, guid: ba23756b971f1cf4e88a1e62f89257c1, type: 2}
   duringBotText: {fileID: 2052671310}
+  goodMoveHighlightColor: {r: 0.6367924, g: 1, b: 0.6783791, a: 0}
+  badMoveHightlightColor: {r: 1, g: 0.33828816, b: 0.3254717, a: 0}
 --- !u!4 &801168601
 Transform:
   m_ObjectHideFlags: 0

@@ -207,19 +207,21 @@ public class GridGame : MonoBehaviour
 
     public void OnHoverExitRestoreDefaultColor()
     {
+        Color defaultColor = new(0.04f, 0.43f, 0.96f);
+
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                gameGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = Color.white;
+                gameGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = defaultColor;
             }
         }
         for (int y = 0; y < 3; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                pCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = Color.white;
-                eCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = Color.white;
+                pCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = defaultColor;
+                eCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = defaultColor;
             }
         }
     }
@@ -231,7 +233,7 @@ public class GridGame : MonoBehaviour
         {
             foreach (var item in blacklist)
             {
-                gameGrid[item.Item1, item.Item2].GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
+                gameGrid[item.Item1, item.Item2].GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
             }
         }
     }
