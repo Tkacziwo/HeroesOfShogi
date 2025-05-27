@@ -20,6 +20,8 @@ public class ShogiBot : MonoBehaviour
 
     private LogicBoard logicBoard = new();
 
+    private int botDifficulty;
+
     public void GetBoardState(GridGame grid, bool kingInDanger, Position attackerPos, List<Position> extendedDangerMoves)
     {
         logicBoard.CloneFromReal(grid, kingInDanger, attackerPos, extendedDangerMoves);
@@ -27,6 +29,12 @@ public class ShogiBot : MonoBehaviour
 
     //include in board state captured pieces for drops
     //calculate all possibleMoves and include drops
+
+    public void InitializeBot(int botDifficulty)
+    {
+        this.botDifficulty = botDifficulty;
+    }
+
 
     //do random move for now
     public void MakeRandomMove()
@@ -78,11 +86,10 @@ public class ShogiBot : MonoBehaviour
 
     public Tuple<int, Tuple<Position, Position>> Minimax(LogicBoard board, int depth)
     {
-        if (depth == 0)
+        if (depth == 0)         
         {
             return new(board.EvaluateBoard(), null);
         }
-
 
         var moves = board.CalculateLogicPossibleMoves();
 
@@ -99,6 +106,7 @@ public class ShogiBot : MonoBehaviour
         {
             depth = 1;
         }
+
         foreach (var m in moves)
         {
             LogicBoard simulatedBoard = new();

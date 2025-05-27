@@ -12,16 +12,12 @@ public class GameCreationManager : MonoBehaviour
 
     [SerializeField] private Slider botSlider;
 
+    [SerializeField] private Toggle botCheckbox;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
+        StaticData.botEnabled = true;
     }
 
     public void ReturnToMenu()
@@ -41,7 +37,15 @@ public class GameCreationManager : MonoBehaviour
     }
 
     public void UpdateBotDifficulty()
-        => botDifficulty = (int)botSlider.value;
+    {
+        botDifficulty = (int)botSlider.value;
+        StaticData.botDifficulty = (int)botSlider.value;
+    }
+
+    public void EnableBot()
+    {
+        StaticData.botEnabled = botCheckbox.isOn;
+    }
 
     public void UpdateTurnTimeLimit(float n)
         => turnTimeLimit = n;

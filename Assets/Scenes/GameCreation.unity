@@ -2464,7 +2464,19 @@ MonoBehaviour:
   m_Group: {fileID: 0}
   onValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 2018569500}
+        m_TargetAssemblyTypeName: GameCreationManager, Assembly-CSharp
+        m_MethodName: EnableBot
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   m_IsOn: 1
 --- !u!1 &788005964
 GameObject:
@@ -4689,7 +4701,8 @@ MonoBehaviour:
   turnTimeLimit: 0
   gameTimeLimit: 0
   botDifficulty: 0
-  botSlider: {fileID: 0}
+  botSlider: {fileID: 597500315}
+  botCheckbox: {fileID: 772947773}
 --- !u!4 &2018569501
 Transform:
   m_ObjectHideFlags: 0

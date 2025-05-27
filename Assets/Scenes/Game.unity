@@ -453,7 +453,7 @@ MonoBehaviour:
   numberOfPieces: 0
   posX: 0
   positionOperator: 0
-  capturedPieces: []
+  capturedPieceObjects: []
 --- !u!4 &307997461
 Transform:
   m_ObjectHideFlags: 0
@@ -1304,7 +1304,7 @@ MonoBehaviour:
   numberOfPieces: 0
   posX: 0
   positionOperator: 0
-  capturedPieces: []
+  capturedPieceObjects: []
 --- !u!4 &608483106
 Transform:
   m_ObjectHideFlags: 0

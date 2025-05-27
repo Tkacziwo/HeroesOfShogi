@@ -91,6 +91,8 @@ public class InputManager : MonoBehaviour
         cantChangePiece = false;
         duringBotMove = false;
         botFinishedCalculating = false;
+        botEnabled = StaticData.botEnabled;
+        //bot.InitializeBot(StaticData.botDifficulty);
     }
 
     public void PauseGame()
