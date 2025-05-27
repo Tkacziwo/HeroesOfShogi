@@ -92,7 +92,7 @@ public class InputManager : MonoBehaviour
         duringBotMove = false;
         botFinishedCalculating = false;
         botEnabled = StaticData.botEnabled;
-        //bot.InitializeBot(StaticData.botDifficulty);
+        bot.InitializeBot(StaticData.botDifficulty);
     }
 
     public void PauseGame()

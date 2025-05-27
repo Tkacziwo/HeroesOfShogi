@@ -79,14 +79,28 @@ public class ShogiBot : MonoBehaviour
 
     public Tuple<Position, Position> GetBestMove(LogicBoard board, int depth)
     {
-        var res = Minimax(board, depth);
+        System.Random random = new();
+        int chance = random.Next(0, 10);
+
+        bool maximizing;
+
+        if (chance <= botDifficulty)
+        {
+            maximizing = true;
+        }
+        else
+        {
+            maximizing = false;
+        }
+
+        var res = Minimax(board, depth, maximizing);
 
         return res.Item2;
     }
 
-    public Tuple<int, Tuple<Position, Position>> Minimax(LogicBoard board, int depth)
+    public Tuple<int, Tuple<Position, Position>> Minimax(LogicBoard board, int depth, bool maximizing)
     {
-        if (depth == 0)         
+        if (depth == 0)
         {
             return new(board.EvaluateBoard(), null);
         }
@@ -100,30 +114,60 @@ public class ShogiBot : MonoBehaviour
             return new(board.EvaluateBoard(), null);
         }
 
-        int maxEval = int.MinValue;
-        Tuple<Position, Position> bestMoves = null;
-        if (board.kingInDanger)
+        if (maximizing)
         {
-            depth = 1;
-        }
-
-        foreach (var m in moves)
-        {
-            LogicBoard simulatedBoard = new();
-            simulatedBoard.CloneFromLogic(board, board.kingInDanger, board.attackerPos, board.extendedDangerMoves);
-
-            simulatedBoard.ApplyMove(m.Item1, m.Item2);
-
-            var res = Minimax(simulatedBoard, depth - 1);
-            int eval = res.Item1;
-            if (eval > maxEval)
+            int maxEval = int.MinValue;
+            Tuple<Position, Position> bestMoves = null;
+            if (board.kingInDanger)
             {
-                maxEval = eval;
-                bestMoves = m;
+                depth = 1;
             }
-        }
 
-        return new(maxEval, bestMoves);
+            foreach (var m in moves)
+            {
+                LogicBoard simulatedBoard = new();
+                simulatedBoard.CloneFromLogic(board, board.kingInDanger, board.attackerPos, board.extendedDangerMoves);
+
+                simulatedBoard.ApplyMove(m.Item1, m.Item2);
+
+                var res = Minimax(simulatedBoard, depth - 1, true);
+                int eval = res.Item1;
+                if (eval > maxEval)
+                {
+                    maxEval = eval;
+                    bestMoves = m;
+                }
+            }
+
+            return new(maxEval, bestMoves);
+        }
+        else
+        {
+            int minEval = int.MaxValue;
+            Tuple<Position, Position> worstMoves = null;
+            if (board.kingInDanger)
+            {
+                depth = 1;
+            }
+
+            foreach (var m in moves)
+            {
+                LogicBoard simulatedBoard = new();
+                simulatedBoard.CloneFromLogic(board, board.kingInDanger, board.attackerPos, board.extendedDangerMoves);
+
+                simulatedBoard.ApplyMove(m.Item1, m.Item2);
+
+                var res = Minimax(simulatedBoard, depth - 1, false);
+                int eval = res.Item1;
+                if (eval > minEval)
+                {
+                    minEval = eval;
+                    worstMoves = m;
+                }
+            }
+
+            return new(minEval, worstMoves);
+        }
     }
 
     //choose move and execute move
