@@ -536,41 +536,13 @@ public class InputManager : MonoBehaviour
             boardManager.RegisterMove(sourceDestination, piece.GetIsDrop());
         }
 
-        //check if drop
-        if (piece.GetIsDrop())
-        {
-            if (piece.GetIsBlack())
-            {
-                gameGrid.eCamp.capturedPieces.Remove(piece);
-            }
-            else
-            {
-                gameGrid.pCamp.capturedPieces.Remove(piece);
-            }
-            piece.ResetIsDrop();
-        }
-
         //check for promotions
-        else if (!piece.GetIsPromoted() && CheckForPromotion(hoveredCell, piece.GetIsBlack()))
+        if (!piece.GetIsDrop() && !piece.GetIsPromoted() && CheckForPromotion(hoveredCell, piece.GetIsBlack()))
         {
             boardManager.ApplyPromotion(piece);
         }
 
-        //handle piece kill
-        bool killedPiece = false;
-        bool killedPieceColor;
-
-        if (hoveredCell.objectInThisGridSpace != null &&
-            hoveredCell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack() != piece.GetIsBlack())
-        {
-            killedPieceColor = hoveredCell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack();
-            HandlePieceKill(hoveredCell);
-            killedPiece = true;
-        }
-        else
-        {
-            killedPieceColor = false;
-        }
+        var handlePieceKillResult = HandlePieceKill(hoveredCell, piece);
 
         piece.MovePiece(hoveredCell.GetPosition());
         if (piece.abilityCooldown > 0)
@@ -579,7 +551,9 @@ public class InputManager : MonoBehaviour
         }
 
         hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.objectInThisGridSpace, hoveredCell.GetWorldPosition());
-        CellWhichHoldsPiece.objectInThisGridSpace = null;
+
+        HandleDropCheck(piece);
+
         RemovePossibleMoves();
         chosenPiece = false;
 
@@ -599,13 +573,13 @@ public class InputManager : MonoBehaviour
                     break;
                 case "Rook":
                     {
-                        if (killedPiece)
+                        if (handlePieceKillResult.Item1)
                         {
                             Position p = new(hoveredCell.GetPositionTuple());
-                            var infernoResult = abilitiesManager.Inferno(p, killedPieceColor);
+                            var infernoResult = abilitiesManager.Inferno(p, handlePieceKillResult.Item2);
                             if (infernoResult != null)
                             {
-                                HandlePieceKill(gameGrid.GetGridCell(infernoResult.x, infernoResult.y));
+                                KillPiece(gameGrid.GetGridCell(infernoResult.x, infernoResult.y));
                             }
                             specialAbilityInUse = false;
                             piece.abilityCooldown = -1;
@@ -619,7 +593,29 @@ public class InputManager : MonoBehaviour
 
         HandleKingEndangerement(piece);
     }
-   
+
+    public void HandleDropCheck(Piece piece)
+    {
+        if (piece.GetIsDrop())
+        {
+            if (piece.GetIsBlack())
+            {
+                gameGrid.eCamp.capturedPieceObjects.Remove(CellWhichHoldsPiece.objectInThisGridSpace);
+                gameGrid.eCamp.Reshuffle();
+            }
+            else
+            {
+                gameGrid.pCamp.capturedPieceObjects.Remove(CellWhichHoldsPiece.objectInThisGridSpace);
+                gameGrid.pCamp.Reshuffle();
+            }
+            piece.ResetIsDrop();
+        }
+        else
+        {
+            CellWhichHoldsPiece.objectInThisGridSpace = null;
+        }
+    }
+
     public void HandleKingEndangerement(Piece piece)
     {
         Piece king = piece.GetIsBlack() ? gameGrid.GetPlayerKing() : gameGrid.GetBotKing();
@@ -658,7 +654,27 @@ public class InputManager : MonoBehaviour
         }
     }
 
-    public void HandlePieceKill(GridCell hoveredCell)
+    public Tuple<bool, bool> HandlePieceKill(GridCell hoveredCell, Piece piece)
+    {
+        bool killedPiece = false;
+        bool killedPieceColor;
+
+        if (hoveredCell.objectInThisGridSpace != null &&
+            hoveredCell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack() != piece.GetIsBlack())
+        {
+            killedPieceColor = hoveredCell.objectInThisGridSpace.GetComponent<Piece>().GetIsBlack();
+            KillPiece(hoveredCell);
+            killedPiece = true;
+        }
+        else
+        {
+            killedPieceColor = false;
+        }
+
+        return new(killedPiece, killedPieceColor);
+    }
+
+    public void KillPiece(GridCell hoveredCell)
     {
         gameGrid.AddToCamp(hoveredCell.objectInThisGridSpace);
         hoveredCell.objectInThisGridSpace = null;

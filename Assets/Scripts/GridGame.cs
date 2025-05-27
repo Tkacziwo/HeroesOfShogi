@@ -205,11 +205,6 @@ public class GridGame : MonoBehaviour
     public Piece GetBotKing()
         => botKing;
 
-    public void ReshuffleCamp(GameObject[,] camp)
-    {
-
-    }
-
     public void OnHoverExitRestoreDefaultColor()
     {
         for (int y = 0; y < height; y++)

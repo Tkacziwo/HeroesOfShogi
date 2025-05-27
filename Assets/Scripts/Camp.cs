@@ -15,19 +15,22 @@ public class Camp : MonoBehaviour
 
     private int posY;
 
+    private int originalPosY;
+
     public int positionOperator;
 
-    public List<Piece> capturedPieces;
+    public List<GameObject> capturedPieceObjects;
 
     void Start()
     {
-        capturedPieces = new();
+        capturedPieceObjects = new();
         posX = numberOfPieces = 0;
     }
 
     public void InitializePosY(int posY)
     {
         this.posY = posY;
+        originalPosY = posY;
     }
 
     public void InitializeGrid(int posY, float gridCellSize, GameObject gridCell)
@@ -58,6 +61,37 @@ public class Camp : MonoBehaviour
                 cell.SetPosition(x, y);
                 campGrid[x, y].transform.parent = transform;
                 campGrid[x, y].transform.rotation = Quaternion.Euler(90, 0, 0);
+            }
+        }
+    }
+
+    public void Reshuffle()
+    {
+        posX = 0;
+        posY = originalPosY;
+        numberOfPieces = 0;
+
+        for (int x = 0; x < 9; x++)
+        {
+            for (int y = 0; y < 3; y++)
+            {
+                campGrid[x, y].GetComponent<GridCell>().objectInThisGridSpace = null;
+            }
+        }
+
+        foreach (var pieceObject in capturedPieceObjects)
+        {
+            var pieceScript = pieceObject.GetComponent<Piece>();
+            pieceScript.SetIsDrop();
+
+            var cell = campGrid[posX, posY].GetComponent<GridCell>();
+            cell.SetAndMovePiece(pieceObject, cell.GetWorldPosition());
+            posX++;
+            numberOfPieces++;
+            if (posX == 9)
+            {
+                posX = 0;
+                posY += positionOperator;
             }
         }
     }
@@ -93,6 +127,6 @@ public class Camp : MonoBehaviour
             posX = 0;
             posY += positionOperator;
         }
-        capturedPieces.Add(pieceScript);
+        capturedPieceObjects.Add(piece);
     }
 }
