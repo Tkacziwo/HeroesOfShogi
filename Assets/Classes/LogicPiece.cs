@@ -134,6 +134,9 @@ public class LogicPiece
     public bool GetIsPromoted()
         => isPromoted;
 
+    public string GetName()
+        => pieceName;
+
     public void Promote(int[] newMoveset)
     {
         Moveset = newMoveset;

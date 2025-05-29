@@ -147,7 +147,6 @@ public class LogicBoard
             var movedPiece = dropCells[src.x - 200, src.y - 200].piece;
             dropCells[src.x - 200, src.y - 200].piece = null;
             movedPiece.MovePiece(dst);
-            //drops.Remove(movedPiece);
             cells[dst.x, dst.y].piece = new(movedPiece);
         }
         else
@@ -173,10 +172,10 @@ public class LogicBoard
             {
                 for (int x = 0; x < 9; x++)
                 {
-                    if (dropCells[x,y] != null && dropCells[x, y].piece != null)
+                    if (dropCells[x, y] != null && dropCells[x, y].piece != null)
                     {
                         var piece = dropCells[x, y].piece;
-                        var dropsMoves = manager.CalculatePossibleDrops(cells);
+                        var dropsMoves = manager.CalculatePossibleDrops(cells, piece);
                         if (dropsMoves != null)
                         {
                             Position src = piece.GetPosition();
@@ -192,6 +191,7 @@ public class LogicBoard
                     }
                 }
             }
+
             foreach (var p in pieces)
             {
                 List<Position> moves = new();

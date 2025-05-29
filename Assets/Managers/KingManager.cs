@@ -311,7 +311,7 @@ public class KingManager : MonoBehaviour
                 if (!boardManager.IsCellFree(destX, destY))
                 {
                     var piece = gridGame.GetPieceInGrid(destX, destY).GetComponent<Piece>();
-                    if (!boardManager.IsEnemy(destX, destY, isBlack))
+                    if (!boardManager.IsEnemy(destX, destY, isBlack) && destX != source.Item1 && destY != source.Item2)
                     {
                         if (piece.GetIsSpecial())
                         {

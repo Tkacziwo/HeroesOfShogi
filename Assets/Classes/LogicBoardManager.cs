@@ -3,7 +3,7 @@ using System;
 
 public class LogicBoardManager
 {
-    public List<Position> CalculatePossibleMoves(Position pos, 
+    public List<Position> CalculatePossibleMoves(Position pos,
         int[] moveset, bool isBlack, LogicCell[,] cells)
     {
         List<Position> possibleMoves = new();
@@ -119,16 +119,47 @@ public class LogicBoardManager
     }
 
 
-    public List<Position> CalculatePossibleDrops(LogicCell[,] cells)
+    public List<Position> CalculatePossibleDrops(LogicCell[,] cells, LogicPiece piece)
     {
         List<Position> moves = new();
-        for (int y = 0; y < 9; y++)
+
+        if (piece.GetName() == "Pawn")
         {
-            for (int x = 0; x < 9; x++)
+            List<int> badX = new();
+
+
+            for (int y = 0; y < 9; y++)
             {
-                if (IsCellFree(x, y, cells))
+                for (int x = 0; x < 9; x++)
                 {
-                    moves.Add(new(x, y));
+                    if (!IsCellFree(x, y, cells) && cells[x, y].piece.GetName() == "Pawn")
+                    {
+                        badX.Add(x);
+                    }
+                }
+            }
+
+            for (int y = 0; y < 9; y++)
+            {
+                for (int x = 0; x < 9; x++)
+                {
+                    if (IsCellFree(x, y, cells) && !badX.Contains(x))
+                    {
+                        moves.Add(new(x, y));
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (int y = 0; y < 9; y++)
+            {
+                for (int x = 0; x < 9; x++)
+                {
+                    if (IsCellFree(x, y, cells))
+                    {
+                        moves.Add(new(x, y));
+                    }
                 }
             }
         }

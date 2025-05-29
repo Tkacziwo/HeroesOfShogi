@@ -165,7 +165,14 @@ public class InputManager : MonoBehaviour
 
             if (botFinishedCalculating)
             {
-                ApplyBotMinimaxResult();
+                if (botResult == null)
+                {
+                    //Handle finish game
+                }
+                else
+                {
+                    ApplyBotMinimaxResult();
+                }
             }
             else if (!playerTurn && botEnabled && !duringBotMove)
             {
@@ -501,7 +508,7 @@ public class InputManager : MonoBehaviour
         }
         else if (piece.GetIsDrop())
         {
-            possibleMoves = boardManager.CalculatePossibleDrops();
+            possibleMoves = boardManager.CalculatePossibleDrops(piece);
         }
         else
         {

@@ -69,7 +69,7 @@ public class BoardManager : MonoBehaviour
         return possibleMoves;
     }
 
-    public List<Tuple<int,int>> CalculatePossibleMoves(Piece piece)
+    public List<Tuple<int, int>> CalculatePossibleMoves(Piece piece)
     {
         List<Tuple<int, int>> possibleMoves = new();
         int[] moveset = piece.GetMoveset();
@@ -94,7 +94,7 @@ public class BoardManager : MonoBehaviour
                 Position destPos = new(col + pos.x, isBlack ? row - 1 + pos.y : row + 1 + pos.y);
                 if (IsInBoard(destPos) && (IsCellFree(destPos) || IsEnemy(destPos, isBlack)))
                 {
-                   possibleMoves.Add(new(destPos.x, destPos.y));
+                    possibleMoves.Add(new(destPos.x, destPos.y));
                 }
             }
             //Special pieces: Rook, Bishop
@@ -200,16 +200,46 @@ public class BoardManager : MonoBehaviour
     }
 
 
-    public List<Tuple<int, int>> CalculatePossibleDrops()
+    public List<Tuple<int, int>> CalculatePossibleDrops(Piece piece)
     {
         List<Tuple<int, int>> moves = new();
-        for (int y = 0; y < 9; y++)
+        if (piece.GetName() == "Pawn")
         {
-            for (int x = 0; x < 9; x++)
+            List<int> badX = new();
+
+
+            for (int y = 0; y < 9; y++)
             {
-                if (IsCellFree(x, y))
+                for (int x = 0; x < 9; x++)
                 {
-                    moves.Add(new(x, y));
+                    if (!IsCellFree(x, y) && gameGrid.GetPieceInGrid(x, y).GetComponent<Piece>().GetName() == "Pawn")
+                    {
+                        badX.Add(x);
+                    }
+                }
+            }
+
+            for (int y = 0; y < 9; y++)
+            {
+                for (int x = 0; x < 9; x++)
+                {
+                    if (IsCellFree(x, y) && !badX.Contains(x))
+                    {
+                        moves.Add(new(x, y));
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (int y = 0; y < 9; y++)
+            {
+                for (int x = 0; x < 9; x++)
+                {
+                    if (IsCellFree(x, y))
+                    {
+                        moves.Add(new(x, y));
+                    }
                 }
             }
         }
@@ -232,7 +262,7 @@ public class BoardManager : MonoBehaviour
 
     public bool IsCellFree(Position pos)
         => gameGrid.GetGridCell(pos).objectInThisGridSpace == null;
-    
+
 
     public bool IsEnemy(int destX, int destY, bool isBlack)
     {
