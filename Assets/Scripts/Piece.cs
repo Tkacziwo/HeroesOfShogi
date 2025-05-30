@@ -36,6 +36,8 @@ public class Piece : MonoBehaviour
 
     public int abilityCooldown;
 
+    public GameObject promotionEffect;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -79,7 +81,10 @@ public class Piece : MonoBehaviour
                 break;
         }
 
-
+        promotionEffect = Resources.Load("PromotionEffect") as GameObject;
+        promotionEffect = Instantiate(promotionEffect);
+        promotionEffect.GetComponent<ParticleSystem>().Stop();
+        promotionEffect.GetComponent<ParticleSystem>().Clear();
         if (name == "King")
         {
             isKing = true;
@@ -170,6 +175,7 @@ public class Piece : MonoBehaviour
 
     public void Promote(int[] newMoveset)
     {
+        promotionEffect.GetComponent<ParticleSystem>().Play();
         Moveset = newMoveset;
         if (isBlack)
         {
@@ -190,6 +196,7 @@ public class Piece : MonoBehaviour
 
     public void Demote()
     {
+        promotionEffect.GetComponent<ParticleSystem>().Stop();
         pieceName = new(originalPieceName);
         Moveset = originalMoveset;
         isPromoted = false;
@@ -222,6 +229,7 @@ public class Piece : MonoBehaviour
         {
             var step = speed * Time.deltaTime;
             transform.position = Vector3.MoveTowards(transform.position, emptyGameObject.transform.position, step);
+            promotionEffect.transform.position = Vector3.MoveTowards(transform.position, emptyGameObject.transform.position, step);
         }
     }
 

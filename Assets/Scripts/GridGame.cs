@@ -68,7 +68,7 @@ public class GridGame : MonoBehaviour
 
         pCamp.GenerateCamp();
 
-        float campSpacing = 5.0F + gridCellSize * 3;
+        float campSpacing = 1.0F + gridCellSize * 3;
         gameGrid = new GameObject[width, height];
         for (int y = 0; y < height; y++)
         {
@@ -82,15 +82,15 @@ public class GridGame : MonoBehaviour
                 gameGrid[x, y].transform.rotation = Quaternion.Euler(90, 0, 0);
             }
         }
-        campSpacing += 9 * gridCellSize + 5.0F;
+        campSpacing += 9 * gridCellSize + 1.0F;
 
         eCamp.GenerateCamp(campSpacing);
 
         float xRot = 63.0F;
         float yRot = -90;
 
-        cameraPosition.position = new Vector4((float)100, 80, ((height + 6) * gridCellSize + 10.0F) / 2 - gridCellSize / 2);
-        cameraPosition.rotation = Quaternion.Euler(xRot, yRot, 0);
+        //cameraPosition.position = new Vector4((float)100, 100, ((height + 6) * gridCellSize + 10.0F) / 2 - gridCellSize / 2);
+        //cameraPosition.rotation = Quaternion.Euler(xRot, yRot, 0);
     }
 
     public void InitializePieces()

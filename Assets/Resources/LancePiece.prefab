@@ -47,8 +47,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isKing: 0
-  speed: 30
+  speed: 5
   value: 0
+  abilityCooldown: 0
+  promotionEffect: {fileID: 0}
 --- !u!1001 &6086793775290845779
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -59,27 +61,27 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 1c808cbc921f8124e891d525fa514221, type: 3}
       propertyPath: m_LocalScale.x
-      value: 5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c808cbc921f8124e891d525fa514221, type: 3}
       propertyPath: m_LocalScale.y
-      value: 5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c808cbc921f8124e891d525fa514221, type: 3}
       propertyPath: m_LocalScale.z
-      value: 8
+      value: 1.6000001
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c808cbc921f8124e891d525fa514221, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c808cbc921f8124e891d525fa514221, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.25
+      value: 0.19999981
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c808cbc921f8124e891d525fa514221, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 1.53
+      value: 0.29999924
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c808cbc921f8124e891d525fa514221, type: 3}
       propertyPath: m_LocalRotation.w
@@ -137,15 +139,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 7e36584b545531f498eb4198146e6ea5, type: 3}
       propertyPath: m_LocalScale.x
-      value: 5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7e36584b545531f498eb4198146e6ea5, type: 3}
       propertyPath: m_LocalScale.y
-      value: 5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7e36584b545531f498eb4198146e6ea5, type: 3}
       propertyPath: m_LocalScale.z
-      value: 5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7e36584b545531f498eb4198146e6ea5, type: 3}
       propertyPath: m_LocalPosition.x
