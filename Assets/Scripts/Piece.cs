@@ -74,7 +74,7 @@ public class Piece : MonoBehaviour
                 value = 300;
                 break;
             case "King":
-                value = 10000;
+                value = 790;
                 break;
             default:
                 value = 0;
@@ -169,6 +169,12 @@ public class Piece : MonoBehaviour
 
     public bool GetIsPromoted()
         => isPromoted;
+
+    public void SetPiecePositionImmediate(Vector3 target)
+    {
+        transform.position = target;
+        emptyGameObject.transform.position = target;
+    }
 
     public void SetTargetPosition(Vector3 target)
         => emptyGameObject.transform.position = target;

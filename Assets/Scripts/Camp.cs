@@ -119,6 +119,10 @@ public class Camp : MonoBehaviour
             pieceScript.SetIsBlack();
         }
         var cell = campGrid[posX, posY].GetComponent<GridCell>();
+        var aboveCellPosition = cell.GetWorldPosition();
+        aboveCellPosition.y += 10;
+        piece.GetComponent<Piece>().SetPiecePositionImmediate(aboveCellPosition);
+
         cell.SetAndMovePiece(piece, cell.GetWorldPosition());
         posX++;
         numberOfPieces++;

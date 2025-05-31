@@ -41,7 +41,7 @@ public class LogicPiece
             "Rook" => 800,
             "Lance" => 400,
             "Horse" => 300,
-            "King" => 10000,
+            "King" => 790,
             _ => 0,
         };
 

@@ -302,6 +302,7 @@ public class KingManager : MonoBehaviour
 
     public bool FarEnemyDirectionScan(int rowOperator, int colOperator, Tuple<int, int> source, bool isBlack)
     {
+        if (rowOperator == 0 && colOperator == 0) { return false; }
         int destX = source.Item1 + colOperator;
         int destY = source.Item2 + rowOperator;
         while (true)

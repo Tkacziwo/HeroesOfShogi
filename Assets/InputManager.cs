@@ -78,6 +78,8 @@ public class InputManager : MonoBehaviour
 
     private bool paused = false;
 
+    [SerializeField] private GameObject dieAnimation;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -703,6 +705,7 @@ public class InputManager : MonoBehaviour
     {
         gameGrid.AddToCamp(hoveredCell.objectInThisGridSpace);
         hoveredCell.objectInThisGridSpace = null;
+        Instantiate(dieAnimation, hoveredCell.GetWorldPosition(), Quaternion.identity);
     }
 
     public bool CheckForPromotion(GridCell hoveredCell, bool isBlack)
