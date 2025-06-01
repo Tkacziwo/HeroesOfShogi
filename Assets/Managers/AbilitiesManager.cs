@@ -197,6 +197,7 @@ public class AbilitiesManager : MonoBehaviour
         var piece = game.GetPieceInGrid(silverGenPosition).GetComponent<Piece>();
 
         var pMoves = boardManager.CalculatePossibleMoves(piece);
+        //boardManager.CheckIfMovesAreLegal(ref pMoves, piece);
         return pMoves;
     }
 

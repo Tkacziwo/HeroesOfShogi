@@ -71,6 +71,173 @@ public class BoardManager : MonoBehaviour
         return possibleMoves;
     }
 
+    public void CheckIfMovesAreLegal(ref List<Tuple<int, int>> pMoves, Piece piece)
+    {
+        var king = piece.GetIsBlack() ? gameGrid.GetBotKing() : gameGrid.GetPlayerKing();
+        var enemyPieces = piece.GetIsBlack() ? gameGrid.GetPlayerPieces() : gameGrid.GetBotPieces();
+        List<Piece> specialEnemyPieces = new();
+        foreach (var p in enemyPieces)
+        {
+            if (p.GetName() == "Lance" || p.GetName() == "Bishop" || p.GetName() == "Rook")
+            {
+                specialEnemyPieces.Add(p);
+            }
+        }
+
+        var piecePosition = piece.GetPositionTuple();
+        var kingPosition = king.GetPositionTuple();
+        foreach (var enemy in specialEnemyPieces)
+        {
+            var enemyPosition = enemy.GetPositionTuple();
+            var enemyPMoves = CalculatePossibleMovesWithDirection(enemy);
+            var enemyPMovesUnrestricted = CalculatePossibleMovesWithDirection(enemy, true);
+
+            bool canKill = pMoves.Contains(enemyPosition);
+
+            if (enemyPMoves.North.Contains(piecePosition) && enemyPMovesUnrestricted.North.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.North, piece.GetIsBlack()) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.North, true);
+            }
+            else if (enemyPMoves.East.Contains(piecePosition) && enemyPMovesUnrestricted.East.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.East, piece.GetIsBlack()) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.East, true);
+            }
+            else if (enemyPMoves.South.Contains(piecePosition) && enemyPMovesUnrestricted.South.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.South, piece.GetIsBlack()) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.South, true);
+            }
+            else if (enemyPMoves.West.Contains(piecePosition) && enemyPMovesUnrestricted.West.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.West, piece.GetIsBlack()) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.West, true);
+            }
+            else if (enemyPMoves.North_West.Contains(piecePosition) && enemyPMovesUnrestricted.North_West.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.North_West, piece.GetIsBlack()) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.North_West, true);
+            }
+            else if (enemyPMoves.North_East.Contains(piecePosition) && enemyPMovesUnrestricted.North_East.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.North_East, piece.GetIsBlack()) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.North_East, true);
+            }
+            else if (enemyPMoves.South_West.Contains(piecePosition) && enemyPMovesUnrestricted.South_West.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.South_West, piece.GetIsBlack()) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.South_West, true);
+            }
+            else if (enemyPMoves.South_East.Contains(piecePosition) && enemyPMovesUnrestricted.South_East.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.South_East, piece.GetIsBlack()) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.South_East, true);
+            }
+
+            if(canKill)
+            {
+                pMoves.Add(enemy.GetPositionTuple());
+            }
+        }
+    }
+
+    public int CalculateSameColorPiecesInDirection(List<Tuple<int, int>> movesLine, bool isBlack)
+    {
+        var sum = 0;
+        for (int i = 0; i < movesLine.Count; i++)
+        {
+            if (!IsCellFree(movesLine[i].Item1, movesLine[i].Item2))
+            {
+                var pieceInCell = gameGrid.GetPieceInGrid(movesLine[i].Item1, movesLine[i].Item2).GetComponent<Piece>();
+                
+                if (!pieceInCell.isKing && pieceInCell.GetIsBlack() == isBlack)
+                {
+                    sum++;
+                }
+            }
+        }
+        return sum;
+    }
+
+    public DirectionPossibleMoves CalculatePossibleMovesWithDirection(Piece piece, bool unrestricted = false)
+    {
+        DirectionPossibleMoves directionPossibleMoves = new();
+        var moveset = piece.GetMoveset();
+        var pos = piece.GetPositionClass();
+        var isBlack = piece.GetIsBlack();
+        List<Tuple<int, int>> possibleMoves = new();
+        int row = 1;
+        int col = -1;
+        for (int i = 1; i <= 9; i++)
+        {
+            if (moveset[i - 1] == 2)
+            {
+                ExtendSpecialPiecePossibleMoves(row, col, pos, unrestricted, ref possibleMoves, isBlack);
+
+
+                switch (row, col)
+                {
+                    case (1, 0):
+                        {
+                            directionPossibleMoves.North.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                    case (0, 1):
+                        {
+                            directionPossibleMoves.East.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                    case (-1, 0):
+                        {
+                            directionPossibleMoves.South.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                    case (0, -1):
+                        {
+                            directionPossibleMoves.West.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                    case (1, -1):
+                        {
+                            directionPossibleMoves.North_West.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                    case (1, 1):
+                        {
+                            directionPossibleMoves.North_East.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                    case (-1, -1):
+                        {
+                            directionPossibleMoves.South_West.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                    case (-1, 1):
+                        {
+                            directionPossibleMoves.South_East.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                }
+            }
+            col++;
+            if (i % 3 == 0 && i != 0)
+            {
+                row--;
+                col = -1;
+            }
+        }
+        return directionPossibleMoves;
+    }
+
     public List<Tuple<int, int>> CalculateOverlappingMoves(List<Tuple<int, int>> first, List<Tuple<int, int>> comparer, bool overlap)
     {
         List<Tuple<int, int>> overlappingMoves = new();

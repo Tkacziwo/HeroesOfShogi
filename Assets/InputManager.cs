@@ -508,6 +508,7 @@ public class InputManager : MonoBehaviour
         else
         {
             possibleMoves = boardManager.CalculatePossibleMoves(piece);
+            boardManager.CheckIfMovesAreLegal(ref possibleMoves, piece);
         }
 
 
