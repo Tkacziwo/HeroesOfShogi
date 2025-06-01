@@ -194,9 +194,9 @@ public class AbilitiesManager : MonoBehaviour
     //silver gen
     public List<Tuple<int, int>> Rush(Position silverGenPosition)
     {
-        var piece = game.GetPieceInGrid(silverGenPosition.x, silverGenPosition.y).GetComponent<Piece>();
+        var piece = game.GetPieceInGrid(silverGenPosition).GetComponent<Piece>();
 
-        var pMoves = boardManager.CalculatePossibleMoves(silverGenPosition, piece.GetMoveset(), piece.GetIsBlack());
+        var pMoves = boardManager.CalculatePossibleMoves(piece);
         return pMoves;
     }
 

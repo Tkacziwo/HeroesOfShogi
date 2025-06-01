@@ -91,6 +91,76 @@ public class LogicBoardManager
         }
     }
 
+    public List<Position> ScanMovesUnrestricted(LogicPiece piece)
+    {
+        var moveset = piece.GetMoveset();
+        var isBlack = piece.GetIsBlack();
+        var pos = piece.GetPosition();
+        List<Position> possibleMoves = new();
+        int row = 1;
+        int col = -1;
+        for (int i = 1; i <= 9; i++)
+        {
+            //Regular pieces
+            if (moveset[i - 1] == 1)
+            {
+                Position destPos = new(col + pos.x, row + pos.y);
+                if (IsInBoard(destPos.x, destPos.y))
+                {
+                    possibleMoves.Add(new(destPos.x, destPos.y));
+                }
+            }
+            //Horse
+            else if (moveset[i - 1] == 3)
+            {
+                int destY;
+                if (isBlack)
+                {
+                    destY = row - 1 + pos.y;
+                }
+                else
+                {
+                    destY = row + 1 + pos.y;
+                }
+                int destX = col + pos.x;
+                if (IsInBoard(destX, destY))
+                {
+                    possibleMoves.Add(new(destX, destY));
+                }
+            }
+            //Special pieces: Rook, Bishop
+            else if (moveset[i - 1] == 2)
+            {
+                ExtendSpecialPiecePossibleMovesUnrestricted(row, col, pos, ref possibleMoves);
+            }
+            col++;
+            if (i % 3 == 0 && i != 0)
+            {
+                row--;
+                col = -1;
+            }
+        }
+        return possibleMoves;
+    }
+
+    public void ExtendSpecialPiecePossibleMovesUnrestricted(int row, int col, Position pos,ref List<Position> possibleMoves)
+    {
+        Position destPos = new(col + pos.x, row + pos.y);
+        while (true)
+        {
+            if (IsInBoard(destPos.x, destPos.y))
+            {
+                possibleMoves.Add(new(destPos));
+
+                destPos.x += col;
+                destPos.y += row;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
 
     public void ExtendSpecialPiecePossibleMoves(int row, int col, Position pos,
                                                 bool isBlack, ref List<Position> possibleMoves, LogicCell[,] cells)

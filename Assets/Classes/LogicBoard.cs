@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEditorInternal;
 using UnityEngine;
 
 public class LogicBoard
@@ -19,15 +18,13 @@ public class LogicBoard
 
     public Position attackerPos = null;
 
-    public List<Position> extendedDangerMoves = new();
 
     public LogicCell[,] dropCells = new LogicCell[9, 3];
 
-    public void CloneFromReal(GridGame grid, bool kingInDanger, Position attackerPos, List<Position> extendedDangerMoves)
+    public void CloneFromReal(GridGame grid, bool kingInDanger, Position attackerPos)
     {
         this.kingInDanger = kingInDanger;
         this.attackerPos = new(attackerPos);
-        this.extendedDangerMoves = new(extendedDangerMoves);
         pieces.Clear();
         allPieces.Clear();
         cells = new LogicCell[9, 9];
@@ -76,11 +73,10 @@ public class LogicBoard
         }
     }
 
-    public void CloneFromLogic(LogicBoard grid, bool kingInDanger, Position attackerPos, List<Position> extendedDangerMoves)
+    public void CloneFromLogic(LogicBoard grid, bool kingInDanger, Position attackerPos)
     {
         this.kingInDanger = kingInDanger;
         this.attackerPos = new(attackerPos);
-        this.extendedDangerMoves = new(extendedDangerMoves);
         pieces.Clear();
         allPieces.Clear();
         cells = new LogicCell[9, 9];
@@ -249,6 +245,12 @@ public class LogicBoard
                     attackerPos
                 };
 
+                var attackerPossibleMovesUnrestricted = manager.ScanMovesUnrestricted(attacker);
+                if (attackerPossibleMovesUnrestricted != null)
+                {
+                    moves = manager.CalculateOverlappingMoves(moves, attackerPossibleMovesUnrestricted, false);
+                }
+
                 if (additionalDangerMoves != null)
                 {
                     moves = manager.CalculateOverlappingMoves(moves, additionalDangerMoves, false);
@@ -257,11 +259,6 @@ public class LogicBoard
                 if (attackerProtected)
                 {
                     moves = manager.CalculateOverlappingMoves(moves, aPos, false);
-                }
-
-                if (extendedDangerMoves != null)
-                {
-                    moves = manager.CalculateOverlappingMoves(moves, extendedDangerMoves, false);
                 }
 
                 Position src = p.GetPosition();

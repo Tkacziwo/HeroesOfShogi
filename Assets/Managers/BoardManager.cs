@@ -10,15 +10,17 @@ public class BoardManager : MonoBehaviour
 
     GridGame gameGrid;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         previousMoves = new();
         gameGrid = FindFirstObjectByType<GridGame>();
     }
 
-    public List<Tuple<int, int>> CalculatePossibleMoves(Position pos, int[] moveset, bool isBlack)
+    public List<Tuple<int, int>> CalculatePossibleMoves(Piece piece, bool unrestricted = false)
     {
+        var moveset = piece.GetMoveset();
+        var pos = piece.GetPositionClass();
+        var isBlack = piece.GetIsBlack();
         List<Tuple<int, int>> possibleMoves = new();
         int row = 1;
         int col = -1;
@@ -57,50 +59,7 @@ public class BoardManager : MonoBehaviour
             //Special pieces: Rook, Bishop
             else if (moveset[i - 1] == 2)
             {
-                ExtendSpecialPiecePossibleMoves(row, col, pos, isBlack, ref possibleMoves);
-            }
-            col++;
-            if (i % 3 == 0 && i != 0)
-            {
-                row--;
-                col = -1;
-            }
-        }
-        return possibleMoves;
-    }
-
-    public List<Tuple<int, int>> CalculatePossibleMoves(Piece piece)
-    {
-        List<Tuple<int, int>> possibleMoves = new();
-        int[] moveset = piece.GetMoveset();
-        bool isBlack = piece.GetIsBlack();
-        Position pos = piece.GetPositionClass();
-        int row = 1;
-        int col = -1;
-        for (int i = 1; i <= 9; i++)
-        {
-            //Regular pieces
-            if (moveset[i - 1] == 1)
-            {
-                Position destPos = new(col + pos.x, row + pos.y);
-                if (IsInBoard(destPos) && (IsCellFree(destPos) || IsEnemy(destPos, isBlack)))
-                {
-                    possibleMoves.Add(new(destPos.x, destPos.y));
-                }
-            }
-            //Horse
-            else if (moveset[i - 1] == 3)
-            {
-                Position destPos = new(col + pos.x, isBlack ? row - 1 + pos.y : row + 1 + pos.y);
-                if (IsInBoard(destPos) && (IsCellFree(destPos) || IsEnemy(destPos, isBlack)))
-                {
-                    possibleMoves.Add(new(destPos.x, destPos.y));
-                }
-            }
-            //Special pieces: Rook, Bishop
-            else if (moveset[i - 1] == 2)
-            {
-                ExtendSpecialPiecePossibleMoves(row, col, pos, isBlack, ref possibleMoves);
+                ExtendSpecialPiecePossibleMoves(row, col, pos, unrestricted, ref possibleMoves, isBlack);
             }
             col++;
             if (i % 3 == 0 && i != 0)
@@ -148,57 +107,55 @@ public class BoardManager : MonoBehaviour
     }
 
 
-    public void ExtendSpecialPiecePossibleMoves(int row, int col, Position pos,
-                                                bool isBlack, ref List<Tuple<int, int>> possibleMoves)
-    {
-        int destX = col + pos.x;
-        int destY = row + pos.y;
-        while (true)
-        {
-            if (IsInBoard(destX, destY) && IsCellFree(destX, destY, isBlack))
-            {
-                possibleMoves.Add(new(destX, destY));
-
-                if (IsEnemy(destX, destY, isBlack))
-                {
-                    break;
-                }
-
-                destX += col;
-                destY += row;
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-
-    public void ExtendSpecialPiecePossibleMoves(int row, int col, Position pos,
-                                                bool isBlack, ref List<Position> possibleMoves)
+    public void ExtendSpecialPiecePossibleMoves(
+        int row,
+        int col,
+        Position pos,
+        bool unrestricted,
+        ref List<Tuple<int, int>> possibleMoves,
+        bool isBlack = false)
     {
         Position destPos = new(col + pos.x, row + pos.y);
-        while (true)
+        if (unrestricted)
         {
-            if (IsInBoard(destPos) && IsCellFree(destPos.x, destPos.y, isBlack))
+            while (true)
             {
-                possibleMoves.Add(destPos);
+                if (IsInBoard(destPos))
+                {
+                    possibleMoves.Add(new(destPos.x, destPos.y));
 
-                if (IsEnemy(destPos, isBlack))
+                    destPos.x += col;
+                    destPos.y += row;
+                }
+                else
                 {
                     break;
                 }
-
-                destPos.x += col;
-                destPos.y += row;
             }
-            else
+        }
+        else
+        {
+            while (true)
             {
-                break;
+                if (IsInBoard(destPos) && IsCellFree(destPos.x, destPos.y, isBlack))
+                {
+                    possibleMoves.Add(new(destPos.x, destPos.y));
+
+                    if (IsEnemy(destPos.x, destPos.y, isBlack))
+                    {
+                        break;
+                    }
+
+                    destPos.x += col;
+                    destPos.y += row;
+                }
+                else
+                {
+                    break;
+                }
             }
         }
     }
-
 
     public List<Tuple<int, int>> CalculatePossibleDrops(Piece piece)
     {
@@ -206,7 +163,6 @@ public class BoardManager : MonoBehaviour
         if (piece.GetName() == "Pawn")
         {
             List<int> badX = new();
-
 
             for (int y = 0; y < 9; y++)
             {
@@ -259,10 +215,8 @@ public class BoardManager : MonoBehaviour
     public bool IsCellFree(int destX, int destY)
         => gameGrid.GetGridCell(destX, destY).objectInThisGridSpace == null;
 
-
     public bool IsCellFree(Position pos)
         => gameGrid.GetGridCell(pos).objectInThisGridSpace == null;
-
 
     public bool IsEnemy(int destX, int destY, bool isBlack)
     {

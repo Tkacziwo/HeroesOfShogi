@@ -9,6 +9,8 @@ public class FileManager : MonoBehaviour
 
     Dictionary<string, string> MovesetDictionary;
 
+    [SerializeField] private string positioning;
+
     public PositionCollection PiecesPositions;
 
 
@@ -65,7 +67,7 @@ public class FileManager : MonoBehaviour
     
     private void LoadPiecesFromFile()
     {
-        var file = Resources.Load<TextAsset>("Positioning");
+        var file = Resources.Load<TextAsset>(positioning);
         if (file != null)
         {
             var result = JsonUtility.FromJson<PositionCollection>(file.text);

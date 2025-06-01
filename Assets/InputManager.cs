@@ -26,8 +26,6 @@ public class InputManager : MonoBehaviour
 
     public List<Tuple<int, int>> endangeredMoves;
 
-    public List<Tuple<int, int>> extendedDangerMoves;
-
     private bool chosenPiece;
 
     private bool kingInDanger;
@@ -126,15 +124,8 @@ public class InputManager : MonoBehaviour
         duringBotMove = true;
         botFinishedCalculating = false;
         Position aPosition = new(attackerPos);
-        List<Position> extendedDangerMovesPositions = new();
-        if (extendedDangerMoves != null)
-        {
-            foreach (var e in extendedDangerMoves)
-            {
-                extendedDangerMovesPositions.Add(new(e));
-            }
-        }
-        bot.GetBoardState(gameGrid, kingInDanger, aPosition, extendedDangerMovesPositions);
+        
+        bot.GetBoardState(gameGrid, kingInDanger, aPosition);
 
         StartBotMinimax();
     }
@@ -412,6 +403,13 @@ public class InputManager : MonoBehaviour
                     var attacker = CellWhichHoldsAttacker.objectInThisGridSpace.GetComponent<Piece>();
                     var attackerProtected = kingManager
                         .FarScan(attacker.GetPositionTuple(), attacker.GetIsBlack());
+
+                    var attackerPossibleMovesUnrestricted = boardManager.CalculatePossibleMoves(attacker, true);
+                    if(attackerPossibleMovesUnrestricted != null)
+                    {
+                        possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, attackerPossibleMovesUnrestricted, false);
+                    }
+
                     var additionalDangerMoves = kingManager.KingDangerMovesScan(possibleMoves, piece.GetIsBlack());
                     List<Tuple<int, int>> attackerPos = new()
                     {
@@ -426,11 +424,6 @@ public class InputManager : MonoBehaviour
                     if (attackerProtected)
                     {
                         possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, attackerPos, false);
-                    }
-
-                    if (extendedDangerMoves != null)
-                    {
-                        possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, extendedDangerMoves, false);
                     }
 
                     PossibleMovesDisplayLoop();
@@ -463,7 +456,7 @@ public class InputManager : MonoBehaviour
                             {
                                 if (endangeredMoves != null)
                                 {
-                                    possibleMoves = kingManager.CalculateProtectionMoves(piece.GetPositionClass(), piece.GetMoveset(), piece.GetIsBlack(), endangeredMoves); ;
+                                    possibleMoves = kingManager.CalculateProtectionMoves(piece, endangeredMoves); ;
                                 }
 
                                 PossibleMovesDisplayLoop();
@@ -514,7 +507,7 @@ public class InputManager : MonoBehaviour
         }
         else
         {
-            possibleMoves = boardManager.CalculatePossibleMoves(piece.GetPositionClass(), piece.GetMoveset(), piece.GetIsBlack());
+            possibleMoves = boardManager.CalculatePossibleMoves(piece);
         }
 
 
@@ -661,7 +654,6 @@ public class InputManager : MonoBehaviour
             kingInDanger = true;
             kingPos = king.GetPositionTuple();
             king.GetComponentInChildren<MeshRenderer>().material.color = Color.red;
-            //extendedDangerMoves = kingManager.CalculateEndangeredMoves(attacker);
             endangeredMoves = kingManager.CalculateEndangeredMoves(attacker, king.GetPositionTuple());
             bodyguards = kingManager.FindGuards(attackerPos, piecesList);
             sacrifices = kingManager.FindSacrifices(endangeredMoves, piecesList);

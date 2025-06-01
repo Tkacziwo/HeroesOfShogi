@@ -14,17 +14,13 @@ public class ShogiBot : MonoBehaviour
 
     public List<Tuple<int, int>> logicPossibleMoves = new();
 
-    private Tuple<int, int> source;
-
-    private Tuple<int, int> destination;
-
     private LogicBoard logicBoard = new();
 
     private int botDifficulty;
 
-    public void GetBoardState(GridGame grid, bool kingInDanger, Position attackerPos, List<Position> extendedDangerMoves)
+    public void GetBoardState(GridGame grid, bool kingInDanger, Position attackerPos)
     {
-        logicBoard.CloneFromReal(grid, kingInDanger, attackerPos, extendedDangerMoves);
+        logicBoard.CloneFromReal(grid, kingInDanger, attackerPos);
     }
 
     //include in board state captured pieces for drops
@@ -35,28 +31,6 @@ public class ShogiBot : MonoBehaviour
         this.botDifficulty = botDifficulty;
     }
 
-
-    //do random move for now
-    public void MakeRandomMove()
-    {
-        Tuple<int, int> randomMove = logicPossibleMoves[UnityEngine.Random.Range(0, allPossibleMoves.Count)];
-
-        foreach (var p in logicBoard.pieces)
-        {
-            if (p.GetIsBlack())
-            {
-                var pMoves = boardManager.CalculatePossibleMoves(p.GetPosition(), p.GetMoveset(), p.GetIsBlack());
-
-                if (pMoves.Contains(randomMove))
-                {
-                    source = p.GetPositionTuple();
-                    destination = randomMove;
-                    logicBoard.ApplyMove(new(source), new(destination));
-                    break;
-                }
-            }
-        }
-    }
 
     public Tuple<Position, Position> ApplyMoveToRealBoard()
     {
@@ -118,7 +92,7 @@ public class ShogiBot : MonoBehaviour
         foreach (var m in moves)
         {
             LogicBoard simulatedBoard = new();
-            simulatedBoard.CloneFromLogic(board, board.kingInDanger, board.attackerPos, board.extendedDangerMoves);
+            simulatedBoard.CloneFromLogic(board, board.kingInDanger, board.attackerPos);
 
             simulatedBoard.ApplyMove(m.Item1, m.Item2);
 
@@ -139,20 +113,4 @@ public class ShogiBot : MonoBehaviour
 
         return new(maxEval, bestMoves);
     }
-
-    //choose move and execute move
-
-    //get source and destination
-    //send it to inputManager
-    public List<Tuple<int, int>> GetSourceAndDestination()
-    {
-        return new List<Tuple<int, int>>()
-        {
-            source,
-            destination
-        };
-    }
-
-    public Tuple<Position, Position> GetSourceAndDestinationLogic()
-        => new(new(source), new(destination));
 }
