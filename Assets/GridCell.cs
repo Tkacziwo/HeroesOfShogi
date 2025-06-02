@@ -39,12 +39,8 @@ public class GridCell : MonoBehaviour
         objectInThisGridSpace.GetComponent<Piece>().SetTargetPosition(new Vector3(position.x, 0.2F, position.z));
     }
 
-    public Vector2Int GetPosition()
+    public Position GetPosition()
         => new(posX, posY);
-
-    public Tuple<int, int> GetPositionTuple()
-        => new(posX, posY);
-
 
     public Vector3 GetWorldPosition()
         => transform.position;

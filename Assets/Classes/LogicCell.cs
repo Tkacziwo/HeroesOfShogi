@@ -10,12 +10,12 @@ public class LogicCell
 
     public LogicCell(GridCell cell)
     {
-        pos = new(cell.GetPositionTuple());
+        pos = new(cell.GetPosition());
     }
 
     public LogicCell(LogicCell cell)
     {
-        pos = new(cell.GetPositionTuple());
+        pos = new(cell.GetPosition());
         //piece = new();
         //if (cell.piece != null)
         //{
@@ -44,9 +44,6 @@ public class LogicCell
     {
         this.piece = piece;
     }
-
-    public Tuple<int, int> GetPositionTuple()
-        => new(pos.x, pos.y);
 
     public Position GetPosition()
         => pos;

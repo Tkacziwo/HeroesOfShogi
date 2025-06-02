@@ -16,12 +16,12 @@ public class BoardManager : MonoBehaviour
         gameGrid = FindFirstObjectByType<GridGame>();
     }
 
-    public List<Tuple<int, int>> CalculatePossibleMoves(Piece piece, bool unrestricted = false)
+    public List<Position> CalculatePossibleMoves(Piece piece, bool unrestricted = false)
     {
         var moveset = piece.GetMoveset();
-        var pos = piece.GetPositionClass();
+        var pos = piece.GetPosition();
         var isBlack = piece.GetIsBlack();
-        List<Tuple<int, int>> possibleMoves = new();
+        List<Position> possibleMoves = new();
         int row = 1;
         int col = -1;
         for (int i = 1; i <= 9; i++)
@@ -71,7 +71,7 @@ public class BoardManager : MonoBehaviour
         return possibleMoves;
     }
 
-    public void CheckIfMovesAreLegal(ref List<Tuple<int, int>> pMoves, Piece piece)
+    public void CheckIfMovesAreLegal(ref List<Position> pMoves, Piece piece)
     {
         var king = piece.GetIsBlack() ? gameGrid.GetBotKing() : gameGrid.GetPlayerKing();
         var enemyPieces = piece.GetIsBlack() ? gameGrid.GetPlayerPieces() : gameGrid.GetBotPieces();
@@ -84,11 +84,11 @@ public class BoardManager : MonoBehaviour
             }
         }
 
-        var piecePosition = piece.GetPositionTuple();
-        var kingPosition = king.GetPositionTuple();
+        var piecePosition = piece.GetPosition();
+        var kingPosition = king.GetPosition();
         foreach (var enemy in specialEnemyPieces)
         {
-            var enemyPosition = enemy.GetPositionTuple();
+            var enemyPosition = enemy.GetPosition();
             var enemyPMoves = CalculatePossibleMovesWithDirection(enemy);
             var enemyPMovesUnrestricted = CalculatePossibleMovesWithDirection(enemy, true);
 
@@ -137,19 +137,19 @@ public class BoardManager : MonoBehaviour
 
             if(canKill)
             {
-                pMoves.Add(enemy.GetPositionTuple());
+                pMoves.Add(enemy.GetPosition());
             }
         }
     }
 
-    public int CalculateSameColorPiecesInDirection(List<Tuple<int, int>> movesLine, bool isBlack)
+    public int CalculateSameColorPiecesInDirection(List<Position> movesLine, bool isBlack)
     {
         var sum = 0;
         for (int i = 0; i < movesLine.Count; i++)
         {
-            if (!IsCellFree(movesLine[i].Item1, movesLine[i].Item2))
+            if (!IsCellFree(movesLine[i]))
             {
-                var pieceInCell = gameGrid.GetPieceInGrid(movesLine[i].Item1, movesLine[i].Item2).GetComponent<Piece>();
+                var pieceInCell = gameGrid.GetPieceInGrid(movesLine[i]).GetComponent<Piece>();
                 
                 if (!pieceInCell.isKing && pieceInCell.GetIsBlack() == isBlack)
                 {
@@ -164,9 +164,9 @@ public class BoardManager : MonoBehaviour
     {
         DirectionPossibleMoves directionPossibleMoves = new();
         var moveset = piece.GetMoveset();
-        var pos = piece.GetPositionClass();
+        var pos = piece.GetPosition();
         var isBlack = piece.GetIsBlack();
-        List<Tuple<int, int>> possibleMoves = new();
+        List<Position> possibleMoves = new();
         int row = 1;
         int col = -1;
         for (int i = 1; i <= 9; i++)
@@ -237,11 +237,10 @@ public class BoardManager : MonoBehaviour
         }
         return directionPossibleMoves;
     }
-
-    public List<Tuple<int, int>> CalculateOverlappingMoves(List<Tuple<int, int>> first, List<Tuple<int, int>> comparer, bool overlap)
+    public List<Position> CalculateOverlappingMoves(List<Position> first, List<Position> comparer, bool overlap)
     {
-        List<Tuple<int, int>> overlappingMoves = new();
-        List<Tuple<int, int>> firstCopy = new(first);
+        List<Position> overlappingMoves = new();
+        List<Position> firstCopy = new(first);
         for (int i = 0; i < first.Count; i++)
         {
             for (int j = 0; j < comparer.Count; j++)
@@ -273,13 +272,12 @@ public class BoardManager : MonoBehaviour
         }
     }
 
-
     public void ExtendSpecialPiecePossibleMoves(
         int row,
         int col,
         Position pos,
         bool unrestricted,
-        ref List<Tuple<int, int>> possibleMoves,
+        ref List<Position> possibleMoves,
         bool isBlack = false)
     {
         Position destPos = new(col + pos.x, row + pos.y);
@@ -324,9 +322,9 @@ public class BoardManager : MonoBehaviour
         }
     }
 
-    public List<Tuple<int, int>> CalculatePossibleDrops(Piece piece)
+    public List<Position> CalculatePossibleDrops(Piece piece)
     {
-        List<Tuple<int, int>> moves = new();
+        List<Position> moves = new();
         if (piece.GetName() == "Pawn")
         {
             List<int> badX = new();

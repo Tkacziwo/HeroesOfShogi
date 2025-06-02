@@ -49,7 +49,7 @@ public class LogicPiece
         originalPieceName = pieceName = piece.GetName();
         Moveset = piece.GetMoveset();
         BackupOriginalMoveset();
-        pos = new(piece.GetPositionClass());
+        pos = new(piece.GetPosition());
         isSpecial = piece.GetIsSpecial();
         isPromoted = piece.GetIsPromoted();
         isDrop = piece.GetIsDrop();
@@ -112,9 +112,6 @@ public class LogicPiece
 
     public int[] GetMoveset()
         => Moveset;
-
-    public Tuple<int, int> GetPositionTuple()
-        => new(pos.x, pos.y);
 
     public Position GetPosition()
         => pos;

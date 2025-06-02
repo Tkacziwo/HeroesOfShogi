@@ -296,7 +296,7 @@ public class LogicBoard
                 //        {
                 //            if (endangeredMoves != null)
                 //            {
-                //                possibleMoves = kingManager.CalculateProtectionMoves(piece.GetPositionClass(), piece.GetMoveset(), piece.GetIsBlack(), endangeredMoves); ;
+                //                possibleMoves = kingManager.CalculateProtectionMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack(), endangeredMoves); ;
                 //            }
 
                 //            foreach (var r in possibleMoves)

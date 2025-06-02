@@ -85,12 +85,6 @@ public class GridGame : MonoBehaviour
         campSpacing += 9 * gridCellSize + 1.0F;
 
         eCamp.GenerateCamp(campSpacing);
-
-        float xRot = 63.0F;
-        float yRot = -90;
-
-        //cameraPosition.position = new Vector4((float)100, 100, ((height + 6) * gridCellSize + 10.0F) / 2 - gridCellSize / 2);
-        //cameraPosition.rotation = Quaternion.Euler(xRot, yRot, 0);
     }
 
     public void InitializePieces()
@@ -108,7 +102,8 @@ public class GridGame : MonoBehaviour
                 bool isSpecialPiece = SpecialPieceCheck(p.piece);
                 cell.SetPiece(resource);
                 var pieceScript = cell.objectInThisGridSpace.GetComponent<Piece>();
-                pieceScript.InitializePiece(p.piece, moveset, cell.GetPosition().x, cell.GetPosition().y, isSpecialPiece);
+                Position piecePos = cell.GetPosition();
+                pieceScript.InitializePiece(p.piece, moveset, piecePos.x, piecePos.y, isSpecialPiece);
 
                 if (pieceScript.GetIsBlack())
                 {
@@ -226,14 +221,14 @@ public class GridGame : MonoBehaviour
         }
     }
 
-    public void ClearPossibleMoves(IList<Tuple<int, int>> blacklist = null)
+    public void ClearPossibleMoves(List<Position> blacklist = null)
     {
         OnHoverExitRestoreDefaultColor();
         if (blacklist != null)
         {
             foreach (var item in blacklist)
             {
-                gameGrid[item.Item1, item.Item2].GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
+                gameGrid[item.x, item.y].GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
             }
         }
     }

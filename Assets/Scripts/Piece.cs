@@ -134,10 +134,10 @@ public class Piece : MonoBehaviour
         }
     }
 
-    public void MovePiece(Vector2Int vec)
+    public void MovePiece(Position p)
     {
-        posX = vec.x;
-        posY = vec.y;
+        posX = p.x;
+        posY = p.y;
     }
 
     public int[] GetMoveset()
@@ -146,13 +146,7 @@ public class Piece : MonoBehaviour
     public string GetName()
         => pieceName;
 
-    public Vector2Int GetPosition()
-        => new(posX, posY);
-
-    public Tuple<int, int> GetPositionTuple()
-        => new(posX, posY);
-
-    public Position GetPositionClass()
+    public Position GetPosition()
         => new(posX, posY);
 
     public bool GetIsBlack()
