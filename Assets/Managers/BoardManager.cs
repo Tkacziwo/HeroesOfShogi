@@ -40,16 +40,9 @@ public class BoardManager : MonoBehaviour
             //Horse
             else if (moveset[i - 1] == 3)
             {
-                int destY;
-                if (isBlack)
-                {
-                    destY = row - 1 + pos.y;
-                }
-                else
-                {
-                    destY = row + 1 + pos.y;
-                }
+                int destY = isBlack ? row - 1 + pos.y : row + 1 + pos.y;
                 int destX = col + pos.x;
+
                 if (IsInBoard(destX, destY)
                     && (IsCellFree(destX, destY) || IsEnemy(destX, destY, isBlack)))
                 {
@@ -61,6 +54,7 @@ public class BoardManager : MonoBehaviour
             {
                 ExtendSpecialPiecePossibleMoves(row, col, pos, unrestricted, ref possibleMoves, isBlack);
             }
+
             col++;
             if (i % 3 == 0 && i != 0)
             {
@@ -135,7 +129,7 @@ public class BoardManager : MonoBehaviour
                     pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.South_East, true);
             }
 
-            if(canKill)
+            if (canKill)
             {
                 pMoves.Add(enemy.GetPosition());
             }
@@ -150,7 +144,7 @@ public class BoardManager : MonoBehaviour
             if (!IsCellFree(movesLine[i]))
             {
                 var pieceInCell = gameGrid.GetPieceInGrid(movesLine[i]).GetComponent<Piece>();
-                
+
                 if (!pieceInCell.isKing && pieceInCell.GetIsBlack() == isBlack)
                 {
                     sum++;
@@ -237,6 +231,7 @@ public class BoardManager : MonoBehaviour
         }
         return directionPossibleMoves;
     }
+
     public List<Position> CalculateOverlappingMoves(List<Position> first, List<Position> comparer, bool overlap)
     {
         List<Position> overlappingMoves = new();
@@ -385,11 +380,10 @@ public class BoardManager : MonoBehaviour
 
     public bool IsEnemy(int destX, int destY, bool isBlack)
     {
-        var cell = gameGrid.gameGrid[destX, destY].GetComponent<GridCell>();
+        var cell = gameGrid.GetGridCell(destX, destY);
         if (cell.objectInThisGridSpace != null)
         {
-            var pieceColorInDestination = gameGrid.gameGrid[destX, destY].GetComponent<GridCell>()
-                .objectInThisGridSpace.GetComponent<Piece>().GetIsBlack();
+            var pieceColorInDestination = gameGrid.GetPieceInGrid(destX, destY).GetComponent<Piece>().GetIsBlack();
             return pieceColorInDestination != isBlack;
         }
         else
@@ -403,8 +397,7 @@ public class BoardManager : MonoBehaviour
         var cell = gameGrid.GetGridCell(pos);
         if (cell.objectInThisGridSpace != null)
         {
-            var pieceColorInDestination = gameGrid.GetGridCell(pos)
-                .objectInThisGridSpace.GetComponent<Piece>().GetIsBlack();
+            var pieceColorInDestination = gameGrid.GetPieceInGrid(pos).GetComponent<Piece>().GetIsBlack();
             return pieceColorInDestination != isBlack;
         }
         else

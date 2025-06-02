@@ -1,11 +1,16 @@
 using System.Collections.Generic;
-using System;
 
 public class LogicBoardManager
 {
-    public List<Position> CalculatePossibleMoves(Position pos,
-        int[] moveset, bool isBlack, LogicCell[,] cells)
+    public List<Position> CalculatePossibleMoves(
+        LogicPiece piece,
+        LogicCell[,] cells,
+        bool unrestricted = false)
+
     {
+        var moveset = piece.GetMoveset();
+        var pos = piece.GetPosition();
+        var isBlack = piece.GetIsBlack();
         List<Position> possibleMoves = new();
         int row = 1;
         int col = -1;
@@ -25,16 +30,9 @@ public class LogicBoardManager
             //Horse
             else if (moveset[i - 1] == 3)
             {
-                int destY;
-                if (isBlack)
-                {
-                    destY = row - 1 + pos.y;
-                }
-                else
-                {
-                    destY = row + 1 + pos.y;
-                }
+                int destY = isBlack ? row - 1 + pos.y : row + 1 + pos.y;
                 int destX = col + pos.x;
+
                 if (IsInBoard(destX, destY)
                     && (IsCellFree(destX, destY, cells) || IsEnemy(destX, destY, isBlack, cells)))
                 {
@@ -44,7 +42,7 @@ public class LogicBoardManager
             //Special pieces: Rook, Bishop
             else if (moveset[i - 1] == 2)
             {
-                ExtendSpecialPiecePossibleMoves(row, col, pos, isBlack, ref possibleMoves, cells);
+                ExtendSpecialPiecePossibleMoves(row, col, pos, unrestricted, ref possibleMoves, cells, isBlack);
             }
             col++;
             if (i % 3 == 0 && i != 0)
@@ -54,6 +52,241 @@ public class LogicBoardManager
             }
         }
         return possibleMoves;
+    }
+
+    public void ExtendSpecialPiecePossibleMoves(
+        int row,
+        int col,
+        Position pos,
+        bool unrestricted,
+        ref List<Position> possibleMoves,
+        LogicCell[,] cells,
+        bool isBlack = false)
+    {
+        Position destPos = new(col + pos.x, row + pos.y);
+        if (unrestricted)
+        {
+            while (true)
+            {
+                if (IsInBoard(destPos.x, destPos.y))
+                {
+                    possibleMoves.Add(new(destPos.x, destPos.y));
+
+                    destPos.x += col;
+                    destPos.y += row;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+        else
+        {
+            int destX = col + pos.x;
+            int destY = row + pos.y;
+            while (true)
+            {
+                if (IsInBoard(destX, destY) && IsCellFree(destX, destY, isBlack, cells))
+                {
+                    possibleMoves.Add(new(destX, destY));
+
+                    if (IsEnemy(destX, destY, isBlack, cells))
+                    {
+                        break;
+                    }
+
+                    destX += col;
+                    destY += row;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    public void CheckIfMovesAreLegal(ref List<Position> pMoves, LogicPiece piece, List<LogicPiece> allPieces, LogicCell[,] cells)
+    {
+        LogicPiece king = new();
+
+        List<LogicPiece> enemyPieces = new();
+        foreach (var p in allPieces)
+        {
+            if (!p.GetIsBlack())
+            {
+                enemyPieces.Add(p);
+            }
+            
+            if(p.GetIsBlack() && p.isKing)
+            {
+                king = p;
+            }
+        }
+
+
+        List<LogicPiece> specialEnemyPieces = new();
+        foreach (var p in enemyPieces)
+        {
+            if (p.GetName() == "Lance" || p.GetName() == "Bishop" || p.GetName() == "Rook")
+            {
+                specialEnemyPieces.Add(p);
+            }
+        }
+
+        var piecePosition = piece.GetPosition();
+        var kingPosition = king.GetPosition();
+        foreach (var enemy in specialEnemyPieces)
+        {
+            var enemyPosition = enemy.GetPosition();
+            var enemyPMoves = CalculatePossibleMovesWithDirection(enemy, cells);
+            var enemyPMovesUnrestricted = CalculatePossibleMovesWithDirection(enemy, cells, true);
+
+            bool canKill = pMoves.Contains(enemyPosition);
+
+            if (enemyPMoves.North.Contains(piecePosition) && enemyPMovesUnrestricted.North.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.North, piece.GetIsBlack(), cells) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.North, true);
+            }
+            else if (enemyPMoves.East.Contains(piecePosition) && enemyPMovesUnrestricted.East.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.East, piece.GetIsBlack(), cells) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.East, true);
+            }
+            else if (enemyPMoves.South.Contains(piecePosition) && enemyPMovesUnrestricted.South.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.South, piece.GetIsBlack(), cells) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.South, true);
+            }
+            else if (enemyPMoves.West.Contains(piecePosition) && enemyPMovesUnrestricted.West.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.West, piece.GetIsBlack(), cells) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.West, true);
+            }
+            else if (enemyPMoves.North_West.Contains(piecePosition) && enemyPMovesUnrestricted.North_West.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.North_West, piece.GetIsBlack(), cells) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.North_West, true);
+            }
+            else if (enemyPMoves.North_East.Contains(piecePosition) && enemyPMovesUnrestricted.North_East.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.North_East, piece.GetIsBlack(), cells) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.North_East, true);
+            }
+            else if (enemyPMoves.South_West.Contains(piecePosition) && enemyPMovesUnrestricted.South_West.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.South_West, piece.GetIsBlack(), cells) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.South_West, true);
+            }
+            else if (enemyPMoves.South_East.Contains(piecePosition) && enemyPMovesUnrestricted.South_East.Contains(kingPosition))
+            {
+                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.South_East, piece.GetIsBlack(), cells) == 1)
+                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.South_East, true);
+            }
+
+            if (canKill)
+            {
+                pMoves.Add(enemy.GetPosition());
+            }
+        }
+    }
+
+    public int CalculateSameColorPiecesInDirection(List<Position> movesLine, bool isBlack, LogicCell[,] cells)
+    {
+        var sum = 0;
+        for (int i = 0; i < movesLine.Count; i++)
+        {
+            if (!IsCellFree(movesLine[i].x, movesLine[i].y, cells))
+            {
+                var pieceInCell = cells[movesLine[i].x, movesLine[i].y].piece;
+
+                if (!pieceInCell.isKing && pieceInCell.GetIsBlack() == isBlack)
+                {
+                    sum++;
+                }
+            }
+        }
+        return sum;
+    }
+
+    public DirectionPossibleMoves CalculatePossibleMovesWithDirection(LogicPiece piece, LogicCell[,] cells, bool unrestricted = false)
+    {
+        DirectionPossibleMoves directionPossibleMoves = new();
+        var moveset = piece.GetMoveset();
+        var pos = piece.GetPosition();
+        var isBlack = piece.GetIsBlack();
+        List<Position> possibleMoves = new();
+        int row = 1;
+        int col = -1;
+        for (int i = 1; i <= 9; i++)
+        {
+            if (moveset[i - 1] == 2)
+            {
+                ExtendSpecialPiecePossibleMoves(row, col, pos, unrestricted, ref possibleMoves, cells, isBlack);
+
+
+                switch (row, col)
+                {
+                    case (1, 0):
+                        {
+                            directionPossibleMoves.North.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                    case (0, 1):
+                        {
+                            directionPossibleMoves.East.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                    case (-1, 0):
+                        {
+                            directionPossibleMoves.South.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                    case (0, -1):
+                        {
+                            directionPossibleMoves.West.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                    case (1, -1):
+                        {
+                            directionPossibleMoves.North_West.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                    case (1, 1):
+                        {
+                            directionPossibleMoves.North_East.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                    case (-1, -1):
+                        {
+                            directionPossibleMoves.South_West.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                    case (-1, 1):
+                        {
+                            directionPossibleMoves.South_East.AddRange(possibleMoves);
+                            possibleMoves.Clear();
+                            break;
+                        }
+                }
+            }
+            col++;
+            if (i % 3 == 0 && i != 0)
+            {
+                row--;
+                col = -1;
+            }
+        }
+        return directionPossibleMoves;
     }
 
     public List<Position> CalculateOverlappingMoves(List<Position> first, List<Position> comparer, bool overlap)
@@ -143,7 +376,7 @@ public class LogicBoardManager
         return possibleMoves;
     }
 
-    public void ExtendSpecialPiecePossibleMovesUnrestricted(int row, int col, Position pos,ref List<Position> possibleMoves)
+    public void ExtendSpecialPiecePossibleMovesUnrestricted(int row, int col, Position pos, ref List<Position> possibleMoves)
     {
         Position destPos = new(col + pos.x, row + pos.y);
         while (true)
@@ -162,31 +395,7 @@ public class LogicBoardManager
         }
     }
 
-    public void ExtendSpecialPiecePossibleMoves(int row, int col, Position pos,
-                                                bool isBlack, ref List<Position> possibleMoves, LogicCell[,] cells)
-    {
-        int destX = col + pos.x;
-        int destY = row + pos.y;
-        while (true)
-        {
-            if (IsInBoard(destX, destY) && IsCellFree(destX, destY, isBlack, cells))
-            {
-                possibleMoves.Add(new(destX, destY));
 
-                if (IsEnemy(destX, destY, isBlack, cells))
-                {
-                    break;
-                }
-
-                destX += col;
-                destY += row;
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
 
 
     public List<Position> CalculatePossibleDrops(LogicCell[,] cells, LogicPiece piece)

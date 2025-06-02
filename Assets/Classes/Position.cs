@@ -5,6 +5,11 @@ public class Position : IEquatable<Position>
     public int x;
     public int y;
 
+    public Position()
+    {
+        x = 999; y = 999;
+    }
+
     public Position(int x, int y)
     {
         this.x = x; this.y = y;

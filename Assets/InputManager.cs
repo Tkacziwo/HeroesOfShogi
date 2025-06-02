@@ -93,6 +93,7 @@ public class InputManager : MonoBehaviour
         botFinishedCalculating = false;
         botEnabled = StaticData.botEnabled;
         bot.InitializeBot(StaticData.botDifficulty);
+        attackerPos = new();
     }
 
     public void PauseGame()
@@ -371,7 +372,7 @@ public class InputManager : MonoBehaviour
             ExecutePieceMove(hoveredCell);
             playerTurn = !playerTurn;
         }
-        else if (CellWhichHoldsPiece != null && CellWhichHoldsPiece.GetPosition() == hoveredCell.GetPosition())
+        else if (CellWhichHoldsPiece != null && CellWhichHoldsPiece.GetPosition().Equals(hoveredCell.GetPosition()))
         {
             HandleUnclickPiece();
         }

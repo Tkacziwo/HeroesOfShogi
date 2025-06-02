@@ -1253,7 +1253,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   File: {fileID: 4900000, guid: 8a1778149fd97bd4b9c023f0080fe8ab, type: 3}
-  positioning: KingTesting
+  positioning: Positioning
   PiecesPositions:
     boardPositions: []
 --- !u!4 &569600016

@@ -209,7 +209,8 @@ public class LogicBoard
                 }
                 else
                 {
-                    moves = manager.CalculatePossibleMoves(p.GetPosition(), p.GetMoveset(), p.GetIsBlack(), cells);
+                    moves = manager.CalculatePossibleMoves(p, cells);
+                    manager.CheckIfMovesAreLegal(ref moves, p, allPieces, cells);
                 }
                 if (moves != null)
                 {

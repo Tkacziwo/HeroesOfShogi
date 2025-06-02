@@ -8,7 +8,7 @@ public class LogicKingManager
     public List<Position> CloseScan(Position kingPos, LogicCell[,] cells)
     {
         var kingPiece = cells[kingPos.x, kingPos.y].piece;
-        var possibleMoves = boardManager.CalculatePossibleMoves(kingPos, kingPiece.GetMoveset(), kingPiece.GetIsBlack(), cells);
+        var possibleMoves = boardManager.CalculatePossibleMoves(kingPiece, cells);
         List<Position> overlappingMoves = new();
         List<Position> enemiesProtectionMoves = new();
         var rowOperator = 2;
@@ -23,10 +23,18 @@ public class LogicKingManager
                 && !boardManager.IsCellFree(destX, destY, cells)
                 && boardManager.IsEnemy(destX, destY, kingPiece.GetIsBlack(), cells))
             {
-                Position enemyPos = new(destX, destY);
                 var enemyPiece = cells[kingPos.x, kingPos.y].piece;
-                var enemyPossibleMoves = boardManager.CalculatePossibleMoves(enemyPos, enemyPiece.GetMoveset(), enemyPiece.GetIsBlack(), cells);
-                var enemyProtectionMoves = boardManager.CalculatePossibleMoves(enemyPos, enemyPiece.GetMoveset(), !enemyPiece.GetIsBlack(), cells);
+                var enemyPossibleMoves = boardManager.CalculatePossibleMoves(enemyPiece, cells);
+                var adjustedPiece = enemyPiece;
+                if (adjustedPiece.GetIsBlack())
+                {
+                    adjustedPiece.ResetIsBlack();
+                }
+                else
+                {
+                    adjustedPiece.SetIsBlack();
+                }
+                var enemyProtectionMoves = boardManager.CalculatePossibleMoves(adjustedPiece, cells);
                 enemiesProtectionMoves.AddRange(enemyProtectionMoves);
                 overlappingMoves.AddRange(boardManager.CalculateOverlappingMoves(possibleMoves, enemyPossibleMoves, true));
             }
@@ -78,7 +86,7 @@ public class LogicKingManager
                 if (!boardManager.IsCellFree(destX, destY, cells))
                 {
                     var piece = cells[destX, destY].piece;
-                    var pieceMoves = boardManager.CalculatePossibleMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack(), cells);
+                    var pieceMoves = boardManager.CalculatePossibleMoves(piece, cells);
 
                     if (boardManager.IsEnemy(destX, destY, isBlack, cells))
                     {
