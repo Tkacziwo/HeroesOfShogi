@@ -125,7 +125,7 @@ public class InputManager : MonoBehaviour
         duringBotMove = true;
         botFinishedCalculating = false;
         Position aPosition = new(attackerPos);
-        
+
         bot.GetBoardState(gameGrid, kingInDanger, aPosition);
 
         StartBotMinimax();
@@ -183,7 +183,7 @@ public class InputManager : MonoBehaviour
                     }
                     else
                     {
-                        hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = new(1.0f, 86/255, 83/255);
+                        hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = new(1.0f, 86 / 255, 83 / 255);
                     }
                 }
                 else
@@ -227,7 +227,7 @@ public class InputManager : MonoBehaviour
             foreach (var p in promotedPieces)
             {
                 if (hoveredCell.GetPosition().Equals(p.GetPosition()))
-                {   
+                {
                     srcKingAbilityPiecePosition = p.GetPosition();
                     break;
                 }
@@ -405,7 +405,7 @@ public class InputManager : MonoBehaviour
                     var attackerProtected = kingManager.FarScan(attacker.GetPosition(), attacker.GetIsBlack());
 
                     var attackerPossibleMovesUnrestricted = boardManager.CalculatePossibleMoves(attacker, true);
-                    if(attackerPossibleMovesUnrestricted != null)
+                    if (attackerPossibleMovesUnrestricted != null)
                     {
                         possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, attackerPossibleMovesUnrestricted, false);
                     }
@@ -569,6 +569,13 @@ public class InputManager : MonoBehaviour
         if (piece.abilityCooldown > 0)
         {
             piece.abilityCooldown--;
+        }
+
+        if (piece.GetIsDrop())
+        {
+            var aboveCell = hoveredCell.GetWorldPosition();
+            aboveCell.y += 15;
+            piece.SetPiecePositionImmediate(aboveCell);
         }
 
         hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.objectInThisGridSpace, hoveredCell.GetWorldPosition());

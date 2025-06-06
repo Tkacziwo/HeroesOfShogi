@@ -330,7 +330,11 @@ public class BoardManager : MonoBehaviour
                 {
                     if (!IsCellFree(x, y) && gameGrid.GetPieceInGrid(x, y).GetComponent<Piece>().GetName() == "Pawn")
                     {
-                        badX.Add(x);
+                        var gridPiece = gameGrid.GetPieceInGrid(x, y).GetComponent<Piece>();
+                        if (gridPiece.GetName() == "Pawn" && !gridPiece.GetIsBlack() != piece.GetIsBlack())
+                        {
+                            badX.Add(x);
+                        }
                     }
                 }
             }
