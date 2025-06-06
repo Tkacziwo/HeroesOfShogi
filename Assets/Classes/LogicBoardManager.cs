@@ -118,8 +118,8 @@ public class LogicBoardManager
             {
                 enemyPieces.Add(p);
             }
-            
-            if(p.GetIsBlack() && p.isKing)
+
+            if (p.GetIsBlack() && p.isKing)
             {
                 king = p;
             }
@@ -411,9 +411,13 @@ public class LogicBoardManager
             {
                 for (int x = 0; x < 9; x++)
                 {
-                    if (!IsCellFree(x, y, cells) && cells[x, y].piece.GetName() == "Pawn")
+                    if (!IsCellFree(x, y, cells))
                     {
-                        badX.Add(x);
+                        var gridPiece = cells[x, y].piece;
+                        if (gridPiece.GetName() == "Pawn" && gridPiece.GetIsBlack() != piece.GetIsBlack())
+                        {
+                            badX.Add(x);
+                        }
                     }
                 }
             }
@@ -488,7 +492,7 @@ public class LogicBoardManager
             return false;
     }
 
-    public void ApplyPromotion(Piece piece)
+    public void ApplyPromotion(LogicPiece piece)
     {
         if (!piece.isKing)
         {
@@ -499,7 +503,7 @@ public class LogicBoardManager
             }
             else
             {
-                piece.BackupOriginalMoveset(piece.GetMoveset());
+                //piece.BackupOriginalMoveset(piece.GetMoveset());
                 int[] moveset = piece.GetMoveset();
                 for (int i = 0; i < 9; i++)
                 {

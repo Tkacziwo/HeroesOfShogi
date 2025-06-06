@@ -143,6 +143,7 @@ public class LogicBoard
             var movedPiece = dropCells[src.x - 200, src.y - 200].piece;
             dropCells[src.x - 200, src.y - 200].piece = null;
             movedPiece.MovePiece(dst);
+            movedPiece.ResetIsDrop();
             cells[dst.x, dst.y].piece = new(movedPiece);
         }
         else
@@ -150,6 +151,12 @@ public class LogicBoard
             var movedPiece = cells[src.x, src.y].piece;
             cells[src.x, src.y].piece = null;
             movedPiece.MovePiece(dst);
+
+            if (dst.y < 4)
+            {
+                manager.ApplyPromotion(movedPiece);
+            }
+
             cells[dst.x, dst.y].piece = new(movedPiece);
         }
     }
@@ -157,7 +164,6 @@ public class LogicBoard
     public List<Tuple<Position, Position>> CalculateLogicPossibleMoves()
     {
         List<Tuple<Position, Position>> logicSrcDstMoves = new();
-        List<Tuple<LogicPiece, Position>> logicDropDstMoves = new();
         if (kingInDanger)
         {
             return HandleKingInDanger();
@@ -232,6 +238,18 @@ public class LogicBoard
     private List<Tuple<Position, Position>> HandleKingInDanger()
     {
         List<Tuple<Position, Position>> logicSrcDstMoves = new();
+
+        var endangeredMoves = new List<Position>();
+
+        foreach (var p in pieces)
+        {
+            if (p.isKing)
+            {
+                var attacker = cells[attackerPos.x, attackerPos.y].piece;
+                endangeredMoves = kingManager.CalculateEndangeredMoves(attacker, p.GetPosition());
+            }
+        }
+
         foreach (var p in pieces)
         {
             if (p.isKing)
@@ -272,72 +290,75 @@ public class LogicBoard
                     }
                 }
             }
-            else
-            {
-                //bodyguard checking
-                //foreach (var b in bodyguards)
-                //{
-                //    if (hoveredCell.GetPositionTuple().Equals(b.GetPositionTuple()))
-                //    {
-                //        PossibleMovesCalculationHandler(piece, hoveredCell, true);
-                //        break;
-                //    }
-                //}
-                //drop checking
-                //if (piece.GetIsDrop())
-                //{
-                //    PossibleMovesCalculationHandler(piece, hoveredCell);
-                //}
-                //sacrifice checking
-                //if (sacrifices != null)
-                //{
-                //    foreach (var s in sacrifices)
-                //    {
-                //        if (hoveredCell.GetPositionTuple().Equals(s.GetPositionTuple()))
-                //        {
-                //            if (endangeredMoves != null)
-                //            {
-                //                possibleMoves = kingManager.CalculateProtectionMoves(piece.GetPosition(), piece.GetMoveset(), piece.GetIsBlack(), endangeredMoves); ;
-                //            }
+        }
 
-                //            foreach (var r in possibleMoves)
-                //            {
-                //                var cell = gameGrid.gameGrid[r.Item1, r.Item2].GetComponent<GridCell>();
-                //                cell.SetIsPossibleMove();
-                //                cell.GetComponentInChildren<SpriteRenderer>().material.color = Color.black;
-                //            }
-                //            break;
-                //        }
-                //    }
-                //}
+        var bodyguards = kingManager.FindGuards(attackerPos, pieces, cells);
+
+        //bodyguard checking
+        if (bodyguards != null)
+        {
+            foreach (var b in bodyguards)
+            {
+                logicSrcDstMoves.Add(new(b.GetPosition(), attackerPos));
+            }
+        }
+
+        for (int y = 0; y < 3; y++)
+        {
+            for (int x = 0; x < 9; x++)
+            {
+                if (dropCells[x, y] != null && dropCells[x, y].piece != null)
+                {
+                    var piece = dropCells[x, y].piece;
+                    var dropsMoves = manager.CalculatePossibleDrops(cells, piece);
+                    if (dropsMoves != null)
+                    {
+                        Position src = piece.GetPosition();
+                        logicSrcDstMoves.Add(new(src, attackerPos));
+                    }
+                }
+            }
+        }
+        //sacrifice checking
+        var sacrifices = kingManager.FindSacrifices(endangeredMoves, pieces, cells);
+        if (sacrifices != null && endangeredMoves != null)
+        {
+            foreach (var s in sacrifices)
+            {
+                var sacrificeMoves = kingManager.CalculateProtectionMoves(s, endangeredMoves, cells);
+                var sacrificePosition = s.GetPosition();
+                foreach (var dst in sacrificeMoves)
+                {
+                    logicSrcDstMoves.Add(new(sacrificePosition, dst));
+                }
             }
         }
 
         return logicSrcDstMoves;
     }
 
-    public void DisplayBoardState()
+public void DisplayBoardState()
+{
+    string whole = "";
+    for (int y = 8; y >= 0; y--)
     {
-        string whole = "";
-        for (int y = 8; y >= 0; y--)
+        string rowStr = "|";
+        for (var x = 0; x < 9; x++)
         {
-            string rowStr = "|";
-            for (var x = 0; x < 9; x++)
+            var cell = cells[x, y];
+            if (cell.piece != null)
             {
-                var cell = cells[x, y];
-                if (cell.piece != null)
-                {
-                    rowStr += $"[{cell.piece.pieceName.Substring(0, 1)}]";
-                }
-                else
-                {
-                    rowStr += "[ ]";
-                }
+                rowStr += $"[{cell.piece.pieceName.Substring(0, 1)}]";
             }
-            rowStr += "|";
-            whole += rowStr + "\n";
+            else
+            {
+                rowStr += "[ ]";
+            }
         }
-
-        Debug.Log(whole);
+        rowStr += "|";
+        whole += rowStr + "\n";
     }
+
+    Debug.Log(whole);
+}
 }
