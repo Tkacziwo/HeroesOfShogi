@@ -36,7 +36,13 @@ public class GridCell : MonoBehaviour
     public void SetAndMovePiece(GameObject piece, Vector3 position)
     {
         objectInThisGridSpace = piece;
-        objectInThisGridSpace.GetComponent<Piece>().SetTargetPosition(new Vector3(position.x, 0.2F, position.z));
+        objectInThisGridSpace.GetComponent<Piece>().QuadraticTransformation(new Vector3(position.x, 0.2F, position.z));
+    }
+
+    public void SetAndMovePieceLinear(GameObject piece, Vector3 position)
+    {
+        objectInThisGridSpace = piece;
+        objectInThisGridSpace.GetComponent<Piece>().LinearTransformation(new Vector3(position.x, 0.2F, position.z));
     }
 
     public Position GetPosition()

@@ -433,37 +433,43 @@ public class InputManager : MonoBehaviour
                 }
                 else
                 {
+                    bool bodyguardClicked = false;
                     //bodyguard checking
                     foreach (var b in bodyguards)
                     {
                         if (hoveredCell.GetPosition().Equals(b.GetPosition()))
                         {
                             PossibleMovesCalculationHandler(piece, hoveredCell, true);
+                            bodyguardClicked = true;
                             break;
                         }
                     }
                     //drop checking
-                    if (piece.GetIsDrop())
+                    if (!bodyguardClicked)
                     {
-                        PossibleMovesCalculationHandler(piece, hoveredCell);
-                    }
-                    //sacrifice checking
-                    if (sacrifices != null)
-                    {
-                        foreach (var s in sacrifices)
+                        if (piece.GetIsDrop())
                         {
-                            if (hoveredCell.GetPosition().Equals(s.GetPosition()))
+                            possibleMoves = boardManager.CalculatePossibleDrops(piece);
+                            possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, endangeredMoves, true);
+                        }
+                        //sacrifice checking
+                        else if (sacrifices != null)
+                        {
+                            foreach (var s in sacrifices)
                             {
-                                if (endangeredMoves != null)
+                                if (hoveredCell.GetPosition().Equals(s.GetPosition()))
                                 {
-                                    possibleMoves = kingManager.CalculateProtectionMoves(piece, endangeredMoves); ;
+                                    if (endangeredMoves != null)
+                                    {
+                                        possibleMoves = kingManager.CalculateProtectionMoves(piece, endangeredMoves); ;
+                                    }
+
+                                    PossibleMovesDisplayLoop();
+
+                                    CellWhichHoldsPiece = hoveredCell;
+                                    chosenPiece = true;
+                                    break;
                                 }
-
-                                PossibleMovesDisplayLoop();
-
-                                CellWhichHoldsPiece = hoveredCell;
-                                chosenPiece = true;
-                                break;
                             }
                         }
                     }
@@ -543,11 +549,20 @@ public class InputManager : MonoBehaviour
 
         if (kingInDanger)
         {
-            var scanPieceGM = gameGrid.GetPieceInGrid(kingPos);
-            scanPieceGM.GetComponentInChildren<MeshRenderer>().material.color =
-                scanPieceGM.GetComponent<Piece>().GetIsBlack() ? Color.black : Color.white;
-
+            gameGrid.GetPieceInGrid(kingPos).GetComponentInChildren<MeshRenderer>().material.color =
+                piece.GetIsBlack() ? Color.black : Color.white;
             kingInDanger = false;
+
+            Piece attacker = gameGrid.GetPieceInGrid(attackerPos).GetComponent<Piece>();
+
+            if (piece.GetIsBlack())
+            {
+                attacker.ResetIsBlack();
+            }
+            else
+            {
+                attacker.SetIsBlack();
+            }
         }
 
         //if (registerMove)
@@ -569,13 +584,6 @@ public class InputManager : MonoBehaviour
         if (piece.abilityCooldown > 0)
         {
             piece.abilityCooldown--;
-        }
-
-        if (piece.GetIsDrop())
-        {
-            var aboveCell = hoveredCell.GetWorldPosition();
-            aboveCell.y += 15;
-            piece.SetPiecePositionImmediate(aboveCell);
         }
 
         hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.objectInThisGridSpace, hoveredCell.GetWorldPosition());
@@ -619,7 +627,10 @@ public class InputManager : MonoBehaviour
             }
         }
 
-        HandleKingEndangerement(piece);
+        if (!piece.isKing)
+        {
+            HandleKingEndangerement(piece);
+        }
     }
 
     public void HandleDropCheck(Piece piece)
@@ -649,11 +660,12 @@ public class InputManager : MonoBehaviour
         Piece king = piece.GetIsBlack() ? gameGrid.GetPlayerKing() : gameGrid.GetBotKing();
         var piecesList = piece.GetIsBlack() ? gameGrid.GetPlayerPieces() : gameGrid.GetBotPieces();
 
+        var attackerRes = kingManager.AttackerScanForKing(king, piece);
         var closeRes = kingManager.CloseScanForKing(king, piece.GetPosition());
         var farRes = kingManager.FarScanForKing(king.GetPosition(), king.GetIsBlack(), ref attackerPos);
-        if (closeRes || farRes)
+        if (closeRes || farRes || attackerRes)
         {
-            if (closeRes)
+            if (closeRes || attackerRes)
             {
                 attackerPos = piece.GetPosition();
             }

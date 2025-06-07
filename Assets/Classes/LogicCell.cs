@@ -1,5 +1,3 @@
-using System;
-
 public class LogicCell
 {
     private Position pos;
@@ -16,12 +14,6 @@ public class LogicCell
     public LogicCell(LogicCell cell)
     {
         pos = new(cell.GetPosition());
-        //piece = new();
-        //if (cell.piece != null)
-        //{
-        //    var piece = cell.piece;
-        //    this.piece = new(piece);
-        //}
     }
 
     public void InitializeGridCell(int x, int y, float cellSize)

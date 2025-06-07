@@ -85,7 +85,7 @@ public class Camp : MonoBehaviour
             pieceScript.SetIsDrop();
 
             var cell = campGrid[posX, posY].GetComponent<GridCell>();
-            cell.SetAndMovePiece(pieceObject, cell.GetWorldPosition());
+            cell.SetAndMovePieceLinear(pieceObject, cell.GetWorldPosition());
             posX++;
             numberOfPieces++;
             if (posX == 9)
@@ -123,7 +123,7 @@ public class Camp : MonoBehaviour
         aboveCellPosition.y += 10;
         piece.GetComponent<Piece>().SetPiecePositionImmediate(aboveCellPosition);
 
-        cell.SetAndMovePiece(piece, cell.GetWorldPosition());
+        cell.SetAndMovePieceLinear(piece, cell.GetWorldPosition());
         posX++;
         numberOfPieces++;
         if (posX == 9)

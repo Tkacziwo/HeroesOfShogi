@@ -48,7 +48,7 @@ public class LogicPiece
         isKing = piece.isKing;
         originalPieceName = pieceName = piece.GetName();
         Moveset = piece.GetMoveset();
-        BackupOriginalMoveset();
+        originalMoveset = piece.GetOriginalMovest();
         pos = new(piece.GetPosition());
         isSpecial = piece.GetIsSpecial();
         isPromoted = piece.GetIsPromoted();
@@ -73,13 +73,13 @@ public class LogicPiece
 
         isKing = piece.isKing;
         originalPieceName = pieceName = piece.pieceName;
-        Moveset = piece.GetMoveset();
-        BackupOriginalMoveset();
-        pos = new(piece.GetPosition());
-        isSpecial = piece.GetIsSpecial();
-        isPromoted = piece.GetIsPromoted();
-        isDrop = piece.GetIsDrop();
-        isBlack = piece.GetIsBlack();
+        Moveset = piece.Moveset;
+        originalMoveset = piece.originalMoveset;
+        pos = piece.pos;
+        isSpecial = piece.isSpecial;
+        isPromoted = piece.isPromoted;
+        isDrop = piece.isDrop;
+        isBlack = piece.isBlack;
     }
 
     public void ReverseMovementMatrix()
@@ -102,9 +102,6 @@ public class LogicPiece
         }
     }
 
-    public void MovePiece(Tuple<int, int> pos)
-        => this.pos = new(pos);
-    
     public void MovePiece(Position p)
     {
         this.pos = new(p);
@@ -112,6 +109,9 @@ public class LogicPiece
 
     public int[] GetMoveset()
         => Moveset;
+
+    public int[] GetOriginalMoveset()
+        => originalMoveset;
 
     public Position GetPosition()
         => pos;
@@ -145,12 +145,12 @@ public class LogicPiece
         //todo change textures
     }
 
-    public void BackupOriginalMoveset()
+    public void BackupOriginalMoveset(int[] moveset)
     {
-        originalMoveset = new int[Moveset.Length];
-        for (int i = 0; i < Moveset.Length; i++)
+        originalMoveset = new int[moveset.Length];
+        for (int i = 0; i < moveset.Length; i++)
         {
-            originalMoveset[i] = Moveset[i];
+            originalMoveset[i] = moveset[i];
         }
     }
 

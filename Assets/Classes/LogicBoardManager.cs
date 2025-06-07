@@ -505,6 +505,13 @@ public class LogicBoardManager
             {
                 //piece.BackupOriginalMoveset(piece.GetMoveset());
                 int[] moveset = piece.GetMoveset();
+                int[] originalMoveset = piece.GetOriginalMoveset();
+
+                for (int i = 0; i < moveset.Length; i++)
+                {
+                    moveset[i] = originalMoveset[i];
+                }
+
                 for (int i = 0; i < 9; i++)
                 {
                     if (moveset[i] != 2 && i != 4)

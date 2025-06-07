@@ -1,5 +1,8 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Xml.Schema;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Piece : MonoBehaviour
@@ -37,6 +40,8 @@ public class Piece : MonoBehaviour
     public int abilityCooldown;
 
     public GameObject promotionEffect;
+
+    private List<Vector3> curvePath = new();
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -143,6 +148,9 @@ public class Piece : MonoBehaviour
     public int[] GetMoveset()
         => Moveset;
 
+    public int[] GetOriginalMovest()
+        => originalMoveset;
+
     public string GetName()
         => pieceName;
 
@@ -222,15 +230,88 @@ public class Piece : MonoBehaviour
     public void ResetIsDrop()
         => isDrop = false;
 
+    public void LinearTransformation(Vector3 endPosition)
+    {
+        Vector3 startPosition = this.transform.position;
+        int steps = 100;
+        for (int i = 0; i <= steps; i++)
+        {
+            float t = i * 0.01f;
+            Vector3 Linear = (1 - t) * startPosition + (t * endPosition);
+            curvePath.Add(Linear);
+        }
+
+        StartCoroutine(PositionTransformLoop());
+    }
+
+    public void QuadraticTransformation(Vector3 endPosition)
+    {
+        Vector3 startPosition = this.transform.position;
+        float maxHeight;
+        float multiplier = 0.3f;
+
+        double distance = Math.Sqrt(Math.Pow(startPosition.x - endPosition.x, 2) +
+            Math.Pow(startPosition.z - endPosition.z,2));
+        maxHeight = (float)distance * multiplier;
+        maxHeight = Math.Max(0.5f, maxHeight);
+        /*
+         * Center point -> Pcenter = ((startPosition.x + endPosition.x)/2, maxHeight, (startPosition.z + endPosition.z)/2)
+         * Linear Interpolation between points startPosition and CenterPosition, center and end point and then
+         * between interpolations
+         */
+        Vector3 centerPosition = new((
+            startPosition.x + endPosition.x) * 0.5f,
+            maxHeight,
+            (startPosition.z + endPosition.z) * 0.5f);
+
+        int steps = (int)Math.Ceiling((double)distance) * 20;
+        float stepsMultiplier = 1f / (float)steps;
+        if(distance >= 4.0)
+        {
+            steps /= 2;
+            stepsMultiplier *= 2f;
+        }
+        for (int i = 0; i <= steps; i++)
+        {
+            float t = i * stepsMultiplier;
+            Vector3 Linear0 = (1 - t) * startPosition + (t * centerPosition);
+            Vector3 Linear1 = (1 - t) * centerPosition + (t * endPosition);
+
+            Vector3 Quadratic = (1 - t) * Linear0 + (t * Linear1);
+            curvePath.Add(Quadratic);
+        }
+
+        StartCoroutine(PositionTransformLoop());
+    }
+
+    IEnumerator PositionTransformLoop()
+    {
+        foreach (var c in curvePath)
+        {
+            yield return PositionTransformStep(c);
+        }
+
+        curvePath.Clear();
+    }
+
+    IEnumerator PositionTransformStep(Vector3 quadratic)
+    {
+        transform.position = quadratic;
+        promotionEffect.transform.position = quadratic;
+        yield return new WaitForSecondsRealtime(0.001f);
+    }
+
+
+
     // Update is called once per frame
     void Update()
     {
-        if (Vector3.Distance(transform.position, emptyGameObject.transform.position) > 0.001f)
-        {
-            var step = speed * Time.deltaTime;
-            transform.position = Vector3.MoveTowards(transform.position, emptyGameObject.transform.position, step);
-            promotionEffect.transform.position = Vector3.MoveTowards(transform.position, emptyGameObject.transform.position, step);
-        }
+        //if (Vector3.Distance(transform.position, emptyGameObject.transform.position) > 0.001f)
+        //{
+        //    var step = speed * Time.deltaTime;
+        //    transform.position = Vector3.MoveTowards(transform.position, emptyGameObject.transform.position, step);
+        //    promotionEffect.transform.position = Vector3.MoveTowards(transform.position, emptyGameObject.transform.position, step);
+        //}
     }
 
 }

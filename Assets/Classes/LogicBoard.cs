@@ -10,6 +10,8 @@ public class LogicBoard
 
     public List<LogicPiece> allPieces = new();
 
+    public List<LogicPiece> enemyPieces = new();
+
     private readonly LogicBoardManager manager = new();
 
     private readonly LogicKingManager kingManager = new();
@@ -27,6 +29,7 @@ public class LogicBoard
         this.attackerPos = new(attackerPos);
         pieces.Clear();
         allPieces.Clear();
+        enemyPieces.Clear();
         cells = new LogicCell[9, 9];
         for (int y = 0; y < 9; y++)
         {
@@ -36,26 +39,21 @@ public class LogicBoard
                 cells[x, y] = new LogicCell(cell);
                 if (cell.objectInThisGridSpace != null)
                 {
-                    var piece = cell.objectInThisGridSpace.GetComponent<Piece>();
-                    LogicPiece p = new(piece);
+                    LogicPiece p = new(cell.objectInThisGridSpace.GetComponent<Piece>());
                     if (p.GetIsBlack())
                     {
-                        //p.ReverseMovementMatrix();
                         pieces.Add(p);
                     }
+                    else
+                    {
+                        enemyPieces.Add(p);
+                    }
+
                     allPieces.Add(p);
                     cells[x, y].piece = p;
                 }
             }
         }
-
-        //if (grid.eCamp.capturedPieces.Count != 0)
-        //{
-        //    foreach (var d in grid.eCamp.capturedPieces)
-        //    {
-        //        drops.Add(new(d));
-        //    }
-        //}
 
         var campGrid = grid.eCamp.campGrid;
 
@@ -79,6 +77,7 @@ public class LogicBoard
         this.attackerPos = new(attackerPos);
         pieces.Clear();
         allPieces.Clear();
+        enemyPieces.Clear();
         cells = new LogicCell[9, 9];
         for (int y = 0; y < 9; y++)
         {
@@ -94,19 +93,15 @@ public class LogicBoard
                     {
                         pieces.Add(p);
                     }
+                    else
+                    {
+                        enemyPieces.Add(p);
+                    }
                     allPieces.Add(p);
                     cells[x, y].piece = p;
                 }
             }
         }
-
-        //if (grid.drops.Count != 0)
-        //{
-        //    foreach (var d in grid.drops)
-        //    {
-        //        drops.Add(new(d));
-        //    }
-        //}
 
         var campGrid = grid.dropCells;
 
@@ -152,49 +147,95 @@ public class LogicBoard
             cells[src.x, src.y].piece = null;
             movedPiece.MovePiece(dst);
 
-            if (dst.y < 4)
-            {
-                manager.ApplyPromotion(movedPiece);
-            }
+            //if (!movedPiece.GetIsDrop() && !movedPiece.GetIsPromoted() && CheckForPromotion(dst, movedPiece.GetIsBlack()))
+            //{
+            //    manager.ApplyPromotion(movedPiece);
+            //}
 
             cells[dst.x, dst.y].piece = new(movedPiece);
         }
+
+        //update board state after move
+        //pieces.Clear();
+        //enemyPieces.Clear();
+        //allPieces.Clear();
+        //for (int y = 0; y < 9; y++)
+        //{
+        //    for (int x = 0; x < 9; x++)
+        //    {
+        //        var cell = cells[x, y];
+        //        cells[x, y] = new LogicCell(cell);
+        //        if (cell.piece != null)
+        //        {
+        //            var piece = cell.piece;
+        //            LogicPiece p = new(piece);
+        //            if (p.GetIsBlack())
+        //            {
+        //                pieces.Add(p);
+        //            }
+        //            else
+        //            {
+        //                enemyPieces.Add(p);
+        //            }
+        //            allPieces.Add(p);
+        //            cells[x, y].piece = p;
+        //        }
+        //    }
+        //}
     }
 
-    public List<Tuple<Position, Position>> CalculateLogicPossibleMoves()
+    public bool CheckForPromotion(Position dst, bool isBlack)
+    {
+        if (!isBlack && dst.y > 5)
+        {
+            return true;
+        }
+        else if (isBlack && dst.y < 3)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public List<Tuple<Position, Position>> CalculateLogicPossibleMoves(bool maximizing)
     {
         List<Tuple<Position, Position>> logicSrcDstMoves = new();
+        List<LogicPiece> usedPieces = maximizing ? new(pieces) : new(enemyPieces);
+
         if (kingInDanger)
         {
             return HandleKingInDanger();
         }
         else
         {
-            for (int y = 0; y < 3; y++)
-            {
-                for (int x = 0; x < 9; x++)
-                {
-                    if (dropCells[x, y] != null && dropCells[x, y].piece != null)
-                    {
-                        var piece = dropCells[x, y].piece;
-                        var dropsMoves = manager.CalculatePossibleDrops(cells, piece);
-                        if (dropsMoves != null)
-                        {
-                            Position src = piece.GetPosition();
-                            foreach (var m in dropsMoves)
-                            {
-                                if (m != null)
-                                {
-                                    Position dst = m;
-                                    logicSrcDstMoves.Add(new(src, dst));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            //for (int y = 0; y < 3; y++)
+            //{
+            //    for (int x = 0; x < 9; x++)
+            //    {
+            //        if (dropCells[x, y] != null && dropCells[x, y].piece != null)
+            //        {
+            //            var piece = dropCells[x, y].piece;
+            //            var dropsMoves = manager.CalculatePossibleDrops(cells, piece);
+            //            if (dropsMoves != null)
+            //            {
+            //                Position src = piece.GetPosition();
+            //                foreach (var m in dropsMoves)
+            //                {
+            //                    if (m != null)
+            //                    {
+            //                        Position dst = m;
+            //                        logicSrcDstMoves.Add(new(src, dst));
+            //                    }
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
 
-            foreach (var p in pieces)
+            foreach (var p in usedPieces)
             {
                 List<Position> moves = new();
                 if (p.isKing)
@@ -314,7 +355,13 @@ public class LogicBoard
                     if (dropsMoves != null)
                     {
                         Position src = piece.GetPosition();
-                        logicSrcDstMoves.Add(new(src, attackerPos));
+                        foreach (var dangerMove in endangeredMoves)
+                        {
+                            if (!dangerMove.Equals(attackerPos))
+                            {
+                                logicSrcDstMoves.Add(new(src, dangerMove));
+                            }
+                        }
                     }
                 }
             }
@@ -337,28 +384,28 @@ public class LogicBoard
         return logicSrcDstMoves;
     }
 
-public void DisplayBoardState()
-{
-    string whole = "";
-    for (int y = 8; y >= 0; y--)
+    public void DisplayBoardState()
     {
-        string rowStr = "|";
-        for (var x = 0; x < 9; x++)
+        string whole = "";
+        for (int y = 8; y >= 0; y--)
         {
-            var cell = cells[x, y];
-            if (cell.piece != null)
+            string rowStr = "|";
+            for (var x = 0; x < 9; x++)
             {
-                rowStr += $"[{cell.piece.pieceName.Substring(0, 1)}]";
+                var cell = cells[x, y];
+                if (cell.piece != null)
+                {
+                    rowStr += $"[{cell.piece.pieceName.Substring(0, 1)}]";
+                }
+                else
+                {
+                    rowStr += "[ ]";
+                }
             }
-            else
-            {
-                rowStr += "[ ]";
-            }
+            rowStr += "|";
+            whole += rowStr + "\n";
         }
-        rowStr += "|";
-        whole += rowStr + "\n";
-    }
 
-    Debug.Log(whole);
-}
+        Debug.Log(whole);
+    }
 }

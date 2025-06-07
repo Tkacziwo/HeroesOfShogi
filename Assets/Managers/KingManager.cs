@@ -375,4 +375,10 @@ public class KingManager : MonoBehaviour
             }
         }
     }
+
+    public bool AttackerScanForKing(Piece king, Piece attacker)
+    {
+        var attackerMoves = boardManager.CalculatePossibleMoves(attacker);
+        return attackerMoves.Contains(king.GetPosition());
+    }
 }
