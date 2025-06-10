@@ -2,6 +2,56 @@ using System.Collections.Generic;
 
 public class LogicBoardManager
 {
+    public List<Position> CalculatePossibleMovesInverted(LogicPiece piece, LogicCell[,] cells)
+    {
+        var moveset = piece.GetMoveset();
+        var pos = piece.GetPosition();
+        var isBlack = piece.GetIsBlack();
+        isBlack = !isBlack;
+        List<Position> possibleMoves = new();
+        int row = 1;
+        int col = -1;
+        for (int i = 1; i <= 9; i++)
+        {
+            //Regular pieces
+            if (moveset[i - 1] == 1)
+            {
+                int destX = col + pos.x;
+                int destY = row + pos.y;
+                if (IsInBoard(destX, destY)
+                    && (IsCellFree(destX, destY, cells) || IsEnemy(destX, destY, isBlack, cells)))
+                {
+                    possibleMoves.Add(new(destX, destY));
+                }
+            }
+            //Horse
+            else if (moveset[i - 1] == 3)
+            {
+                int destY = isBlack ? row - 1 + pos.y : row + 1 + pos.y;
+                int destX = col + pos.x;
+
+                if (IsInBoard(destX, destY)
+                    && (IsCellFree(destX, destY, cells) || IsEnemy(destX, destY, isBlack, cells)))
+                {
+                    possibleMoves.Add(new(destX, destY));
+                }
+            }
+            //Special pieces: Rook, Bishop
+            else if (moveset[i - 1] == 2)
+            {
+                ExtendSpecialPiecePossibleMovesInverted(row, col, pos, ref possibleMoves, isBlack, cells);
+            }
+
+            col++;
+            if (i % 3 == 0 && i != 0)
+            {
+                row--;
+                col = -1;
+            }
+        }
+        return possibleMoves;
+    }
+
     public List<Position> CalculatePossibleMoves(
         LogicPiece piece,
         LogicCell[,] cells,
@@ -103,6 +153,42 @@ public class LogicBoardManager
                 {
                     break;
                 }
+            }
+        }
+    }
+
+    public void ExtendSpecialPiecePossibleMovesInverted(
+        int row,
+        int col,
+        Position pos,
+        ref List<Position> possibleMoves,
+        bool isBlack,
+        LogicCell[,] cells)
+    {
+        Position destPos = new(col + pos.x, row + pos.y);
+        while (true)
+        {
+            if (IsInBoard(destPos.x, destPos.y))
+            {
+                if (IsCellFree(destPos.x, destPos.y, cells))
+                {
+                    possibleMoves.Add(new(destPos));
+                }
+                else
+                {
+                    if (IsEnemy(destPos.x, destPos.y, isBlack, cells))
+                    {
+                        possibleMoves.Add(new(destPos));
+                        break;
+                    }
+                }
+
+                destPos.x += col;
+                destPos.y += row;
+            }
+            else
+            {
+                break;
             }
         }
     }

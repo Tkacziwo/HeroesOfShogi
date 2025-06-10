@@ -240,19 +240,8 @@ public class LogicBoard
                 List<Position> moves = new();
                 if (p.isKing)
                 {
-                    moves = kingManager.CloseScan(p.GetPosition(), cells);
-
-                    var copy = new List<Position>();
-                    copy.AddRange(moves);
-                    foreach (var pMoves in moves)
-                    {
-                        var res = kingManager.FarScanForKing(pMoves, p.GetIsBlack(), ref attackerPos, cells);
-                        if (res)
-                        {
-                            copy.Remove(pMoves);
-                        }
-                    }
-                    moves = copy;
+                    var piecesList = p.GetIsBlack() ? enemyPieces : pieces;
+                    moves = kingManager.ValidMovesScan(p, piecesList, cells);
                 }
                 else
                 {
@@ -295,9 +284,16 @@ public class LogicBoard
         {
             if (p.isKing)
             {
-                var moves = kingManager.CloseScan(p.GetPosition(), cells);
+                var piecesList = p.GetIsBlack() ? enemyPieces : pieces;
+                var moves = kingManager.ValidMovesScan(p, piecesList, cells);
                 var attacker = cells[attackerPos.x, attackerPos.y].piece;
-                var attackerProtected = kingManager.FarScan(attackerPos, attacker.GetIsBlack(), cells);
+
+                var friendlyPieces = p.GetIsBlack() ? pieces : enemyPieces;
+                bool attackerProtected = kingManager.IsAttackerProtected(attacker, friendlyPieces, cells);
+                if (attackerProtected && moves.Contains(attacker.GetPosition()))
+                {
+                    moves.Remove(attacker.GetPosition());
+                }
                 var additionalDangerMoves = kingManager.KingDangerMovesScan(moves, p.GetIsBlack(), cells);
 
                 List<Position> aPos = new()

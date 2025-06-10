@@ -204,116 +204,46 @@ public class KingManager : MonoBehaviour
         }
     }
 
-    public bool FarScan(Position enemyPos, bool isBlack)
-    {
-        //used for special piece scanning
-        int rowOperator = 1;
-        int colOperator = -1;
-        for (int i = 1; i <= 9; i++)
-        {
-            if (FarEnemyDirectionScan(rowOperator, colOperator, enemyPos, isBlack))
-            {
-                return true;
-            }
-            colOperator++;
-            if (i % 3 == 0 && i != 0)
-            {
-                rowOperator--;
-                colOperator = -1;
-            }
-        }
-        return false;
-    }
-
     public bool CloseScanForKing(Piece king, Position attackerPos)
     {
         var possibleMoves = boardManager.CalculatePossibleMoves(king);
         return possibleMoves.Contains(attackerPos);
     }
 
-    public bool FarEnemyDirectionScan(int rowOperator, int colOperator, Position source, bool isBlack)
+    public List<Position> ValidMovesScan(Piece king)
     {
-        if (rowOperator == 0 && colOperator == 0) { return false; }
-        int destX = source.x + colOperator;
-        int destY = source.y + rowOperator;
-        while (true)
+        var enemyPieces = king.GetIsBlack() ? gridGame.GetPlayerPieces() : gridGame.GetBotPieces();
+        List<Position> kingPMoves = boardManager.CalculatePossibleMoves(king);
+
+        foreach (var piece in enemyPieces)
         {
-            if (boardManager.IsInBoard(destX, destY))
-            {
-                if (!boardManager.IsCellFree(destX, destY))
-                {
-                    var piece = gridGame.GetPieceInGrid(destX, destY).GetComponent<Piece>();
-                    if (!boardManager.IsEnemy(destX, destY, isBlack) && destX != source.x && destY != source.y)
-                    {
-                        if (piece.GetIsSpecial())
-                        {
-                            return true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    }
-                    else if (boardManager.IsEnemy(destX, destY, isBlack))
-                    {
-                        return false;
-                    }
-                }
-                destX += colOperator;
-                destY += rowOperator;
-            }
-            else
-            {
-                return false;
-            }
+            List<Position> enemyPiecePMoves = boardManager.CalculatePossibleMoves(piece);
+            kingPMoves = boardManager.CalculateOverlappingMoves(kingPMoves, enemyPiecePMoves, false);
         }
+
+        return kingPMoves;
     }
 
-    public List<Position> CloseScan(Position kingPos)
+    public bool IsAttackerProtected(Piece attacker)
     {
-        var kingPiece = gridGame.GetPieceInGrid(kingPos).GetComponent<Piece>();
-        var possibleMoves = boardManager.CalculatePossibleMoves(kingPiece);
-        List<Position> overlappingMoves = new();
-        List<Position> enemiesProtectionMoves = new();
-        var rowOperator = 2;
-        var colOperator = -2;
-
-        for (int i = 0; i < 25; i++)
+        var friendlyPieces = attacker.GetIsBlack() ? gridGame.GetBotPieces() : gridGame.GetPlayerPieces();
+        var attackerPosition = attacker.GetPosition();
+        foreach (var piece in friendlyPieces)
         {
-            Position destPos = new(kingPos.x + colOperator, kingPos.y + rowOperator);
+            if (!piece.GetIsDrop())
+            {
+                List<Position> friendlyPiecePMovesInverted = boardManager.CalculatePossibleMovesInverted(piece);
 
-            if (boardManager.IsInBoard(destPos)
-                && !boardManager.IsCellFree(destPos)
-                && boardManager.IsEnemy(destPos, kingPiece.GetIsBlack()))
-            {
-                var enemyPiece = gridGame.GetPieceInGrid(destPos).GetComponent<Piece>();
-                var enemyPossibleMoves = boardManager.CalculatePossibleMoves(enemyPiece);
-                var adjustedPiece = enemyPiece;
-                if (adjustedPiece.GetIsBlack())
+                if (friendlyPiecePMovesInverted.Contains(attackerPosition))
                 {
-                    adjustedPiece.ResetIsBlack();
+                    return true;
                 }
-                else
-                {
-                    adjustedPiece.SetIsBlack();
-                }
-                var enemyProtectionMoves = boardManager.CalculatePossibleMoves(adjustedPiece);
-                enemiesProtectionMoves.AddRange(enemyProtectionMoves);
-                overlappingMoves.AddRange(boardManager.CalculateOverlappingMoves(possibleMoves, enemyPossibleMoves, true));
-            }
-            colOperator++;
-            if (i % 5 == 0 && i != 0)
-            {
-                rowOperator--;
-                colOperator = -2;
             }
         }
-        possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, overlappingMoves, false);
-        possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, enemiesProtectionMoves, false);
 
-        return possibleMoves;
+        return false;
     }
-
+   
     public List<Position> CalculateEndangeredMoves(Piece attacker, Position kingPos = null)
     {
         var attackerMoveset = attacker.GetMoveset();

@@ -18,7 +18,7 @@ public class AbilitiesManager : MonoBehaviour
         List<Position> potentialKills = new();
         int row = 1;
         int col = -1;
-        for (int i = 1; i <= 3; i++)
+        for (int i = 1; i <= 9; i++)
         {
             int destX = col + killedPiecePosition.x;
             int destY = row + killedPiecePosition.y;
@@ -39,7 +39,7 @@ public class AbilitiesManager : MonoBehaviour
             }
         }
 
-        if (potentialKills != null)
+        if (potentialKills != null && potentialKills.Count != 0)
         {
             return potentialKills[UnityEngine.Random.Range(0, potentialKills.Count)];
 

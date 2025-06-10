@@ -452,7 +452,7 @@ MonoBehaviour:
   gridCellSize: 2
   numberOfPieces: 0
   posX: 0
-  positionOperator: 0
+  positionOperator: -1
   capturedPieceObjects: []
 --- !u!4 &307997461
 Transform:
@@ -1304,7 +1304,7 @@ MonoBehaviour:
   gridCellSize: 2
   numberOfPieces: 0
   posX: 0
-  positionOperator: 0
+  positionOperator: 1
   capturedPieceObjects: []
 --- !u!4 &608483106
 Transform:
@@ -1353,7 +1353,6 @@ MonoBehaviour:
   whatIsAGridLayer:
     serializedVersion: 2
     m_Bits: 256
-  shogiPiece: {fileID: 920334233785424435, guid: 1cb404005b525f542990d0835542a848, type: 3}
   bodyguards: []
   sacrifices: []
   playerTurn: 1
@@ -2497,7 +2496,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1679473594}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 801168600}
+        m_TargetAssemblyTypeName: InputManager, Assembly-CSharp
+        m_MethodName: Restart
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1679473594
 MonoBehaviour:
   m_ObjectHideFlags: 0

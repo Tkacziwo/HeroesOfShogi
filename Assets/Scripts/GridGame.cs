@@ -63,6 +63,31 @@ public class GridGame : MonoBehaviour
         enemyCampPosY = 0;
     }
 
+    public bool PiecesFinishedMoving()
+    {
+        foreach (var piece in playerPieces)
+        {
+            if (!piece.finishedMoving)
+            {
+                return false;
+            }
+        }
+        foreach (var piece in botPieces)
+        {
+            if (!piece.finishedMoving)
+            {
+                return false;
+            }
+        }
+
+        if (!playerKing.finishedMoving || !botKing.finishedMoving)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     public void GenerateField()
     {
 

@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Threading;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class InputManager : MonoBehaviour
 {
     GridGame gameGrid;
-    [SerializeField] private LayerMask whatIsAGridLayer;
 
-    [SerializeField] private GameObject shogiPiece;
+    [SerializeField] private LayerMask whatIsAGridLayer;
 
     private BoardManager boardManager;
 
@@ -102,6 +102,11 @@ public class InputManager : MonoBehaviour
         paused = true;
     }
 
+    public void Restart()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
     public void ResumeGame()
     {
         paused = false;
@@ -168,7 +173,7 @@ public class InputManager : MonoBehaviour
                     ApplyBotMinimaxResult();
                 }
             }
-            else if (!playerTurn && botEnabled && !duringBotMove)
+            else if (!playerTurn && botEnabled && !duringBotMove && gameGrid.PiecesFinishedMoving())
             {
                 PrepareBotForMinimax();
             }
@@ -191,7 +196,7 @@ public class InputManager : MonoBehaviour
                     hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.magenta;
                 }
 
-                if (Input.GetMouseButtonDown(0) && !duringBotMove)
+                if (Input.GetMouseButtonDown(0) && !duringBotMove && gameGrid.PiecesFinishedMoving())
                 {
                     if (duringKingAbility)
                     {
@@ -206,16 +211,16 @@ public class InputManager : MonoBehaviour
                         HandleBoardClick(hoveredCell);
                     }
                 }
-                else if (Input.GetKeyDown(KeyCode.Backspace))
-                {
-                    //undo move
-                    var undo = boardManager.UndoMove();
-                    var source = undo.src;
-                    var dest = undo.dst;
-                    CellWhichHoldsPiece = gameGrid.GetGridCell(dest.Item1, dest.Item2);
-                    var cell = gameGrid.GetGridCell(source.Item1, source.Item2);
-                    ExecutePieceMove(cell);
-                }
+                //else if (Input.GetKeyDown(KeyCode.Backspace))
+                //{
+                //    //undo move
+                //    var undo = boardManager.UndoMove();
+                //    var source = undo.src;
+                //    var dest = undo.dst;
+                //    CellWhichHoldsPiece = gameGrid.GetGridCell(dest.Item1, dest.Item2);
+                //    var cell = gameGrid.GetGridCell(source.Item1, source.Item2);
+                //    ExecutePieceMove(cell);
+                //}
             }
         }
     }
@@ -400,9 +405,18 @@ public class InputManager : MonoBehaviour
             {
                 if (piece.isKing)
                 {
-                    possibleMoves = kingManager.CloseScan(piece.GetPosition());
+                    //possibleMoves = kingManager.CloseScan(piece.GetPosition());
+                    possibleMoves = kingManager.ValidMovesScan(piece);
                     var attacker = CellWhichHoldsAttacker.objectInThisGridSpace.GetComponent<Piece>();
-                    var attackerProtected = kingManager.FarScan(attacker.GetPosition(), attacker.GetIsBlack());
+                    // var attackerProtected = kingManager.FarScan(attacker.GetPosition(), attacker.GetIsBlack());
+
+                    // Attacker protected -> remove attacker pos from possible moves
+                    bool attackerProtected = kingManager.IsAttackerProtected(attacker);
+                    if (attackerProtected && possibleMoves.Contains(attacker.GetPosition()))
+                    {
+                        possibleMoves.Remove(attacker.GetPosition());
+                    }
+
 
                     var attackerPossibleMovesUnrestricted = boardManager.CalculatePossibleMoves(attacker, true);
                     if (attackerPossibleMovesUnrestricted != null)
@@ -421,10 +435,7 @@ public class InputManager : MonoBehaviour
                         possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, additionalDangerMoves, false);
                     }
 
-                    if (attackerProtected)
-                    {
-                        possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, attackerPos, false);
-                    }
+                   
 
                     PossibleMovesDisplayLoop();
 
@@ -493,19 +504,20 @@ public class InputManager : MonoBehaviour
         }
         else if (piece.isKing)
         {
-            possibleMoves = kingManager.CloseScan(piece.GetPosition());
+            possibleMoves = kingManager.ValidMovesScan(piece);
             //also check FarScan
-            var copy = new List<Position>();
-            copy.AddRange(possibleMoves);
-            foreach (var p in possibleMoves)
-            {
-                var res = kingManager.FarScanForKing(p, piece.GetIsBlack(), ref attackerPos);
-                if (res)
-                {
-                    copy.Remove(p);
-                }
-            }
-            possibleMoves = copy;
+
+            //var copy = new List<Position>();
+            //copy.AddRange(possibleMoves);
+            //foreach (var p in possibleMoves)
+            //{
+            //    var res = kingManager.FarScanForKing(p, piece.GetIsBlack(), ref attackerPos);
+            //    if (res)
+            //    {
+            //        copy.Remove(p);
+            //    }
+            //}
+            //possibleMoves = copy;
         }
         else if (piece.GetIsDrop())
         {
@@ -652,6 +664,15 @@ public class InputManager : MonoBehaviour
         else
         {
             CellWhichHoldsPiece.objectInThisGridSpace = null;
+        }
+
+        if(playerTurn)
+        {
+            piece.ResetIsBlack();
+        }
+        else
+        {
+            piece.SetIsBlack();
         }
     }
 

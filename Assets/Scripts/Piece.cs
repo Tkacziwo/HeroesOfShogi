@@ -43,6 +43,8 @@ public class Piece : MonoBehaviour
 
     private List<Vector3> curvePath = new();
 
+    public bool finishedMoving = true;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -286,12 +288,14 @@ public class Piece : MonoBehaviour
 
     IEnumerator PositionTransformLoop()
     {
+        finishedMoving = false;
         foreach (var c in curvePath)
         {
             yield return PositionTransformStep(c);
         }
 
         curvePath.Clear();
+        finishedMoving = true;
     }
 
     IEnumerator PositionTransformStep(Vector3 quadratic)

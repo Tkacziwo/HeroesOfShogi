@@ -34,180 +34,38 @@ public class LogicKingManager
         return sacrifices;
     }
 
-    public List<Position> CloseScan(Position kingPos, LogicCell[,] cells)
+    public List<Position> ValidMovesScan(LogicPiece king, List<LogicPiece> enemyPieces, LogicCell[,] cells)
     {
-        var kingPiece = cells[kingPos.x, kingPos.y].piece;
-        var possibleMoves = boardManager.CalculatePossibleMoves(kingPiece, cells);
-        List<Position> overlappingMoves = new();
-        List<Position> enemiesProtectionMoves = new();
-        var rowOperator = 2;
-        var colOperator = -2;
+        List<Position> kingPMoves = boardManager.CalculatePossibleMoves(king, cells);
 
-        for (int i = 0; i < 25; i++)
+        foreach (var piece in enemyPieces)
         {
-            int destX = kingPos.x + colOperator;
-            int destY = kingPos.y + rowOperator;
-
-            if (boardManager.IsInBoard(destX, destY)
-                && !boardManager.IsCellFree(destX, destY, cells)
-                && boardManager.IsEnemy(destX, destY, kingPiece.GetIsBlack(), cells))
-            {
-                var enemyPiece = cells[kingPos.x, kingPos.y].piece;
-                var enemyPossibleMoves = boardManager.CalculatePossibleMoves(enemyPiece, cells);
-                var adjustedPiece = enemyPiece;
-                if (adjustedPiece.GetIsBlack())
-                {
-                    adjustedPiece.ResetIsBlack();
-                }
-                else
-                {
-                    adjustedPiece.SetIsBlack();
-                }
-                var enemyProtectionMoves = boardManager.CalculatePossibleMoves(adjustedPiece, cells);
-                enemiesProtectionMoves.AddRange(enemyProtectionMoves);
-                overlappingMoves.AddRange(boardManager.CalculateOverlappingMoves(possibleMoves, enemyPossibleMoves, true));
-            }
-            colOperator++;
-            if (i % 5 == 0 && i != 0)
-            {
-                rowOperator--;
-                colOperator = -2;
-            }
+            List<Position> enemyPiecePMoves = boardManager.CalculatePossibleMoves(piece, cells);
+            kingPMoves = boardManager.CalculateOverlappingMoves(kingPMoves, enemyPiecePMoves, false);
         }
-        possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, overlappingMoves, false);
-        possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, enemiesProtectionMoves, false);
 
-        return possibleMoves;
+        return kingPMoves;
     }
 
-    public bool FarScanForKing(Position pos, bool isBlack, ref Position attackerPos, LogicCell[,] cells)
+    public bool IsAttackerProtected(LogicPiece attacker, List<LogicPiece> friendlyPieces, LogicCell[,] cells)
     {
-        int rowOperator = 1;
-        int colOperator = -1;
-        for (int i = 1; i <= 9; i++)
+        var attackerPosition = attacker.GetPosition();
+        foreach (var piece in friendlyPieces)
         {
-            if (FarKingDirectionScan(rowOperator, colOperator, pos, isBlack, ref attackerPos, cells))
+            if (!piece.GetIsDrop())
             {
-                return true;
-            }
-            colOperator++;
-            if (i % 3 == 0 && i != 0)
-            {
-                rowOperator--;
-                colOperator = -1;
+                List<Position> friendlyPiecePMovesInverted = boardManager.CalculatePossibleMovesInverted(piece, cells);
+
+                if (friendlyPiecePMovesInverted.Contains(attackerPosition))
+                {
+                    return true;
+                }
             }
         }
+
         return false;
     }
-
-    public bool FarKingDirectionScan(int rowOperator, int colOperator, Position source, bool isBlack, ref Position attackerPos, LogicCell[,] cells)
-    {
-        int destX = source.x + colOperator;
-        int destY = source.y + rowOperator;
-        while (true)
-        {
-            if (rowOperator == 0 && colOperator == 0)
-            {
-                return false;
-            }
-            if (boardManager.IsInBoard(destX, destY))
-            {
-                if (!boardManager.IsCellFree(destX, destY, cells))
-                {
-                    var piece = cells[destX, destY].piece;
-                    var pieceMoves = boardManager.CalculatePossibleMoves(piece, cells);
-
-                    if (boardManager.IsEnemy(destX, destY, isBlack, cells))
-                    {
-                        if (piece.GetIsSpecial())
-                        {
-                            foreach (var m in pieceMoves)
-                            {
-                                if (m.Equals(source))
-                                {
-                                    attackerPos = new(destX, destY);
-                                    return true;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    }
-                    else if (!boardManager.IsEnemy(destX, destY, isBlack, cells))
-                    {
-                        return false;
-                    }
-                }
-                destX += colOperator;
-                destY += rowOperator;
-            }
-            else
-            {
-                return false;
-            }
-        }
-    }
-
-    public bool FarScan(Position enemyPos, bool isBlack, LogicCell[,] cells)
-    {
-        //used for special piece scanning
-        int rowOperator = 1;
-        int colOperator = -1;
-        for (int i = 1; i <= 9; i++)
-        {
-            if (FarEnemyDirectionScan(rowOperator, colOperator, enemyPos, isBlack, cells))
-            {
-                return true;
-            }
-            colOperator++;
-            if (i % 3 == 0 && i != 0)
-            {
-                rowOperator--;
-                colOperator = -1;
-            }
-        }
-        return false;
-    }
-
-    public bool FarEnemyDirectionScan(int rowOperator, int colOperator, Position source, bool isBlack, LogicCell[,] cells)
-    {
-        int destX = source.x + colOperator;
-        int destY = source.y + rowOperator;
-        while (true)
-        {
-            if (boardManager.IsInBoard(destX, destY))
-            {
-                if (!boardManager.IsCellFree(destX, destY, cells))
-                {
-                    var piece = cells[destX, destY].piece;
-                    if (!boardManager.IsEnemy(destX, destY, isBlack, cells))
-                    {
-                        if (piece.GetIsSpecial())
-                        {
-                            return true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    }
-                    else if (boardManager.IsEnemy(destX, destY, isBlack, cells))
-                    {
-                        return false;
-                    }
-                }
-                destX += colOperator;
-                destY += rowOperator;
-            }
-            else
-            {
-                return false;
-            }
-        }
-    }
-
+    
     public List<Position> KingDangerMovesScan(List<Position> pos, bool isBlack, LogicCell[,] cells)
     {
         List<Position> dangerMoves = new();
