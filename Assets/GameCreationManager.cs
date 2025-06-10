@@ -14,6 +14,8 @@ public class GameCreationManager : MonoBehaviour
 
     [SerializeField] private Toggle botCheckbox;
 
+    [SerializeField] private Image mapImage;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -24,16 +26,37 @@ public class GameCreationManager : MonoBehaviour
         => SceneManager.LoadScene("MainMenu");
 
     public void StartGame()
-        => SceneManager.LoadScene("Game");
+    {
+        StaticData.map = mapImage.GetComponent<Image>().sprite.name;
+        SceneManager.LoadScene("Game");
+    }
 
     public void LoadPreviousMap()
     {
-
+        if (mapImage.GetComponent<Image>().sprite.name == "GrasslandsImage")
+        {
+            var sprite = Resources.Load<Sprite>("Maps/DesertImage");
+            mapImage.GetComponent<Image>().sprite = sprite;
+        }
+        else
+        {
+            var sprite = Resources.Load<Sprite>("Maps/GrasslandsImage");
+            mapImage.GetComponent<Image>().sprite = sprite;
+        }
     }
 
     public void LoadNextMap()
     {
-
+        if (mapImage.GetComponent<Image>().sprite.name == "GrasslandsImage")
+        {
+            var sprite = Resources.Load<Sprite>("Maps/DesertImage");
+            mapImage.GetComponent<Image>().sprite = sprite;
+        }
+        else
+        {
+            var sprite = Resources.Load<Sprite>("Maps/GrasslandsImage");
+            mapImage.GetComponent<Image>().sprite = sprite;
+        }
     }
 
     public void UpdateBotDifficulty()

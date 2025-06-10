@@ -78,6 +78,8 @@ public class InputManager : MonoBehaviour
 
     [SerializeField] private GameObject dieAnimation;
 
+    private Terrain currentTerrain;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -93,6 +95,17 @@ public class InputManager : MonoBehaviour
         botFinishedCalculating = false;
         botEnabled = StaticData.botEnabled;
         bot.InitializeBot(StaticData.botDifficulty);
+        if (StaticData.map == "GrasslandsImage")
+        {
+            currentTerrain = Terrain.Instantiate(Resources.Load<Terrain>("Terrains/Grasslands"));
+            currentTerrain.transform.position = new Vector3(-110, -1, -150);
+        }
+        else
+        {
+            currentTerrain = Terrain.Instantiate(Resources.Load<Terrain>("Terrains/Desert"));
+            currentTerrain.transform.position = new Vector3(-110, -1, -150);
+        }
+
         attackerPos = new();
     }
 
@@ -405,10 +418,9 @@ public class InputManager : MonoBehaviour
             {
                 if (piece.isKing)
                 {
-                    //possibleMoves = kingManager.CloseScan(piece.GetPosition());
+                    // Find valid moves for king
                     possibleMoves = kingManager.ValidMovesScan(piece);
                     var attacker = CellWhichHoldsAttacker.objectInThisGridSpace.GetComponent<Piece>();
-                    // var attackerProtected = kingManager.FarScan(attacker.GetPosition(), attacker.GetIsBlack());
 
                     // Attacker protected -> remove attacker pos from possible moves
                     bool attackerProtected = kingManager.IsAttackerProtected(attacker);
@@ -417,25 +429,17 @@ public class InputManager : MonoBehaviour
                         possibleMoves.Remove(attacker.GetPosition());
                     }
 
-
                     var attackerPossibleMovesUnrestricted = boardManager.CalculatePossibleMoves(attacker, true);
-                    if (attackerPossibleMovesUnrestricted != null)
+                    if (attackerPossibleMovesUnrestricted != null && attackerPossibleMovesUnrestricted.Count != 0)
                     {
                         possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, attackerPossibleMovesUnrestricted, false);
                     }
 
                     var additionalDangerMoves = kingManager.KingDangerMovesScan(possibleMoves, piece.GetIsBlack());
-                    List<Position> attackerPos = new()
-                    {
-                    attacker.GetPosition()
-                    };
-
-                    if (additionalDangerMoves != null)
+                    if (additionalDangerMoves != null && additionalDangerMoves.Count != 0)
                     {
                         possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, additionalDangerMoves, false);
                     }
-
-                   
 
                     PossibleMovesDisplayLoop();
 
@@ -462,6 +466,9 @@ public class InputManager : MonoBehaviour
                         {
                             possibleMoves = boardManager.CalculatePossibleDrops(piece);
                             possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, endangeredMoves, true);
+                            PossibleMovesDisplayLoop();
+                            CellWhichHoldsPiece = hoveredCell;
+                            chosenPiece = true;
                         }
                         //sacrifice checking
                         else if (sacrifices != null)

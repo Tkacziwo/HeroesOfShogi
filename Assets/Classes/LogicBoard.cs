@@ -20,7 +20,6 @@ public class LogicBoard
 
     public Position attackerPos = null;
 
-
     public LogicCell[,] dropCells = new LogicCell[9, 3];
 
     public void CloneFromReal(GridGame grid, bool kingInDanger, Position attackerPos)
@@ -66,6 +65,8 @@ public class LogicBoard
                 if (cell.objectInThisGridSpace != null)
                 {
                     dropCells[j, i].piece = new(cell.objectInThisGridSpace.GetComponent<Piece>());
+                    var dropPiecePos = dropCells[j, i].piece.GetPosition();
+                    dropCells[j, i].piece.SetPosition(new(dropPiecePos.x + j, dropPiecePos.y + i));
                 }
             }
         }
@@ -146,42 +147,8 @@ public class LogicBoard
             var movedPiece = cells[src.x, src.y].piece;
             cells[src.x, src.y].piece = null;
             movedPiece.MovePiece(dst);
-
-            //if (!movedPiece.GetIsDrop() && !movedPiece.GetIsPromoted() && CheckForPromotion(dst, movedPiece.GetIsBlack()))
-            //{
-            //    manager.ApplyPromotion(movedPiece);
-            //}
-
             cells[dst.x, dst.y].piece = new(movedPiece);
         }
-
-        //update board state after move
-        //pieces.Clear();
-        //enemyPieces.Clear();
-        //allPieces.Clear();
-        //for (int y = 0; y < 9; y++)
-        //{
-        //    for (int x = 0; x < 9; x++)
-        //    {
-        //        var cell = cells[x, y];
-        //        cells[x, y] = new LogicCell(cell);
-        //        if (cell.piece != null)
-        //        {
-        //            var piece = cell.piece;
-        //            LogicPiece p = new(piece);
-        //            if (p.GetIsBlack())
-        //            {
-        //                pieces.Add(p);
-        //            }
-        //            else
-        //            {
-        //                enemyPieces.Add(p);
-        //            }
-        //            allPieces.Add(p);
-        //            cells[x, y].piece = p;
-        //        }
-        //    }
-        //}
     }
 
     public bool CheckForPromotion(Position dst, bool isBlack)
@@ -211,37 +178,40 @@ public class LogicBoard
         }
         else
         {
-            //for (int y = 0; y < 3; y++)
-            //{
-            //    for (int x = 0; x < 9; x++)
-            //    {
-            //        if (dropCells[x, y] != null && dropCells[x, y].piece != null)
-            //        {
-            //            var piece = dropCells[x, y].piece;
-            //            var dropsMoves = manager.CalculatePossibleDrops(cells, piece);
-            //            if (dropsMoves != null)
-            //            {
-            //                Position src = piece.GetPosition();
-            //                foreach (var m in dropsMoves)
-            //                {
-            //                    if (m != null)
-            //                    {
-            //                        Position dst = m;
-            //                        logicSrcDstMoves.Add(new(src, dst));
-            //                    }
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
+            if (maximizing)
+            {
+                for (int y = 0; y < 3; y++)
+                {
+                    for (int x = 0; x < 9; x++)
+                    {
+                        if (dropCells[x, y] != null && dropCells[x, y].piece != null)
+                        {
+                            var piece = dropCells[x, y].piece;
+                            var dropsMoves = manager.CalculatePossibleDrops(cells, piece);
+                            dropsMoves = manager.MultiplyDropsByWeight(dropsMoves);
+                            if (dropsMoves != null || dropsMoves.Count != 0)
+                            {
+                                Position src = piece.GetPosition();
+                                foreach (var m in dropsMoves)
+                                {
+                                    if (m != null)
+                                    {
+                                        Position dst = m;
+                                        logicSrcDstMoves.Add(new(src, dst));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             foreach (var p in usedPieces)
             {
                 List<Position> moves = new();
                 if (p.isKing)
                 {
-                    var piecesList = p.GetIsBlack() ? enemyPieces : pieces;
-                    moves = kingManager.ValidMovesScan(p, piecesList, cells);
+                    moves = kingManager.ValidMovesScan(p, enemyPieces, cells);
                 }
                 else
                 {
@@ -282,24 +252,16 @@ public class LogicBoard
 
         foreach (var p in pieces)
         {
-            if (p.isKing)
+            if (p.isKing && p.GetIsBlack())
             {
-                var piecesList = p.GetIsBlack() ? enemyPieces : pieces;
-                var moves = kingManager.ValidMovesScan(p, piecesList, cells);
+                var moves = kingManager.ValidMovesScan(p, enemyPieces, cells);
                 var attacker = cells[attackerPos.x, attackerPos.y].piece;
 
-                var friendlyPieces = p.GetIsBlack() ? pieces : enemyPieces;
-                bool attackerProtected = kingManager.IsAttackerProtected(attacker, friendlyPieces, cells);
+                bool attackerProtected = kingManager.IsAttackerProtected(attacker, pieces, cells);
                 if (attackerProtected && moves.Contains(attacker.GetPosition()))
                 {
                     moves.Remove(attacker.GetPosition());
                 }
-                var additionalDangerMoves = kingManager.KingDangerMovesScan(moves, p.GetIsBlack(), cells);
-
-                List<Position> aPos = new()
-                {
-                    attackerPos
-                };
 
                 var attackerPossibleMovesUnrestricted = manager.ScanMovesUnrestricted(attacker);
                 if (attackerPossibleMovesUnrestricted != null)
@@ -307,16 +269,13 @@ public class LogicBoard
                     moves = manager.CalculateOverlappingMoves(moves, attackerPossibleMovesUnrestricted, false);
                 }
 
-                if (additionalDangerMoves != null)
+                var additionalDangerMoves = kingManager.KingDangerMovesScan(moves, p.GetIsBlack(), cells);
+                if (additionalDangerMoves != null && additionalDangerMoves.Count != 0)
                 {
                     moves = manager.CalculateOverlappingMoves(moves, additionalDangerMoves, false);
                 }
 
-                if (attackerProtected)
-                {
-                    moves = manager.CalculateOverlappingMoves(moves, aPos, false);
-                }
-
+                // calculate all possible valid moves
                 Position src = p.GetPosition();
                 foreach (var m in moves)
                 {
@@ -329,9 +288,8 @@ public class LogicBoard
             }
         }
 
-        var bodyguards = kingManager.FindGuards(attackerPos, pieces, cells);
-
         //bodyguard checking
+        var bodyguards = kingManager.FindGuards(attackerPos, pieces, cells);
         if (bodyguards != null)
         {
             foreach (var b in bodyguards)
@@ -340,6 +298,7 @@ public class LogicBoard
             }
         }
 
+        //drop checking
         for (int y = 0; y < 3; y++)
         {
             for (int x = 0; x < 9; x++)
@@ -362,6 +321,7 @@ public class LogicBoard
                 }
             }
         }
+
         //sacrifice checking
         var sacrifices = kingManager.FindSacrifices(endangeredMoves, pieces, cells);
         if (sacrifices != null && endangeredMoves != null)

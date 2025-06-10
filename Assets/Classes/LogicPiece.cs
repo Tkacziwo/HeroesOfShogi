@@ -116,6 +116,9 @@ public class LogicPiece
     public Position GetPosition()
         => pos;
 
+    public void SetPosition(Position p)
+        => pos = new(p);
+
     public bool GetIsBlack()
         => isBlack;
 

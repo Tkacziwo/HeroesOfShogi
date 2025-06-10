@@ -98,6 +98,11 @@ public class Camp : MonoBehaviour
 
     public void AddToCamp(GameObject piece)
     {
+        if (capturedPieceObjects.Count == 27)
+        {
+            Destroy(piece);
+        }
+
         var pieceScript = piece.GetComponent<Piece>();
 
         if (pieceScript.GetIsPromoted())

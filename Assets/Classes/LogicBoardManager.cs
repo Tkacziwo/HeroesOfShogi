@@ -481,8 +481,28 @@ public class LogicBoardManager
         }
     }
 
+    public List<Position> MultiplyDropsByWeight(List<Position> moves)
+    {
+        List<Position> betterDrops = new();
+        foreach (var move in moves)
+        {
+            if ((move.y > 0 && move.y <= 3) || (move.y < 7 && move.y >= 5))
+            {
+                var random = new System.Random();
+                var randomNumber = random.Next(0, 2);
+                if (randomNumber == 0)
+                {
+                    betterDrops.Add(move);
+                }
+            }
+            else if (move.y > 3 && move.y < 5)
+            {
+                betterDrops.Add(move);
+            }
+        }
 
-
+        return betterDrops;
+    }
 
     public List<Position> CalculatePossibleDrops(LogicCell[,] cells, LogicPiece piece)
     {
@@ -491,8 +511,6 @@ public class LogicBoardManager
         if (piece.GetName() == "Pawn")
         {
             List<int> badX = new();
-
-
             for (int y = 0; y < 9; y++)
             {
                 for (int x = 0; x < 9; x++)
