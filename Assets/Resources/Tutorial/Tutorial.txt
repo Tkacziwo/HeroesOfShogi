@@ -1,0 +1,7 @@
+Welcome#Shogi są bardzo podobne do klasycznych szachów, klikaj dowolne figury a pokażą się ich możliwe ruchy. Kliknij figury w swoim obozie (na samym dole), aby ponownie je zrzucić na planszę zgodnie z zasadami Shogi. Kiedy Twoje figury wejdę w obóz wroga (trzy pierwsze rzędy z góry) to promują się na Złotego Generała.
+Drop#Właśnie kliknąłeś zdobytą figurę. Figury przeciwnika, które zbijesz, trafią do Twojej ręki. Możesz wykorzystać swoją turę na jej zrzucenie z powrotem na planszę. W jednym rzędzie może być tylko jeden piechur (Pawn).
+Promotion#Twoja figura weszła w obóz wroga i dostała awans. Goniec i Wieża mają swoje unikatowe awanse na Konia i Smoka. Reszta figur staje się Złotym Generałem
+Inferno#Umiejętność smoka, raz na całą rozgrywkę. Zbija dodatkowo losowo wybraną figurę przeciwnika. W skrajnych przypadkach, może stworzyć niemożliwy ruch.
+Forward#Umiejętność Złotego Generała. Wraz z piechurami w bliskim otoczeniu, rusz o jedno pole do przodu.
+Rush#Umiejętność Srebrnego Generała. Wykonaj 2 ruchy w tej turze.
+King#Umiejętność Króla. Zabierz promocję jednej figurze i daj ją figurze nie spromowanej. Wybierz podświetloną na żółto figurę, a potem niebieską.

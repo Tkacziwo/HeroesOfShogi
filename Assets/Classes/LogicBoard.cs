@@ -22,7 +22,7 @@ public class LogicBoard
 
     public LogicCell[,] dropCells = new LogicCell[9, 3];
 
-    public void CloneFromReal(GridGame grid, bool kingInDanger, Position attackerPos)
+    public void CloneFromReal(Grid grid, bool kingInDanger, Position attackerPos)
     {
         this.kingInDanger = kingInDanger;
         this.attackerPos = new(attackerPos);
@@ -257,7 +257,7 @@ public class LogicBoard
                 var moves = kingManager.ValidMovesScan(p, enemyPieces, cells);
                 var attacker = cells[attackerPos.x, attackerPos.y].piece;
 
-                bool attackerProtected = kingManager.IsAttackerProtected(attacker, pieces, cells);
+                bool attackerProtected = kingManager.IsAttackerProtected(attacker, enemyPieces, cells);
                 if (attackerProtected && moves.Contains(attacker.GetPosition()))
                 {
                     moves.Remove(attacker.GetPosition());

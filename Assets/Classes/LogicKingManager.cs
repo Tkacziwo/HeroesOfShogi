@@ -9,10 +9,15 @@ public class LogicKingManager
         List<LogicPiece> guards = new();
         foreach (var piece in piecesList)
         {
-            var piecePossibleMoves = boardManager.CalculatePossibleMoves(piece, cells);
+            if (!piece.isKing)
+            {
+                var piecePossibleMoves = boardManager.CalculatePossibleMoves(piece, cells);
 
-            if (piecePossibleMoves.Contains(attackerPos))
-                guards.Add(piece);
+                if (piecePossibleMoves.Contains(attackerPos))
+                {
+                    guards.Add(piece);
+                }
+            }
         }
         return guards;
     }
@@ -65,7 +70,7 @@ public class LogicKingManager
 
         return false;
     }
-    
+
     public List<Position> KingDangerMovesScan(List<Position> pos, bool isBlack, LogicCell[,] cells)
     {
         List<Position> dangerMoves = new();

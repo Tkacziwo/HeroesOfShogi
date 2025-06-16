@@ -41,7 +41,7 @@ public class Piece : MonoBehaviour
 
     public GameObject promotionEffect;
 
-    private List<Vector3> curvePath = new();
+    private readonly List<Vector3> curvePath = new();
 
     public bool finishedMoving = true;
 
@@ -88,7 +88,7 @@ public class Piece : MonoBehaviour
                 break;
         }
 
-        promotionEffect = Resources.Load("PromotionEffect") as GameObject;
+        promotionEffect = Resources.Load("Prefabs/ParticleEffects/PromotionEffect") as GameObject;
         promotionEffect = Instantiate(promotionEffect);
         promotionEffect.GetComponent<ParticleSystem>().Stop();
         promotionEffect.GetComponent<ParticleSystem>().Clear();
@@ -185,6 +185,7 @@ public class Piece : MonoBehaviour
 
     public void Promote(int[] newMoveset)
     {
+        promotionEffect.transform.position = this.transform.position;
         promotionEffect.GetComponent<ParticleSystem>().Play();
         Moveset = newMoveset;
         if (isBlack)
@@ -304,18 +305,4 @@ public class Piece : MonoBehaviour
         promotionEffect.transform.position = quadratic;
         yield return new WaitForSecondsRealtime(0.001f);
     }
-
-
-
-    // Update is called once per frame
-    void Update()
-    {
-        //if (Vector3.Distance(transform.position, emptyGameObject.transform.position) > 0.001f)
-        //{
-        //    var step = speed * Time.deltaTime;
-        //    transform.position = Vector3.MoveTowards(transform.position, emptyGameObject.transform.position, step);
-        //    promotionEffect.transform.position = Vector3.MoveTowards(transform.position, emptyGameObject.transform.position, step);
-        //}
-    }
-
 }

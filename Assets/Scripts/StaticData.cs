@@ -7,4 +7,6 @@ public class StaticData : MonoBehaviour
     public static bool botEnabled;
 
     public static string map;
+
+    public static bool tutorial;
 }
