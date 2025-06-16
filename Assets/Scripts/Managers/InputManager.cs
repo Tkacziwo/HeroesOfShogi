@@ -1,3 +1,4 @@
+using NUnit.Framework.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -100,6 +101,7 @@ public class InputManager : MonoBehaviour
         bot.InitializeBot(StaticData.botDifficulty);
         if (!StaticData.tutorial)
         {
+            tutorialGrid.gameObject.SetActive(false);
             tutorialCanvas.gameObject.SetActive(false);
             if (StaticData.map == "GrasslandsImage")
             {
@@ -114,6 +116,7 @@ public class InputManager : MonoBehaviour
         }
         else
         {
+            tutorialGrid.gameObject.SetActive(true);
             tutorialCanvas.gameObject.SetActive(true);
             currentTerrain = Instantiate(Resources.Load<Terrain>("Terrains/TutorialPlayground"));
         }
@@ -188,7 +191,10 @@ public class InputManager : MonoBehaviour
         if (!paused)
         {
             grid.ClearPossibleMoves(possibleMoves);
-            tutorialGrid.ClearPossibleMoves();
+            if (StaticData.tutorial)
+            {
+                tutorialGrid.ClearPossibleMoves();
+            }
             var hoveredCell = MouseOverCell();
 
             if (botFinishedCalculating)

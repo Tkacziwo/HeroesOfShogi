@@ -33,7 +33,6 @@ public class TutorialGrid : MonoBehaviour
         {
             cameraPosition.transform.SetPositionAndRotation(new Vector3(-2, 28, 15), Quaternion.Euler(90, 0, 0));
         }
-
     }
 
     public void GenerateField()
