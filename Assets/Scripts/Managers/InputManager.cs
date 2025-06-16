@@ -15,6 +15,8 @@ public class InputManager : MonoBehaviour
 
     [SerializeField] private KingManager kingManager;
 
+    [SerializeField] private Camera mainCamera;
+
     private List<Position> possibleMoves;
 
     private List<Position> cantChangePossibleMoves;
@@ -188,65 +190,68 @@ public class InputManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!paused)
+        if (mainCamera != null)
         {
-            grid.ClearPossibleMoves(possibleMoves);
-            if (StaticData.tutorial)
+            if (!paused)
             {
-                tutorialGrid.ClearPossibleMoves();
-            }
-            var hoveredCell = MouseOverCell();
-
-            if (botFinishedCalculating)
-            {
-                if (botResult == null)
+                grid.ClearPossibleMoves(possibleMoves);
+                if (StaticData.tutorial)
                 {
-                    var text = gameOverText;
-                    text.text = "YOU WIN";
-                    gameOver.gameObject.SetActive(true);
-                    GameEnd();
+                    tutorialGrid.ClearPossibleMoves();
                 }
-                else
-                {
-                    ApplyBotMinimaxResult();
-                }
-            }
-            else if (!playerTurn && botEnabled && !duringBotMove && grid.PiecesFinishedMoving())
-            {
-                PrepareBotForMinimax();
-            }
-            else if (hoveredCell != null)
-            {
+                var hoveredCell = MouseOverCell();
 
-                if (possibleMoves != null)
+                if (botFinishedCalculating)
                 {
-                    if (possibleMoves.Contains(hoveredCell.GetPosition()))
+                    if (botResult == null)
                     {
-                        hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
+                        var text = gameOverText;
+                        text.text = "YOU WIN";
+                        gameOver.gameObject.SetActive(true);
+                        GameEnd();
                     }
                     else
                     {
-                        hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = new(1.0f, 86 / 255, 83 / 255);
+                        ApplyBotMinimaxResult();
                     }
                 }
-                else
+                else if (!playerTurn && botEnabled && !duringBotMove && grid.PiecesFinishedMoving())
                 {
-                    hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.magenta;
+                    PrepareBotForMinimax();
                 }
+                else if (hoveredCell != null)
+                {
 
-                if (Input.GetMouseButtonDown(0) && !duringBotMove && grid.PiecesFinishedMoving())
-                {
-                    if (duringKingAbility)
+                    if (possibleMoves != null)
                     {
-                        HandleKingAbility(hoveredCell);
-                    }
-                    else if (cantChangePiece)
-                    {
-                        HandleExtraMove(hoveredCell);
+                        if (possibleMoves.Contains(hoveredCell.GetPosition()))
+                        {
+                            hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
+                        }
+                        else
+                        {
+                            hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = new(1.0f, 86 / 255, 83 / 255);
+                        }
                     }
                     else
                     {
-                        HandleBoardClick(hoveredCell);
+                        hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.magenta;
+                    }
+
+                    if (Input.GetMouseButtonDown(0) && !duringBotMove && grid.PiecesFinishedMoving())
+                    {
+                        if (duringKingAbility)
+                        {
+                            HandleKingAbility(hoveredCell);
+                        }
+                        else if (cantChangePiece)
+                        {
+                            HandleExtraMove(hoveredCell);
+                        }
+                        else
+                        {
+                            HandleBoardClick(hoveredCell);
+                        }
                     }
                 }
             }
@@ -807,7 +812,7 @@ public class InputManager : MonoBehaviour
 
     private GridCell MouseOverCell()
     {
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
         var hit = Physics.Raycast(ray, out RaycastHit info);
         return hit ? info.transform.GetComponent<GridCell>() : null;
     }
