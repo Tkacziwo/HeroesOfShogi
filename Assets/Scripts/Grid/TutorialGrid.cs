@@ -68,7 +68,7 @@ public class TutorialGrid : MonoBehaviour
             Destroy(tutorialGrid[2, 2].GetComponent<GridCell>().objectInThisGridSpace);
         }
 
-        var resource = Resources.Load(name + "Piece") as GameObject;
+        var resource = Resources.Load("Prefabs/Piece/" + name + "Piece") as GameObject;
         if (resource != null)
         {
             tutorialPossibleMoves.Clear();
