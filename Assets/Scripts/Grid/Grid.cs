@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Symbolizes playing board. Consists of GridCells.
+/// </summary>
 [Serializable]
 public class Grid : MonoBehaviour
 {
@@ -37,6 +40,10 @@ public class Grid : MonoBehaviour
         InitializePieces();
     }
 
+    /// <summary>
+    /// Returns true when all pieces finish their move. False otherwise.
+    /// </summary>
+    /// <returns>bool</returns>
     public bool PiecesFinishedMoving()
     {
         foreach (var piece in playerPieces)
@@ -62,6 +69,9 @@ public class Grid : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// Generates 9 x 9 field of GridCells.
+    /// </summary>
     public void GenerateField()
     {
         pCamp.GenerateCamp();
@@ -84,6 +94,10 @@ public class Grid : MonoBehaviour
 
         eCamp.GenerateCamp(campSpacing);
     }
+
+    /// <summary>
+    /// Loads pieces from resource files and initializes them as Piece objects.
+    /// </summary>
     public void InitializePieces()
     {
         var piecesPositions = fileManager.PiecesPositions.boardPositions;
@@ -119,6 +133,10 @@ public class Grid : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Check if checked piece is special.
+    /// </summary>
+    /// <returns>bool</returns>
     private bool SpecialPieceCheck(string name)
     {
         if (name == "Rook" || name == "Bishop")
@@ -128,6 +146,12 @@ public class Grid : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// Returns piece GameObject in grid.
+    /// </summary>
+    /// <param name="x">x position</param>
+    /// <param name="y">y position</param>
+    /// <returns>GameObject</returns>
     public GameObject GetPieceInGrid(int x, int y)
     {
         if (gameGrid[x, y].GetComponent<GridCell>().objectInThisGridSpace != null)
@@ -140,6 +164,11 @@ public class Grid : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Returns piece GameObject in grid.
+    /// </summary>
+    /// <param name="pos">Position class</param>
+    /// <returns>GameObject</returns>
     public GameObject GetPieceInGrid(Position pos)
     {
         if (gameGrid[pos.x, pos.y].GetComponent<GridCell>().objectInThisGridSpace != null)
@@ -152,15 +181,27 @@ public class Grid : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Gets grid cell in grid.
+    /// </summary>
+    /// <param name="x">x position</param>
+    /// <param name="y">y position</param>
+    /// <returns>GridCell</returns>
     public GridCell GetGridCell(int x, int y)
         => gameGrid[x, y].GetComponent<GridCell>();
 
-
+    /// <summary>
+    /// Gets grid cell in grid.
+    /// </summary>
+    /// <param name="p">Position class</param>
+    /// <returns>GridCell</returns>
     public GridCell GetGridCell(Position p)
         => gameGrid[p.x, p.y].GetComponent<GridCell>();
 
-
-
+    /// <summary>
+    /// Adds killed piece to camp.
+    /// </summary>
+    /// <param name="piece">killed piece GameObject</param>
     public void AddToCamp(GameObject piece)
     {
         Piece p = piece.GetComponent<Piece>();
@@ -182,18 +223,33 @@ public class Grid : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Gets player (white) pieces.
+    /// </summary>
     public List<Piece> GetPlayerPieces()
         => playerPieces;
 
+    /// <summary>
+    /// Gets bot (black) pieces.
+    /// </summary>
     public List<Piece> GetBotPieces()
         => botPieces;
 
+    /// <summary>
+    /// Gets player (white) king.
+    /// </summary>
     public Piece GetPlayerKing()
         => playerKing;
 
+    /// <summary>
+    /// Gets bot (black) king.
+    /// </summary>
     public Piece GetBotKing()
         => botKing;
 
+    /// <summary>
+    /// Restores default color of GridCell on mouse hover exit.
+    /// </summary>
     public void OnHoverExitRestoreDefaultColor()
     {
         Color defaultColor = new(0.04f, 0.43f, 0.96f);
@@ -215,6 +271,9 @@ public class Grid : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Clears possible moves from board, ignores those moves on blacklist.
+    /// </summary>
     public void ClearPossibleMoves(List<Position> blacklist = null)
     {
         OnHoverExitRestoreDefaultColor();

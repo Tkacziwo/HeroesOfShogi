@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System;
 
+/// <summary>
+/// Loads data from files to use withing game.
+/// </summary>
 public class FileManager : MonoBehaviour
 {
     [SerializeField] private TextAsset File;
@@ -42,6 +45,9 @@ public class FileManager : MonoBehaviour
         LoadTutorialMessagesFromFile();
     }
 
+    /// <summary>
+    /// Loads tutorial messages from file.
+    /// </summary>
     private void LoadTutorialMessagesFromFile()
     {
         var file = Resources.Load<TextAsset>("Tutorial/Tutorial");
@@ -59,7 +65,10 @@ public class FileManager : MonoBehaviour
             }
         }
     }
-
+    
+    /// <summary>
+    /// Loads moveset from text file.
+    /// </summary>
     public void LoadMovesetsFromFile()
     {
         MovesetDictionary = new();
@@ -74,6 +83,11 @@ public class FileManager : MonoBehaviour
         Debug.Log(File.text);
     }
 
+    /// <summary>
+    /// Returns moveset by providing piece name.
+    /// </summary>
+    /// <param name="name">piece name</param>
+    /// <returns>int[]</returns>
     public int[] GetMovesetByPieceName(string name)
     {
         string val = MovesetDictionary.GetValueOrDefault(name);
@@ -86,6 +100,9 @@ public class FileManager : MonoBehaviour
         return arr;
     }
 
+    /// <summary>
+    /// Loads pieces models from file.
+    /// </summary>
     private void LoadPiecesFromFile()
     {
         var file = Resources.Load<TextAsset>(positioning);
@@ -96,6 +113,10 @@ public class FileManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Gets tutorial messages from tutorialMessages field.
+    /// </summary>
+    /// <returns>List of tutorial messages</returns>
     public List<Tuple<string, string>> GetTutorialMessages()
         => tutorialMessages;
 }

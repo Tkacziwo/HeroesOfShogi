@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 
+/// <summary>
+/// Logic counterpart to BoardManager. Behaves the same.
+/// </summary>
 public class LogicBoardManager
 {
     public List<Position> CalculatePossibleMovesInverted(LogicPiece piece, LogicCell[,] cells)

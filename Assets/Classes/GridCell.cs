@@ -1,6 +1,9 @@
 using System;
 using UnityEngine;
 
+/// <summary>
+/// Represents single grid cell on the board
+/// </summary>
 public class GridCell : MonoBehaviour
 {
     private int posX;
@@ -13,6 +16,12 @@ public class GridCell : MonoBehaviour
     private bool isPossibleMove;
 
 
+    /// <summary>
+    /// Initializes grid cell with values.
+    /// </summary>
+    /// <param name="x">x position</param>
+    /// <param name="y">y position</param>
+    /// <param name="cellSize">size of the cell</param>
     public void InitializeGridCell(int x, int y, float cellSize)
     {
         posX = x;
@@ -33,12 +42,22 @@ public class GridCell : MonoBehaviour
         objectInThisGridSpace = Instantiate(piece, new Vector4(pos.x, 0.2F, pos.z), Quaternion.identity);
     }
 
+    /// <summary>
+    /// Using quadratic transformation change position of piece to destination.
+    /// </summary>
+    /// <param name="piece">piece to move</param>
+    /// <param name="position">destination position</param>
     public void SetAndMovePiece(GameObject piece, Vector3 position)
     {
         objectInThisGridSpace = piece;
         objectInThisGridSpace.GetComponent<Piece>().QuadraticTransformation(new Vector3(position.x, 0.2F, position.z));
     }
 
+    /// <summary>
+    /// Using linear transformation change position of piece to destination.
+    /// </summary>
+    /// <param name="piece">piece to move</param>
+    /// <param name="position">destination position</param>
     public void SetAndMovePieceLinear(GameObject piece, Vector3 position)
     {
         objectInThisGridSpace = piece;

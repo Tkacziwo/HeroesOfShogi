@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 
+/// <summary>
+/// Holds lists of directions. Used in valid moves checking.
+/// </summary>
 public class DirectionPossibleMoves
 {
     public List<Position> North { get; set; } = new();

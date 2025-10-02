@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Camp which holds killed pieces for dropping back onto the board.
+/// </summary>
 public class Camp : MonoBehaviour
 {
     public GameObject[,] campGrid;
@@ -33,21 +36,6 @@ public class Camp : MonoBehaviour
         originalPosY = posY;
     }
 
-    public void InitializeGrid(int posY, float gridCellSize, GameObject gridCell)
-    {
-        this.gridCellSize = gridCellSize;
-        this.gridCell = gridCell;
-        this.posY = posY;
-        if (this.posY == 2)
-        {
-            positionOperator = -1;
-        }
-        else
-        {
-            positionOperator = 1;
-        }
-    }
-
     public void GenerateCamp(float spacing = 0)
     {
         campGrid = new GameObject[9, 3];
@@ -65,6 +53,9 @@ public class Camp : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Reshuffles the camp to remove any empty cells between captured pieces.
+    /// </summary>
     public void Reshuffle()
     {
         posX = 0;
@@ -96,6 +87,10 @@ public class Camp : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Adds killed piece to camp
+    /// </summary>
+    /// <param name="piece">killed piece</param>
     public void AddToCamp(GameObject piece)
     {
         if (capturedPieceObjects.Count == 27)

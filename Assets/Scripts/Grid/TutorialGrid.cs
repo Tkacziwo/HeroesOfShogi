@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
+/// <summary>
+/// Same as Grid class with additional one method.
+/// </summary>
 [Serializable]
 public class TutorialGrid : MonoBehaviour
 {
@@ -55,6 +58,12 @@ public class TutorialGrid : MonoBehaviour
         this.transform.position = new Vector3(this.transform.position.x - 20, this.transform.position.y, this.transform.position.z - 5);
     }
 
+    /// <summary>
+    /// Loads pieces from file and initializes them and also loads tutorial messages.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="isDrop"></param>
+    /// <param name="moveset"></param>
     public void InitializePieces(string name, bool isDrop, int[] moveset)
     {
         if (tutorialMessages == null || tutorialMessages.Count == 0)
@@ -85,11 +94,18 @@ public class TutorialGrid : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Sets promotion tutorial message when piece gets promoted.
+    /// </summary>
     public void SetPromotionTutorialMessage()
     {
         tutorialText.text = tutorialMessages[2].Item2;
     }
 
+    /// <summary>
+    /// Sets ability usage message when player uses piece ability.
+    /// </summary>
+    /// <param name="pieceName"></param>
     public void SetAbilityUsageMessage(string pieceName)
     {
         switch (pieceName)

@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 
+/// <summary>
+/// Same as KingManager but operates on LogicBoard and LogicCells.
+/// </summary>
 public class LogicKingManager
 {
     private readonly LogicBoardManager boardManager = new();

@@ -57,6 +57,11 @@ public class BoardManager : MonoBehaviour
         return possibleMoves;
     }
 
+    /// <summary>
+    /// Calculates possible moves for every piece with moveset.
+    /// </summary>
+    /// <param name="unrestricted">Whether it should stop at first piece in its path or continue until board dimensions</param>
+    /// <returns>List of positions</returns>
     public List<Position> CalculatePossibleMoves(Piece piece, bool unrestricted = false)
     {
         var moveset = piece.GetMoveset();
@@ -118,6 +123,11 @@ public class BoardManager : MonoBehaviour
         return possibleMoves;
     }
 
+    /// <summary>
+    /// Checks if the provided possible moves are legal with Shogi rules.
+    /// </summary>
+    /// <param name="pMoves">Possible moves. Passed by reference</param>
+    /// <param name="piece">Piece</param>
     public void CheckIfMovesAreLegal(ref List<Position> pMoves, Piece piece)
     {
         var king = piece.GetIsBlack() ? gameGrid.GetBotKing() : gameGrid.GetPlayerKing();
@@ -189,6 +199,12 @@ public class BoardManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Used by King logic. Calculates how many pieces of the same color are protecting King.
+    /// </summary>
+    /// <param name="movesLine">Moves in the passed direction</param>
+    /// <param name="isBlack">Color of piece</param>
+    /// <returns>int</returns>
     public int CalculateSameColorPiecesInDirection(List<Position> movesLine, bool isBlack)
     {
         var sum = 0;
@@ -207,6 +223,12 @@ public class BoardManager : MonoBehaviour
         return sum;
     }
 
+    /// <summary>
+    /// Calculates possible moves in specified direction.
+    /// </summary>
+    /// <param name="piece">Piece</param>
+    /// <param name="unrestricted">Whether it should stop at first piece in its path or continue until board dimensions</param>
+    /// <returns>DirectionPossibleMoves</returns>
     public DirectionPossibleMoves CalculatePossibleMovesWithDirection(Piece piece, bool unrestricted = false)
     {
         DirectionPossibleMoves directionPossibleMoves = new();
@@ -285,6 +307,13 @@ public class BoardManager : MonoBehaviour
         return directionPossibleMoves;
     }
 
+    /// <summary>
+    /// Calculates overlapping moves or not overlapping moves depending on overlap parameter.
+    /// </summary>
+    /// <param name="first">first list of positions</param>
+    /// <param name="comparer">Comparer</param>
+    /// <param name="overlap">Whether moves should overlap or not. First case intersection of sets (A * B), second is difference of set (A/B)</param>
+    /// <returns>List of positions</returns>
     public List<Position> CalculateOverlappingMoves(List<Position> first, List<Position> comparer, bool overlap)
     {
         List<Position> overlappingMoves = new();
@@ -355,6 +384,15 @@ public class BoardManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Extends special piece possible moves.
+    /// </summary>
+    /// <param name="row">row operator</param>
+    /// <param name="col">col operator</param>
+    /// <param name="pos">piece position</param>
+    /// <param name="unrestricted">whether piece ignores other pieces or not</param>
+    /// <param name="possibleMoves">reference possible moves</param>
+    /// <param name="isBlack">piece color</param>
     public void ExtendSpecialPiecePossibleMoves(
         int row,
         int col,
@@ -405,6 +443,11 @@ public class BoardManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Calculates possible drops for clicked piece.
+    /// </summary>
+    /// <param name="piece">piece</param>
+    /// <returns>Possible drops list</returns>
     public List<Position> CalculatePossibleDrops(Piece piece)
     {
         List<Position> moves = new();
@@ -454,6 +497,13 @@ public class BoardManager : MonoBehaviour
         return moves;
     }
 
+    /// <summary>
+    /// Checks if cell is free - meaning not containing any pieces. Takes piece color into consideration. Enemy piece will show as free cell.
+    /// </summary>
+    /// <param name="destX">pos x</param>
+    /// <param name="destY">pos y</param>
+    /// <param name="isBlack">color of piece</param>
+    /// <returns>bool</returns>
     public bool IsCellFree(int destX, int destY, bool isBlack)
     {
         var cell = gameGrid.GetGridCell(destX, destY);
@@ -463,12 +513,30 @@ public class BoardManager : MonoBehaviour
             : true;
     }
 
+    /// <summary>
+    /// Checks if cell is free - meaning not containing any pieces.
+    /// </summary>
+    /// <param name="destX">pos x</param>
+    /// <param name="destY">pos y</param>
+    /// <returns>bool</returns>
     public bool IsCellFree(int destX, int destY)
         => gameGrid.GetGridCell(destX, destY).objectInThisGridSpace == null;
 
+    /// <summary>
+    /// Checks if cell is free - meaning not containing any pieces.
+    /// </summary>
+    /// <param name="pos">checked position</param>
+    /// <returns>bool</returns>
     public bool IsCellFree(Position pos)
         => gameGrid.GetGridCell(pos).objectInThisGridSpace == null;
 
+    /// <summary>
+    /// Checks if piece in grid is enemy or not.
+    /// </summary>
+    /// <param name="destX">pos x</param>
+    /// <param name="destY">pos y</param>
+    /// <param name="isBlack">color of clicked piece</param>
+    /// <returns>bool</returns>
     public bool IsEnemy(int destX, int destY, bool isBlack)
     {
         var cell = gameGrid.GetGridCell(destX, destY);
@@ -483,6 +551,12 @@ public class BoardManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Checks if piece in grid is enemy or not.
+    /// </summary>
+    /// <param name="pos">position of checked piece</param>
+    /// <param name="isBlack">color of clicked piece</param>
+    /// <returns>bool</returns>
     public bool IsEnemy(Position pos, bool isBlack)
     {
         var cell = gameGrid.GetGridCell(pos);
@@ -497,6 +571,10 @@ public class BoardManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Checks if position is in board.
+    /// </summary>
+    /// <returns>bool</returns>
     public bool IsInBoard(int row, int col)
     {
         if (row > -1 && row < 9 && col > -1 && col < 9)
@@ -505,9 +583,16 @@ public class BoardManager : MonoBehaviour
             return false;
     }
 
+    /// <summary>
+    /// Checks if position is in board.
+    /// </summary>
+    /// <returns>bool</returns>
     public bool IsInBoard(Position p)
         => p.y > -1 && p.y < 9 && p.x > -1 && p.x < 9;
 
+    /// <summary>
+    /// Applies promotion to piece.
+    /// </summary>
     public void ApplyPromotion(Piece piece)
     {
         if (!piece.isKing)

@@ -1,5 +1,8 @@
 using System;
 
+/// <summary>
+/// Logic counterpart to Piece class. Behaves the same.
+/// </summary>
 public class LogicPiece
 {
     public string pieceName;

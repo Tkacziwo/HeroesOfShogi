@@ -5,6 +5,9 @@ using System.Xml.Schema;
 using Unity.VisualScripting;
 using UnityEngine;
 
+/// <summary>
+/// Class which symbolizes playable piece on board.
+/// </summary>
 public class Piece : MonoBehaviour
 {
     private string pieceName;
@@ -55,6 +58,14 @@ public class Piece : MonoBehaviour
         emptyGameObject.transform.position = transform.position;
     }
 
+    /// <summary>
+    /// Initializes piece with passed values.
+    /// </summary>
+    /// <param name="name">Name of piece</param>
+    /// <param name="moveset">Possible moveset</param>
+    /// <param name="x">x position</param>
+    /// <param name="y">y position</param>
+    /// <param name="isSpecialPiece">Whether is special or standard piece</param>
     public void InitializePiece(string name, int[] moveset, int x, int y, bool isSpecialPiece)
     {
         switch (name)
@@ -121,6 +132,9 @@ public class Piece : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Reverses movement matrix, when killed by enemy.
+    /// </summary>
     public void ReverseMovementMatrix()
     {
         for (int i = 0; i < 3; i++)
@@ -141,48 +155,91 @@ public class Piece : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Moves piece to destination.
+    /// </summary>
+    /// <param name="p">destination position</param>
     public void MovePiece(Position p)
     {
         posX = p.x;
         posY = p.y;
     }
 
+    /// <summary>
+    /// Gets piece moveset.
+    /// </summary>
+    /// <returns>int[]</returns>
     public int[] GetMoveset()
         => Moveset;
 
+    /// <summary>
+    /// Gets original moveset before promotion.
+    /// </summary>
+    /// <returns>int[]</returns>
     public int[] GetOriginalMovest()
         => originalMoveset;
 
+    /// <summary>
+    /// Gets piece name.
+    /// </summary>
+    /// <returns>string</returns>
     public string GetName()
         => pieceName;
 
+    /// <summary>
+    /// Gets current piece position.
+    /// </summary>
+    /// <returns>Position</returns>
     public Position GetPosition()
         => new(posX, posY);
 
+    /// <summary>
+    /// Returns true when piece is black. Otherwise false.
+    /// </summary>
+    /// <returns>bool</returns>
     public bool GetIsBlack()
         => isBlack;
 
+    /// <summary>
+    /// Sets isBlack value to true.
+    /// </summary>
     public void SetIsBlack()
         => isBlack = true;
 
+    /// <summary>
+    /// Sets isBlack value to false.
+    /// </summary>
     public void ResetIsBlack()
         => isBlack = false;
 
+    /// <summary>
+    /// Returns true if piece is special. Otherwise false.
+    /// </summary>
+    /// <returns>bool</returns>
     public bool GetIsSpecial()
         => isSpecial;
 
+    /// <summary>
+    /// Returns true when piece is promoted. Otherwise false.
+    /// </summary>
+    /// <returns>bool</returns>
     public bool GetIsPromoted()
         => isPromoted;
 
+    /// <summary>
+    /// Immediately changes position of piece
+    /// </summary>
+    /// <param name="target">target position</param>
     public void SetPiecePositionImmediate(Vector3 target)
     {
         transform.position = target;
         emptyGameObject.transform.position = target;
     }
 
-    public void SetTargetPosition(Vector3 target)
-        => emptyGameObject.transform.position = target;
-
+    /// <summary>
+    /// Promotes piece
+    /// </summary>
+    /// <param name="newMoveset"></param>
     public void Promote(int[] newMoveset)
     {
         promotionEffect.transform.position = this.transform.position;
@@ -193,9 +250,11 @@ public class Piece : MonoBehaviour
             ReverseMovementMatrix();
         }
         isPromoted = true;
-        //todo change textures
     }
 
+    /// <summary>
+    /// Backups original moveset to class field.
+    /// </summary>
     public void BackupOriginalMoveset(int[] moveset)
     {
         originalMoveset = new int[moveset.Length];
@@ -205,6 +264,9 @@ public class Piece : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Takes away piece promotion. Restores default moveset.
+    /// </summary>
     public void Demote()
     {
         promotionEffect.GetComponent<ParticleSystem>().Stop();
@@ -213,26 +275,31 @@ public class Piece : MonoBehaviour
         isPromoted = false;
     }
 
+    /// <summary>
+    /// Returns true when piece is drop. False otherwise.
+    /// </summary>
+    /// <returns>bool</returns>
     public bool GetIsDrop()
         => isDrop;
 
+    /// <summary>
+    /// Sets isDrop value to true.
+    /// </summary>
     public void SetIsDrop()
     {
         isDrop = true;
     }
 
-    public bool GetIsBodyguard()
-        => isBodyguard;
-
-    public bool SetIsBodyguard()
-        => isBodyguard = true;
-
-    public bool ResetIsBodyguard()
-        => isBodyguard = false;
-
+    /// <summary>
+    /// Sets isDrop value to false.
+    /// </summary>
     public void ResetIsDrop()
         => isDrop = false;
 
+    /// <summary>
+    /// Creates linear transformation between piece position and endPosition parameter to accomplish smooth movement.
+    /// </summary>
+    /// <param name="endPosition">Target position</param>
     public void LinearTransformation(Vector3 endPosition)
     {
         Vector3 startPosition = this.transform.position;
@@ -247,6 +314,12 @@ public class Piece : MonoBehaviour
         StartCoroutine(PositionTransformLoop());
     }
 
+    /// <summary>
+    /// Creates 2 linear transformation from beginning to center and center to end. Then creates linear transformation between created
+    /// linear transformation to achieve quadratic transformation on a curve.
+    /// Automatically calculates height and center point of transformation to make longer movements have higher point.
+    /// </summary>
+    /// <param name="endPosition">Target position</param>
     public void QuadraticTransformation(Vector3 endPosition)
     {
         Vector3 startPosition = this.transform.position;
@@ -287,6 +360,10 @@ public class Piece : MonoBehaviour
         StartCoroutine(PositionTransformLoop());
     }
 
+    /// <summary>
+    /// Loop for moving piece
+    /// </summary>
+    /// <returns>IEnumerator</returns>
     IEnumerator PositionTransformLoop()
     {
         finishedMoving = false;
@@ -299,6 +376,11 @@ public class Piece : MonoBehaviour
         finishedMoving = true;
     }
 
+    /// <summary>
+    /// Executes single step in transformation and sets piece position.
+    /// </summary>
+    /// <param name="quadratic">quadratic vector3 step coordinates</param>
+    /// <returns>IEnumerator</returns>
     IEnumerator PositionTransformStep(Vector3 quadratic)
     {
         transform.position = quadratic;

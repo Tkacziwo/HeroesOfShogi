@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+/// <summary>
+/// Handles game creation panel.
+/// </summary>
 public class GameCreationManager : MonoBehaviour
 {
     public bool botEnabled, classicRules;

@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Logic counterpart of the Grid class. Holds all cells, pieces and camps for drops.
+/// </summary>
 public class LogicBoard
 {
     public LogicCell[,] cells = new LogicCell[9, 9];
@@ -22,6 +25,13 @@ public class LogicBoard
 
     public LogicCell[,] dropCells = new LogicCell[9, 3];
 
+    /// <summary>
+    /// Clones board from Grid instance to LogicBoard instance and sets all data inside LogicBoard.
+    /// The clone is virtually the same as the real counterpart.
+    /// </summary>
+    /// <param name="grid">Real board</param>
+    /// <param name="kingInDanger">state of King</param>
+    /// <param name="attackerPos">optional attacker position</param>
     public void CloneFromReal(Grid grid, bool kingInDanger, Position attackerPos)
     {
         this.kingInDanger = kingInDanger;
@@ -72,6 +82,13 @@ public class LogicBoard
         }
     }
 
+    /// <summary>
+    /// Clones another LogicBoard instance into a new one.
+    /// Subsequent clones are different from real board, because of Minimax algorithm searching for best possible move.
+    /// </summary>
+    /// <param name="grid">LogicBoard instance</param>
+    /// <param name="kingInDanger">King's state</param>
+    /// <param name="attackerPos">optional attacker position</param>
     public void CloneFromLogic(LogicBoard grid, bool kingInDanger, Position attackerPos)
     {
         this.kingInDanger = kingInDanger;
@@ -121,6 +138,10 @@ public class LogicBoard
         }
     }
 
+    /// <summary>
+    /// Evaluates board score to determine best gain / loss
+    /// </summary>
+    /// <returns>int</returns>
     public int EvaluateBoard()
     {
         int score = 0;
@@ -132,6 +153,11 @@ public class LogicBoard
         return score;
     }
 
+    /// <summary>
+    /// Applies move to the logic board.
+    /// </summary>
+    /// <param name="src">source position</param>
+    /// <param name="dst">destination position</param>
     public void ApplyMove(Position src, Position dst)
     {
         if (src.x > 9 || src.y > 9)
@@ -151,22 +177,11 @@ public class LogicBoard
         }
     }
 
-    public bool CheckForPromotion(Position dst, bool isBlack)
-    {
-        if (!isBlack && dst.y > 5)
-        {
-            return true;
-        }
-        else if (isBlack && dst.y < 3)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
+    /// <summary>
+    /// Calculates all possible legal moves for the current logic board state.
+    /// </summary>
+    /// <param name="maximizing">Whether algorithm maximizes/minimizes</param>
+    /// <returns></returns>
     public List<Tuple<Position, Position>> CalculateLogicPossibleMoves(bool maximizing)
     {
         List<Tuple<Position, Position>> logicSrcDstMoves = new();
@@ -235,6 +250,10 @@ public class LogicBoard
         return logicSrcDstMoves;
     }
 
+    /// <summary>
+    /// Handler for when King is in danger. Behaves similarly to InputManager handler counterpart.
+    /// </summary>
+    /// <returns>List of source and destination positions</returns>
     private List<Tuple<Position, Position>> HandleKingInDanger()
     {
         List<Tuple<Position, Position>> logicSrcDstMoves = new();

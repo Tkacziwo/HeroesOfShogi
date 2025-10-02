@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Manages usage of the piece abilities.
+/// </summary>
 public class AbilitiesManager : MonoBehaviour
 {
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -12,6 +15,12 @@ public class AbilitiesManager : MonoBehaviour
 
     [SerializeField] private FileManager fileManager;
 
+    /// <summary>
+    /// Ability for Dragon, randomly chooses enemy piece in close proximity to killed piece and kills it. Once per game.
+    /// </summary>
+    /// <param name="killedPiecePosition">position of killed piece</param>
+    /// <param name="killedPieceColor">color of killed piece</param>
+    /// <returns>chosen piece position</returns>
     //ability for dragon
     public Position Inferno(Position killedPiecePosition, bool killedPieceColor)
     {
@@ -50,77 +59,12 @@ public class AbilitiesManager : MonoBehaviour
         }
     }
 
-    //ability for horse
-    public List<Tuple<Position, Position>> Regroup(Position horsePosition, bool horseColor)
-    {
-        List<Position> friendPositions = new();
-        int row = 1;
-        int col = -1;
-        for (int i = 1; i <= 9; i++)
-        {
-            int destX = col + horsePosition.x;
-            int destY = row + horsePosition.y;
-
-            if (boardManager.IsInBoard(destX, destY))
-            {
-                if (!boardManager.IsCellFree(destX, destY) && !boardManager.IsEnemy(destX, destY, horseColor))
-                {
-                    Position pos = new(destX, destY);
-
-                    if (!pos.Equals(horsePosition))
-                    {
-                        friendPositions.Add(pos);
-                    }
-                }
-            }
-
-            col++;
-            if (i % 3 == 0 && i != 0)
-            {
-                row--;
-                col = -1;
-            }
-        }
-        if (friendPositions != null)
-        {
-            List<Tuple<Position, Position>> validFriendPositions = new();
-            foreach (var p in friendPositions)
-            {
-                var piece = game.GetPieceInGrid(p.x, p.y).GetComponent<Piece>();
-                int destY;
-                if (piece.GetIsBlack())
-                {
-                    destY = p.y + 1;
-                }
-                else
-                {
-                    destY = p.y - 1;
-                }
-                bool permitted = false;
-                foreach (var g in friendPositions)
-                {
-                    if (g.Equals(new(p.x, destY)))
-                    {
-                        permitted = true;
-                    }
-                }
-
-                if (boardManager.IsInBoard(p.x, destY) && (boardManager.IsCellFree(p.x, destY) || permitted))
-                {
-                    Tuple<Position, Position> srcDst = new(p,new(p.x, destY));
-                    validFriendPositions.Add(srcDst);
-                }
-            }
-
-            return validFriendPositions;
-        }
-        else
-        {
-            return new();
-        }
-    }
-
-    //gold gen
+    /// <summary>
+    /// Ability for Gold General. Marches forward with Pawns in front of Gold General. Pawns must be in close proximity. Ability on cooldown.
+    /// </summary>
+    /// <param name="goldGenPosition">position of Gold General</param>
+    /// <param name="goldGenColor">color of Gold General</param>
+    /// <returns></returns>
     public List<Tuple<Position, Position>> Onward(Position goldGenPosition, bool goldGenColor)
     {
         List<Position> friendPositions = new();
@@ -191,7 +135,11 @@ public class AbilitiesManager : MonoBehaviour
         }
     }
 
-    //silver gen
+    /// <summary>
+    /// Ability for Silver General. Allows one additional move after moving. Ability on cooldown.
+    /// </summary>
+    /// <param name="silverGenPosition">position of Silver General</param>
+    /// <returns>possible moves in new position</returns>
     public List<Position> Rush(Position silverGenPosition)
     {
         var piece = game.GetPieceInGrid(silverGenPosition).GetComponent<Piece>();
@@ -201,6 +149,11 @@ public class AbilitiesManager : MonoBehaviour
         return pMoves;
     }
 
+    /// <summary>
+    /// Ability for King. Take promoted piece promotion and apply it to non-promoted piece. Once per game.
+    /// </summary>
+    /// <param name="src">source piece position</param>
+    /// <param name="dst">chosen piece position</param>
     public void KingPromote(Position src, Position dst)
     {
         var srcPiece = game.GetPieceInGrid(src).GetComponent<Piece>();

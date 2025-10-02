@@ -7,6 +7,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+/// <summary>
+/// Manager which handles all input in the game.
+/// </summary>
 public class InputManager : MonoBehaviour
 {
     [SerializeField] private Grid grid;
@@ -146,6 +149,9 @@ public class InputManager : MonoBehaviour
         Time.timeScale = 1f;
     }
 
+    /// <summary>
+    /// Starts Minimax algorithm.
+    /// </summary>
     public void StartBotMinimax()
     {
         Thread botThread = new(() =>
@@ -157,6 +163,9 @@ public class InputManager : MonoBehaviour
         botThread.Start();
     }
 
+    /// <summary>
+    /// Prepares bot for Minimax algorithm by setting adequate fields.
+    /// </summary>
     public void PrepareBotForMinimax()
     {
         duringBotText.gameObject.SetActive(true);
@@ -169,6 +178,9 @@ public class InputManager : MonoBehaviour
         StartBotMinimax();
     }
 
+    /// <summary>
+    /// Applies Minimax algorithm result to real board.
+    /// </summary>
     public void ApplyBotMinimaxResult()
     {
         if (botResult.Item1.x > 9 || botResult.Item1.y > 9)
@@ -258,6 +270,9 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Additional handler to King's ability.
+    /// </summary>
     private void HandleKingAbility(GridCell hoveredCell)
     {
 
@@ -288,6 +303,9 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Additional handler to abilities which grant extra move.
+    /// </summary>
     private void HandleExtraMove(GridCell hoveredCell)
     {
         foreach (var p in cantChangePossibleMoves)
@@ -302,6 +320,9 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Handler activated when player clicks special ability window.
+    /// </summary>
     public void HandleSpecialAbilityUsage()
     {
         if (chosenPiece)
@@ -390,6 +411,9 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Handler for clicking cell on the board.
+    /// </summary>
     private void HandleBoardClick(GridCell hoveredCell)
     {
         if (hoveredCell.GetIsPossibleMove())
@@ -407,6 +431,9 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Handler for clicking piece on the board.
+    /// </summary>
 
     public void HandlePieceClicked(GridCell hoveredCell)
     {
@@ -442,6 +469,9 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Handler for King while King is in danger. Ends game if there are no possible moves for King or his pieces left.
+    /// </summary>
     public void HandleKingClickedWhileInDanger(Piece piece, GridCell hoveredCell)
     {
         // Find valid moves for king
@@ -480,6 +510,9 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Handler for guards, sacrifices, drop sacrifices while king is in danger.
+    /// </summary>
     public void SaveTheKing(Piece piece, GridCell hoveredCell)
     {
         foreach (var b in bodyguards)
@@ -523,6 +556,9 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Check for Game End. Returns true when game is lost, false otherwise.
+    /// </summary>
     public bool GameEndCheck(bool isBlack)
     {
         var pieces = isBlack ? grid.GetBotPieces() : grid.GetPlayerPieces();
@@ -548,12 +584,18 @@ public class InputManager : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// Ends game.
+    /// </summary>
     public void GameEnd()
     {
         gameOver.gameObject.SetActive(true);
         paused = true;
     }
 
+    /// <summary>
+    /// Handler for activating calculation methods in BoardManager or KingManager.
+    /// </summary>
     public void PossibleMovesCalculationHandler(Piece piece, GridCell hoveredCell)
     {
         if (piece.isKing)
@@ -575,6 +617,9 @@ public class InputManager : MonoBehaviour
         chosenPiece = true;
     }
 
+    /// <summary>
+    /// Loop which displays possible moves.
+    /// </summary>
     public void PossibleMovesDisplayLoop()
     {
         foreach (var p in possibleMoves)
@@ -585,6 +630,9 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Handler for unclicking piece.
+    /// </summary>
     public void HandleUnclickPiece()
     {
         abilityImage.sprite = null;
@@ -594,6 +642,9 @@ public class InputManager : MonoBehaviour
         specialAbilityInUse = false;
     }
 
+    /// <summary>
+    /// Executes piece move from stored in CellWhichHoldsPiece cell to hoveredCell destination.
+    /// </summary>
     public void ExecutePieceMove(GridCell hoveredCell, bool registerMove = true)
     {
         Piece piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
@@ -684,6 +735,10 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Handle if clicked piece is drop.
+    /// </summary>
+    /// <param name="piece"></param>
     public void HandleDropCheck(Piece piece)
     {
         if (piece.GetIsDrop())
@@ -715,6 +770,10 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Handle if King is in danger after executing move.
+    /// </summary>
+    /// <param name="piece"></param>
     public void HandleKingEndangerement(Piece piece)
     {
         Piece king = piece.GetIsBlack() ? grid.GetPlayerKing() : grid.GetBotKing();
@@ -740,6 +799,10 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Ability icon color change when used.
+    /// </summary>
+    /// <param name="piece"></param>
     public void HandleAbilityImageColorChange(Piece piece)
     {
         abilityImage.sprite = Resources.Load<Sprite>("Sprites/" + piece.GetName() + "Ability");
@@ -753,6 +816,9 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Handles when piece is killed.
+    /// </summary>
     public Tuple<bool, bool> HandlePieceKill(GridCell hoveredCell, Piece piece)
     {
         bool killedPiece = false;
@@ -773,6 +839,10 @@ public class InputManager : MonoBehaviour
         return new(killedPiece, killedPieceColor);
     }
 
+    /// <summary>
+    /// Kills piece and adds it to camp.
+    /// </summary>
+    /// <param name="hoveredCell"></param>
     public void KillPiece(GridCell hoveredCell)
     {
         grid.AddToCamp(hoveredCell.objectInThisGridSpace);
@@ -780,6 +850,9 @@ public class InputManager : MonoBehaviour
         Instantiate(dieAnimation, hoveredCell.GetWorldPosition(), Quaternion.identity);
     }
 
+    /// <summary>
+    /// Checks if piece after moving got promoted.
+    /// </summary>
     public bool CheckForPromotion(GridCell hoveredCell, bool isBlack)
     {
         if (!isBlack && hoveredCell.GetPosition().y > 5)
@@ -796,6 +869,9 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Removes possible moves.
+    /// </summary>
     private void RemovePossibleMoves()
     {
         if (possibleMoves != null)
@@ -810,6 +886,10 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Raycast function to return GridCell which mouse hovers above.
+    /// </summary>
+    /// <returns>GridCell</returns>
     private GridCell MouseOverCell()
     {
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);

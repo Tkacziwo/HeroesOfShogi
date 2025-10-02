@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 
+/// <summary>
+/// Utility class for managing King's logic.
+/// </summary>
 public class KingManager : MonoBehaviour
 {
     private BoardManager boardManager;
@@ -13,6 +16,12 @@ public class KingManager : MonoBehaviour
         boardManager = FindFirstObjectByType<BoardManager>();
     }
 
+    /// <summary>
+    /// Finds guards - pieces that can kill attacker.
+    /// </summary>
+    /// <param name="attackerPos">position of attacker</param>
+    /// <param name="piecesList">friendly pieces list</param>
+    /// <returns></returns>
     public List<Piece> FindGuards(Position attackerPos, List<Piece> piecesList)
     {
         List<Piece> guards = new();
@@ -26,6 +35,12 @@ public class KingManager : MonoBehaviour
         return guards;
     }
 
+    /// <summary>
+    /// Finds sacrifices - pieces that can shield King.
+    /// </summary>
+    /// <param name="dangerMoves">list of moves that endanger King</param>
+    /// <param name="piecesList">friendly pieces list</param>
+    /// <returns></returns>
     public List<Piece> FindSacrifices(List<Position> dangerMoves, List<Piece> piecesList)
     {
         if (dangerMoves == null || dangerMoves.Count == 0) { return null; }
@@ -43,6 +58,12 @@ public class KingManager : MonoBehaviour
         return sacrifices;
     }
 
+    /// <summary>
+    /// Calculated protection moves, for King shielding in danger.
+    /// </summary>
+    /// <param name="piece">friendly piece</param>
+    /// <param name="dangerMoves">list of moves that endanger King</param>
+    /// <returns></returns>
     public List<Position> CalculateProtectionMoves(Piece piece, List<Position> dangerMoves)
     {
         var moves = boardManager.CalculatePossibleMoves(piece);
@@ -60,6 +81,9 @@ public class KingManager : MonoBehaviour
         return protectionMoves;
     }
 
+    /// <summary>
+    /// Scans King danger moves.
+    /// </summary>
     public List<Position> KingDangerMovesScan(List<Position> pos, bool isBlack)
     {
         List<Position> dangerMoves = new();
@@ -85,6 +109,9 @@ public class KingManager : MonoBehaviour
         return dangerMoves;
     }
 
+    /// <summary>
+    /// Scans King danger moves in singular direction.
+    /// </summary>
     public List<Position> FarKingDirectionScanDangerMoves(int rowOperator, int colOperator, Position source, bool isBlack)
     {
         if (rowOperator == 0 && colOperator == 0) { return null; }
@@ -133,6 +160,13 @@ public class KingManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Checks if King is endangered by long-range attacking piece. Returns true if King in danger and false otherwise.
+    /// </summary>
+    /// <param name="pos">King position</param>
+    /// <param name="isBlack">King color</param>
+    /// <param name="attackerPos">Attacker's position</param>
+    /// <returns>bool</returns>
     public bool FarScanForKing(Position pos, bool isBlack, ref Position attackerPos)
     {
         int rowOperator = 1;
@@ -153,6 +187,10 @@ public class KingManager : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// Same as FarScanForKing but with specified direction.
+    /// </summary>
+    /// <returns>bool</returns>
     public bool FarKingDirectionScan(int rowOperator, int colOperator, Position source, bool isBlack, ref Position attackerPos)
     {
         int destX = source.x + colOperator;
@@ -203,12 +241,22 @@ public class KingManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Scans if King is endangered in close proximity. Returns true if King endangered, false otherwise.
+    /// </summary>
+    /// <param name="king">King piece</param>
+    /// <param name="attackerPos">Attacker position</param>
+    /// <returns>bool</returns>
     public bool CloseScanForKing(Piece king, Position attackerPos)
     {
         var possibleMoves = boardManager.CalculatePossibleMoves(king);
         return possibleMoves.Contains(attackerPos);
     }
 
+    /// <summary>
+    /// Verifies King's possible moves to make sure they are valid. Returns possibly modified list of moves.
+    /// </summary>
+    /// <param name="king">King piece</param>
     public List<Position> ValidMovesScan(Piece king)
     {
         var enemyPieces = king.GetIsBlack() ? gridGame.GetPlayerPieces() : gridGame.GetBotPieces();
@@ -223,6 +271,11 @@ public class KingManager : MonoBehaviour
         return kingPMoves;
     }
 
+    /// <summary>
+    /// Checks if attacker is protected. True when is, false otherwise.
+    /// </summary>
+    /// <param name="attacker">Attacker piece</param>
+    /// <returns>bool</returns>
     public bool IsAttackerProtected(Piece attacker)
     {
         var friendlyPieces = attacker.GetIsBlack() ? gridGame.GetBotPieces() : gridGame.GetPlayerPieces();
@@ -243,6 +296,11 @@ public class KingManager : MonoBehaviour
         return false;
     }
    
+    /// <summary>
+    /// Calculates endangered moves.
+    /// </summary>
+    /// <param name="attacker">Attacker piece</param>
+    /// <param name="kingPos">King's position</param>
     public List<Position> CalculateEndangeredMoves(Piece attacker, Position kingPos = null)
     {
         var attackerMoveset = attacker.GetMoveset();
@@ -276,6 +334,9 @@ public class KingManager : MonoBehaviour
         return moves;
     }
 
+    /// <summary>
+    /// Scans moves from source to destination.
+    /// </summary>
     public List<Position> ScanMoves(int rowOperator, int colOperator, Position source, Position destination = null)
     {
         if (rowOperator == 0 && colOperator == 0) { return null; }
@@ -305,6 +366,12 @@ public class KingManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Checks if attacker contains King's position in it's possible moves. Return true if it contains, false otherwise.
+    /// </summary>
+    /// <param name="king">King piece</param>
+    /// <param name="attacker">Attacker piece</param>
+    /// <returns>bool</returns>
     public bool AttackerScanForKing(Piece king, Piece attacker)
     {
         var attackerMoves = boardManager.CalculatePossibleMoves(attacker);

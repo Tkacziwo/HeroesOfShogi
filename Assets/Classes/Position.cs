@@ -1,5 +1,9 @@
 using System;
 
+
+/// <summary>
+/// Class for storing piece position on the board
+/// </summary>
 public class Position : IEquatable<Position>
 {
     public int x;

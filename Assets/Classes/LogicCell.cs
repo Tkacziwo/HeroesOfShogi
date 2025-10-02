@@ -1,3 +1,6 @@
+/// <summary>
+/// Same as GridCell but operates on LogicPiece
+/// </summary>
 public class LogicCell
 {
     private Position pos;
