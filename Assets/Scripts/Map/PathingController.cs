@@ -57,8 +57,6 @@ public class PathingController
 
     private TileInfo end;
 
-    public List<Vector3Int> Path = new();
-
     public void SetParameters(Tilemap grid, Vector3Int start, Vector3Int end)
     {
         MapWidth = grid.cellBounds.xMax;
@@ -161,6 +159,11 @@ public class PathingController
     public List<TileInfo> TraceBackPath()
     {
         List<TileInfo> path = new();
+        if(closedList.Count == 0)
+        {
+            return path;
+        }
+
         var last = closedList.Last();
         path.Add(last);
         TileInfo parent = last.parent;
@@ -185,7 +188,6 @@ public class PathingController
     {
         closedList.Clear();
         var s = start.positionInArray;
-        Path.Add(new(s.x, s.y, 0));
         int iterations = 0;
 
         Vector3Int vec = new(s.x, s.y);
@@ -194,7 +196,6 @@ public class PathingController
         List<TileInfo> openList = new();
 
         TileInfo startTile = MapTiles[s.y, s.x];
-
         openList.Add(startTile);
 
         // Setting init values to starting point
@@ -209,7 +210,6 @@ public class PathingController
             openList.Remove(q);
 
             // Generating neighbours
-
             var neighbours = FindNeighbours(q);
 
             // For each neighbour set their parent to previous (first iteration is start).
@@ -217,12 +217,11 @@ public class PathingController
             {
                 if (n.position.x == endPos.x && n.position.y == endPos.y)
                 {
+                    //Found path;
                     closedList.Add(q);
                     closedList.Remove(startTile);
                     var path = TraceBackPath();
-                    closedList = new(path);
-                    return closedList;
-
+                    return path;
                 }
                 else
                 {

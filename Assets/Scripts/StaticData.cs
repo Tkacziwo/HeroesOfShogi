@@ -12,4 +12,6 @@ public class StaticData : MonoBehaviour
     public static string map;
 
     public static bool tutorial;
+
+    public static float playerMovementSpeed;
 }

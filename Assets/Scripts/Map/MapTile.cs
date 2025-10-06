@@ -37,7 +37,7 @@ public class MapTile : Tile
     public Vector3Int tilePosition;
 
     [SerializeField]
-    private PlayerCharacter Player;
+    private PlayerCharacterController Player;
 
     [SerializeField]
     private float size = 0.5f;
@@ -107,24 +107,6 @@ public class MapTile : Tile
 }
 
 
-public class PlayerCharacter
-{
-    [SerializeField]
-    private Position PlayerPosition;
-
-    [SerializeField]
-    private string Name;
-
-    [SerializeField]
-    private double MovementPoints;
-
-    private List<Unit> AssignedUnits { get; set; }
-
-    public void SetPlayerPosition(Position newPos)
-    {
-        PlayerPosition = new(newPos);
-    }
-}
 
 /// <summary>
 /// Unit class symbolizes one unit during battle. 

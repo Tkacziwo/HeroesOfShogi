@@ -1,38 +1,19 @@
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEngine;
 using UnityEngine.Tilemaps;
-using static UnityEditor.PlayerSettings;
 
 public class OverworldMapController : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    private List<TileInfo> pathfindingResult = new();
+
+    private readonly PathingController pathingController = new();
 
     [SerializeField]
-    private int MapHeight;
+    private Tilemap tilemap;
 
-    [SerializeField]
-    private int MapWidth;
-
-    private List<PlayerCharacter> Players = new();
-
-    [SerializeField]
-    private MapTile MapTilePrefab;
-
-    public int RandomThrows;
-
-    public List<TileInfo> closedList = new();
-
-    public PathingController pathingController = new();
-
-    [SerializeField]
-    public Tilemap newGrid;
-
-    public TileBase tile;
+    //[SerializeField]
+    //private TileBase hoverTile;
 
     [SerializeField]
     private TileBase StartTile;
@@ -46,14 +27,40 @@ public class OverworldMapController : MonoBehaviour
     [SerializeField]
     private TileBase PathTile;
 
-    public Camera camera;
+    [SerializeField]
+    private GameObject playerController;
 
+    public static Action onTurnEnd;
+
+    public List<IBuilding> worldBuildings;
+
+    private void OnEnable()
+    {
+        PlayerCharacterController.OnPlayerOverTile += ClearTile;
+        PlayerController.onPlayerBeginMove += MovePlayer;
+    }
+
+    private void OnDisable()
+    {
+        PlayerCharacterController.OnPlayerOverTile -= ClearTile;
+        PlayerController.onPlayerBeginMove -= MovePlayer;
+    }
 
     void Start()
     {
-        PlayerCharacter character = new();
-        character.SetPlayerPosition(new(0, 0));
-        Players.Add(character);
+        // [ToDo] load buldings positions and instantiate them on the map
+
+
+
+
+        var playerControllerScript = playerController.GetComponent<PlayerController>();
+        playerControllerScript.SpawnPlayer();
+        var playerStartingPosition = playerControllerScript.GetPlayerPosition();
+        var vec = new Vector3Int((int)playerStartingPosition.x, (int)playerStartingPosition.y, (int)playerStartingPosition.z);
+        playerControllerScript.SetCharacterPosition(vec);
+        previousStartPos = playerControllerScript.GetCharacterPosition();
+        var t = tilemap.GetTile<MapTile>(vec);
+        SetStartPoint(vec, t);
     }
 
     private void DisplayPath(List<TileInfo> closedList)
@@ -61,11 +68,9 @@ public class OverworldMapController : MonoBehaviour
         foreach (var item in closedList)
         {
             var pos = item.position;
-            newGrid.SetTile(pos, PathResultTile);
+            tilemap.SetTile(pos, PathResultTile);
         }
     }
-
-    public Vector3Int oldMousePos = new();
 
     private MapTile start;
 
@@ -84,51 +89,31 @@ public class OverworldMapController : MonoBehaviour
     private Vector3Int previousTilePos;
 
     // Update is called once per frame
+    bool isBlocked = false;
     void Update()
     {
-        Ray ray = camera.ScreenPointToRay(Input.mousePosition);
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-        Plane ground = new Plane(Vector3.up, Vector3.zero);
+        Plane ground = new(Vector3.up, Vector3.zero);
 
-        if (ground.Raycast(ray, out float enter))
+        if (ground.Raycast(ray, out float enter) && !isBlocked)
         {
             Vector3 point = ray.GetPoint(enter);
 
-            Vector3Int cellPos = newGrid.WorldToCell(point);
+            Vector3Int cellPos = tilemap.WorldToCell(point);
 
-            var t = newGrid.GetTile<MapTile>(cellPos);
+            var t = tilemap.GetTile<MapTile>(cellPos);
             if (t != null)
             {
-                if (t.IsTraversable && !t.IsPath)
+                if (t.IsTraversable)
                 {
                     if (Input.GetMouseButtonDown(0))
                     {
-                        if (previousStart != null)
-                        {
-                            var script = newGrid.GetTile<MapTile>(previousStartPos);
-                            script.IsStart = false; script.IsEnd = false;
-                            newGrid.SetTile(previousStartPos, previousStart);
-
-                        }
-
-                        t.IsStart = true; t.IsEnd = false;
-                        newGrid.SetTile(cellPos, StartTile);
-                        previousStart = t;
-                        previousStartPos = cellPos;
-                    }
-                    else if (Input.GetMouseButtonDown(1))
-                    {
-                        if (previousEnd != null)
-                        {
-                            var script = newGrid.GetTile<MapTile>(previousEndPos);
-                            script.IsEnd = false; script.IsStart = false;
-                            newGrid.SetTile(previousEndPos, previousEnd);
-                        }
-
-                        t.IsStart = false; t.IsEnd = true;
-                        newGrid.SetTile(cellPos, EndTile);
-                        previousEnd = t;
-                        previousEndPos = cellPos;
+                        isBlocked = true;
+                        ClearTiles();
+                        SetEndPoint(cellPos, t);
+                        FindPath();
+                        isBlocked = false;
                     }
 
                     if (previousTilePos != cellPos)
@@ -142,18 +127,24 @@ public class OverworldMapController : MonoBehaviour
                 }
             }
         }
-    
+
+        // Moves player from one location to another
+        //if (Input.GetKeyUp(KeyCode.Space))
+        //{
+        //    MovePlayer();
+        //}
+
         if (Input.GetKeyUp(KeyCode.K))
         {
             ClearTiles();
             var watch = System.Diagnostics.Stopwatch.StartNew();
-            start = newGrid.GetTile<MapTile>(previousStartPos);
-            end = newGrid.GetTile<MapTile>(previousEndPos);
+            start = tilemap.GetTile<MapTile>(previousStartPos);
+            end = tilemap.GetTile<MapTile>(previousEndPos);
 
-            pathingController.SetParameters(newGrid, previousStartPos, previousEndPos);
-            closedList = pathingController.FindPath();
+            pathingController.SetParameters(tilemap, previousStartPos, previousEndPos);
+            pathfindingResult = pathingController.FindPath();
 
-            DisplayPath(closedList);
+            DisplayPath(pathfindingResult);
 
             float elapsed = watch.ElapsedMilliseconds * 0.001f;
             Debug.Log($"Elapsed: {elapsed} seconds");
@@ -162,29 +153,124 @@ public class OverworldMapController : MonoBehaviour
         if (Input.GetKeyUp(KeyCode.L))
         {
 
-            foreach (var item in closedList)
+            foreach (var item in pathfindingResult)
             {
-                newGrid.SetTile(item.position, PathTile);
+                tilemap.SetTile(item.position, PathTile);
             }
-            
-            closedList.Clear();
+
+            pathfindingResult.Clear();
         }
+    }
+
+    public void MovePlayer(PlayerController controller)
+    {
+        List<Vector3> convertedPath = new();
+        List<Vector3Int> tilesPositions = new();
+        foreach (var item in pathfindingResult)
+        {
+            var tileWorldCenterPosition = tilemap.GetCellCenterWorld(item.position);
+            convertedPath.Add(tileWorldCenterPosition);
+
+            tilesPositions.Add(item.position);
+        }
+
+        convertedPath.Reverse();
+        tilesPositions.Reverse();
+        convertedPath.Add(tilemap.GetCellCenterWorld(previousEndPos));
+        tilesPositions.Add(previousEndPos);
+
+        playerController.GetComponent<PlayerController>().SetCharacterPath(convertedPath, tilesPositions);
+
+        ReplaceStartWithEnd();
+    }
+
+
+    public void ClearTile(Vector3Int tilePosition)
+    {
+        tilemap.SetTile(tilePosition, PathTile);
+    }
+
+    private void FindPath()
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        start = tilemap.GetTile<MapTile>(previousStartPos);
+        end = tilemap.GetTile<MapTile>(previousEndPos);
+
+        pathingController.SetParameters(tilemap, previousStartPos, previousEndPos);
+        pathfindingResult = pathingController.FindPath();
+
+        DisplayPath(pathfindingResult);
+
+        float elapsed = watch.ElapsedMilliseconds * 0.001f;
+        Debug.Log($"Elapsed: {elapsed} seconds");
+        watch.Stop();
+    }
+
+
+    private void ReplaceStartWithEnd()
+    {
+        if (previousEnd != null)
+        {
+            var script = tilemap.GetTile<MapTile>(previousEndPos);
+            script.IsEnd = false; script.IsStart = false;
+            tilemap.SetTile(previousEndPos, previousEnd);
+        }
+        var t = tilemap.GetTile<MapTile>(previousEndPos);
+        t.IsStart = true; t.IsEnd = false;
+        previousEnd = null;
+        SetStartPoint(previousEndPos, t);
+    }
+
+    private void SetEndPoint(Vector3Int cellPos, MapTile t)
+    {
+        if (previousEnd != null)
+        {
+            var script = tilemap.GetTile<MapTile>(previousEndPos);
+            script.IsEnd = false; script.IsStart = false;
+            tilemap.SetTile(previousEndPos, previousEnd);
+        }
+
+        t.IsStart = false; t.IsEnd = true;
+        tilemap.SetTile(cellPos, EndTile);
+        previousEnd = t;
+        previousEndPos = cellPos;
+    }
+
+    private void SetStartPoint(Vector3Int cellPos, MapTile t)
+    {
+        if (previousStart != null)
+        {
+            var script = tilemap.GetTile<MapTile>(previousStartPos);
+            script.IsStart = false; script.IsEnd = false;
+            tilemap.SetTile(previousStartPos, previousStart);
+
+        }
+
+        t.IsStart = true; t.IsEnd = false;
+        tilemap.SetTile(cellPos, StartTile);
+        previousStart = t;
+        previousStartPos = cellPos;
     }
 
     private void ClearTiles()
     {
-        foreach (var item in closedList)
+        foreach (var item in pathfindingResult)
         {
-            newGrid.SetTile(item.position, PathTile);
+            tilemap.SetTile(item.position, PathTile);
         }
 
-        closedList.Clear();
+        pathfindingResult.Clear();
+    }
+
+    private void EndTurn()
+    {
+        onTurnEnd?.Invoke();
     }
 
     public MapTile MouseOverTile()
     {
 
-        var ray = camera.ScreenPointToRay(Input.mousePosition);
+        var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         var hit = Physics.Raycast(ray, out RaycastHit info);
         return hit ? info.transform.GetComponent<MapTile>() : null;
     }
