@@ -1,24 +1,17 @@
+using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public interface IBuilding
+public class InteractibleBuilding : MonoBehaviour
 {
-    void AddResources();
+    public bool isCaptured;
 
-    BuildingBounds BuildingBounds { get; set; }
+    public int capturerId;
 
-    int CapturerId { get; set; }
+    public string buildingName;
 
-    bool IsCaptured { get; set; }
-}
-
-public class Sawmill : MonoBehaviour, IBuilding
-{
-    public bool IsCaptured { get; set; }
-
-    public int CapturerId {get; set;}
-
-    public BuildingBounds BuildingBounds { get; set;}
+    public WorldResource buildingResource;
 
     private void OnEnable()
     {
@@ -30,44 +23,37 @@ public class Sawmill : MonoBehaviour, IBuilding
         OverworldMapController.onTurnEnd -= AddResources;
     }
 
-    /// <summary>
-    /// Do not call this method directly. Subscribe to the onTurnEnd event in the OverworldMapController.
-    /// </summary>
     public void AddResources()
     {
-        BuildingEvents.onResourcesAdd?.Invoke(this);
+        throw new NotImplementedException();
+    }
+
+    public bool GetIsCaptured()
+        => isCaptured;
+
+    private void Update()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit))
+            {
+                Debug.Log("Hit building: " + hit.transform);
+                BuildingEvents.onBuildingClicked?.Invoke(this);
+
+                var collider = hit.transform.GetComponent<BoxCollider>();
+
+                Debug.Log("Collider: " + collider);
+                //BuildingEvents.onBuildingClicked?.Invoke(this);
+
+            }
+
+        }
     }
 }
 
 public static class BuildingEvents
 {
-    public static Action<IBuilding> onResourcesAdd;
-}
+    public static Action<InteractibleBuilding> onResourcesAdd;
 
-public class BuildingBounds
-{
-    public Vector3 topLeft;
-    public Vector3 topRight;
-    public Vector3 bottomLeft;
-    public Vector3 bottomRight;
-
-    /// <summary>
-    /// Checks if player position is contained in building bounds
-    /// </summary>
-    /// <param name="position"></param>
-    /// <returns></returns>
-    public bool Contains(Vector3 position)
-    {
-        // [ToDo] improve
-        if (position.x >= topLeft.x && position.x <= topRight.x
-            && position.z <= topLeft.z
-            && position.x >= bottomLeft.z)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
+    public static Action<InteractibleBuilding> onBuildingClicked;
 }

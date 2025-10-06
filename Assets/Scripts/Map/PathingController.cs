@@ -20,6 +20,8 @@ public class TileInfo
 
     public Position positionInArray;
 
+    public bool isBuilding;
+
     public TileInfo parent;
 
     public void CalculateGCost(float previousGCost, bool isDiagonal)

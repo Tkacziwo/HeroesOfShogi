@@ -32,18 +32,66 @@ public class OverworldMapController : MonoBehaviour
 
     public static Action onTurnEnd;
 
-    public List<IBuilding> worldBuildings;
+    public List<InteractibleBuilding> worldBuildings;
 
     private void OnEnable()
     {
         PlayerCharacterController.OnPlayerOverTile += ClearTile;
+        BuildingEvents.onBuildingClicked += FindPathToBuilding;
         PlayerController.onPlayerBeginMove += MovePlayer;
     }
 
     private void OnDisable()
     {
         PlayerCharacterController.OnPlayerOverTile -= ClearTile;
+        BuildingEvents.onBuildingClicked -= FindPathToBuilding;
         PlayerController.onPlayerBeginMove -= MovePlayer;
+    }
+
+    public void FindPathToBuilding(InteractibleBuilding building)
+    {
+        //finding neighbours of tiles;
+        List<Vector3Int> traversableTiles = new();
+
+        var colliderBounds = building.GetComponent<BoxCollider>().bounds;
+
+        for (int y = (int)colliderBounds.min.z; y < colliderBounds.max.z; y++)
+        {
+            for (int x = (int)colliderBounds.min.x; x < colliderBounds.max.x; x++)
+            {
+                for (int cellY = -1; cellY <= 1; cellY++)
+                {
+                    for (int cellX = -1; cellX <= 1; cellX++)
+                    {
+                        int destX = cellX + x;
+                        int destY = cellY + y;
+
+                        Vector3Int destPos = new(destX, destY, 0);
+
+                        var tile = tilemap.GetTile<MapTile>(destPos);
+                        if (tile != null && !traversableTiles.Contains(destPos) && tile.IsTraversable)
+                        {
+                            traversableTiles.Add(destPos);
+                        }
+                    }
+                }
+            }
+        }
+
+        List<TileInfo> bestPath = new();
+
+        foreach (var item in traversableTiles)
+        {
+            pathingController.SetParameters(tilemap, previousStartPos, item);
+            var path = pathingController.FindPath();
+
+            if(bestPath.Count == 0 || bestPath.Count > path.Count)
+            {
+                bestPath = new(path);
+            }
+        }
+
+        DisplayPath(bestPath);
     }
 
     void Start()
