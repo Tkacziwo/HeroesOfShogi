@@ -1,70 +1,46 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    private PlayerCharacterController character;
+    public PlayerModel player;
 
-    public static Action<PlayerController> onPlayerBeginMove;
-
-    [SerializeField] private GameObject playerModel;
-
-    public PlayerResources playerResources;
+    public int currentPlayer;
 
     private void OnEnable()
     {
-        DoubleClickHandler.OnDoubleClick += (DoubleClickHandler handler) => onPlayerBeginMove?.Invoke(this);
+        InteractibleBuilding.AddResourcesToCapturer += HandleAddResources;
+        DoubleClickHandler.OnDoubleClick += HandleDoubleClick;
     }
 
     private void OnDisable()
     {
-        DoubleClickHandler.OnDoubleClick -= (DoubleClickHandler handler) => onPlayerBeginMove?.Invoke(this);
+        InteractibleBuilding.AddResourcesToCapturer -= HandleAddResources;
+        DoubleClickHandler.OnDoubleClick -= HandleDoubleClick;
     }
 
-    public void SpawnPlayer()
+    private void HandleDoubleClick(DoubleClickHandler handler)
     {
-        var p = Instantiate(playerModel);
-        character = p.GetComponent<PlayerCharacterController>();
-        var vec = new Vector3Int(12, 1, 0);
-        character.SetPlayerPosition(vec);
+        player.PlayerBeginMove();
     }
-    public Vector3Int GetCharacterPosition(int characterIndex = 0)
-        => character.characterPosition;
 
-    public void SetCharacterPosition(Vector3Int newPosition,  int characterIndex = 0)
-        => character.characterPosition = newPosition;
+    private void HandleAddResources(InteractibleBuilding building)
+    {
+        player.HandleAddResources(building);
+    }
 
-    public void SetCharacterPath(List<Vector3> positions, List<Vector3Int> tilesPositions, int characterIndex = 0)
-        => character.SetPath(positions, tilesPositions);
+    public void SetCharacterPosition(Vector3Int newPosition)
+        => player.SetCharacterPosition(newPosition);
 
-    public Vector3 GetPlayerPosition()
-        => character.transform.position;
+    public void SetCharacterPath(List<Vector3> positions, List<Vector3Int> tilesPositions)
+      => player.SetCharacterPath(positions, tilesPositions);
+
 
     private void Update()
     {
-        if(Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            onPlayerBeginMove?.Invoke(this);
+            player.PlayerBeginMove();
         }
     }
-}
-
-public class PlayerResources
-{
-    public int Wood;
-
-    public int Stone;
-
-    public int Gold;
-
-    public int LifeResin;
-}
-
-public enum WorldResource
-{
-    Wood = 1,
-    Stone = 2,
-    Gold = 3,
-    LifeResing = 4
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using static UnityEditor.Progress;
 
 public class OverworldMapController : MonoBehaviour
 {
@@ -27,29 +28,31 @@ public class OverworldMapController : MonoBehaviour
     [SerializeField]
     private TileBase PathTile;
 
-    [SerializeField]
-    private GameObject playerController;
-
     public static Action onTurnEnd;
 
     public List<InteractibleBuilding> worldBuildings;
+
+    private InteractibleBuilding chosenWorldBuilding;
+
+    [SerializeField] private PlayerController playerController;
 
     private void OnEnable()
     {
         PlayerCharacterController.OnPlayerOverTile += ClearTile;
         BuildingEvents.onBuildingClicked += FindPathToBuilding;
-        PlayerController.onPlayerBeginMove += MovePlayer;
+        PlayerEvents.OnPlayerBeginMove += MovePlayer;
     }
 
     private void OnDisable()
     {
         PlayerCharacterController.OnPlayerOverTile -= ClearTile;
         BuildingEvents.onBuildingClicked -= FindPathToBuilding;
-        PlayerController.onPlayerBeginMove -= MovePlayer;
+        PlayerEvents.OnPlayerBeginMove -= MovePlayer;
     }
 
     public void FindPathToBuilding(InteractibleBuilding building)
     {
+        //[ToDo] Handle doubleclicking
         //finding neighbours of tiles;
         List<Vector3Int> traversableTiles = new();
 
@@ -79,34 +82,50 @@ public class OverworldMapController : MonoBehaviour
         }
 
         List<TileInfo> bestPath = new();
+        Vector3Int bestEndPosition = new(0, 0, 0);
 
         foreach (var item in traversableTiles)
         {
             pathingController.SetParameters(tilemap, previousStartPos, item);
             var path = pathingController.FindPath();
 
-            if(bestPath.Count == 0 || bestPath.Count > path.Count)
+            if (bestPath.Count == 0 || bestPath.Count > path.Count)
             {
+                bestEndPosition = item;
                 bestPath = new(path);
             }
         }
 
-        DisplayPath(bestPath);
+        var t = tilemap.GetTile<MapTile>(bestEndPosition);
+        SetEndPoint(bestEndPosition, t);
+        pathfindingResult = bestPath;
+        DisplayPath(pathfindingResult);
+        chosenWorldBuilding = building;
     }
 
     void Start()
     {
+        //var width = tilemap.cellBounds.xMax;
+        //var height = tilemap.cellBounds.yMax;
+        //for (int y = 0; y < height; y++)
+        //{
+        //    for (int x = 0; x < width; x++)
+        //    {
+                //Vector3Int v = new(x, y, 0);
+                //var tile = tilemap.GetTile<GameObject>(v);
+                //tile.GetCompoentn.SetActive(false);
+        //    }
+        //}
         // [ToDo] load buldings positions and instantiate them on the map
 
-
-
+        // [ToDo] load players and place them on the map
 
         var playerControllerScript = playerController.GetComponent<PlayerController>();
-        playerControllerScript.SpawnPlayer();
-        var playerStartingPosition = playerControllerScript.GetPlayerPosition();
+        playerControllerScript.player.SpawnPlayer(100);
+        var playerStartingPosition = playerControllerScript.player.GetPlayerPosition();
         var vec = new Vector3Int((int)playerStartingPosition.x, (int)playerStartingPosition.y, (int)playerStartingPosition.z);
-        playerControllerScript.SetCharacterPosition(vec);
-        previousStartPos = playerControllerScript.GetCharacterPosition();
+        playerControllerScript.player.SetCharacterPosition(vec);
+        previousStartPos = playerControllerScript.player.GetCharacterPosition();
         var t = tilemap.GetTile<MapTile>(vec);
         SetStartPoint(vec, t);
     }
@@ -176,41 +195,13 @@ public class OverworldMapController : MonoBehaviour
             }
         }
 
-        // Moves player from one location to another
-        //if (Input.GetKeyUp(KeyCode.Space))
-        //{
-        //    MovePlayer();
-        //}
-
-        if (Input.GetKeyUp(KeyCode.K))
+        if (Input.GetKeyDown(KeyCode.Return))
         {
-            ClearTiles();
-            var watch = System.Diagnostics.Stopwatch.StartNew();
-            start = tilemap.GetTile<MapTile>(previousStartPos);
-            end = tilemap.GetTile<MapTile>(previousEndPos);
-
-            pathingController.SetParameters(tilemap, previousStartPos, previousEndPos);
-            pathfindingResult = pathingController.FindPath();
-
-            DisplayPath(pathfindingResult);
-
-            float elapsed = watch.ElapsedMilliseconds * 0.001f;
-            Debug.Log($"Elapsed: {elapsed} seconds");
-            watch.Stop();
-        }
-        if (Input.GetKeyUp(KeyCode.L))
-        {
-
-            foreach (var item in pathfindingResult)
-            {
-                tilemap.SetTile(item.position, PathTile);
-            }
-
-            pathfindingResult.Clear();
+            EndTurn();
         }
     }
 
-    public void MovePlayer(PlayerController controller)
+    public void MovePlayer(PlayerModel controller)
     {
         List<Vector3> convertedPath = new();
         List<Vector3Int> tilesPositions = new();
@@ -227,9 +218,15 @@ public class OverworldMapController : MonoBehaviour
         convertedPath.Add(tilemap.GetCellCenterWorld(previousEndPos));
         tilesPositions.Add(previousEndPos);
 
-        playerController.GetComponent<PlayerController>().SetCharacterPath(convertedPath, tilesPositions);
+        playerController.player.GetComponent<PlayerModel>().SetCharacterPath(convertedPath, tilesPositions);
 
         ReplaceStartWithEnd();
+
+        if (chosenWorldBuilding != null)
+        {
+            chosenWorldBuilding.CaptureBuilding(controller.playerId, controller.playerColor);
+            chosenWorldBuilding = null;
+        }
     }
 
 
@@ -252,6 +249,7 @@ public class OverworldMapController : MonoBehaviour
         float elapsed = watch.ElapsedMilliseconds * 0.001f;
         Debug.Log($"Elapsed: {elapsed} seconds");
         watch.Stop();
+        chosenWorldBuilding = null;
     }
 
 
