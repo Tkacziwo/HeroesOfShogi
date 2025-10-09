@@ -14,11 +14,9 @@ public class DoubleClickHandler : MonoBehaviour, IPointerDownHandler
 
     public static event Action<DoubleClickHandler> OnDoubleClick;
 
-
     public void OnPointerDown(PointerEventData eventData)
     {
         clicked++;
-
 
         if (clicked == 1) clickTime = Time.time;
 
@@ -27,7 +25,6 @@ public class DoubleClickHandler : MonoBehaviour, IPointerDownHandler
             clicked = 0;
             clickTime = 0f;
             Debug.Log("DoubleClick");
-
             OnDoubleClick?.Invoke(this);
         }
         else if (clicked > 2 || Time.time - clickTime > delay)

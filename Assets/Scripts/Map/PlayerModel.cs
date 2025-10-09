@@ -25,6 +25,8 @@ public class PlayerModel : MonoBehaviour
         isRealPlayer = true;
         var p = Instantiate(playerModel);
         character = p.GetComponent<PlayerCharacterController>();
+        character.playerId = playerId;
+        character.playerColor = playerColor;
         var vec = new Vector3Int(12, 1, 0);
         playerResources = new();
         character.SetPlayerPosition(vec);
@@ -69,17 +71,19 @@ public class PlayerModel : MonoBehaviour
                 }
         }
 
-        Debug.Log("Player resources: ");
-        Debug.Log("Wood: " + playerResources.Wood);
-        Debug.Log("Stone: " + playerResources.Stone);
-        Debug.Log("Gold: " + playerResources.Gold);
-        Debug.Log("LifeResin: " + playerResources.LifeResin);
+        //Debug.Log("Player resources: ");
+        //Debug.Log("Wood: " + playerResources.Wood);
+        //Debug.Log("Stone: " + playerResources.Stone);
+        //Debug.Log("Gold: " + playerResources.Gold);
+        //Debug.Log("LifeResin: " + playerResources.LifeResin);
     }
 }
 
 public static class PlayerEvents
 {
     public static Action<PlayerModel> OnPlayerBeginMove;
+
+    public static Action<PlayerCharacterController> OnPlayerEndMove;
 }
 
 public class PlayerResources

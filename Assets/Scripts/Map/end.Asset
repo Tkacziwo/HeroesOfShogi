@@ -40,7 +40,7 @@ MonoBehaviour:
   size: 1
   IsTraversable: 0
   IsStart: 0
-  IsEnd: 1
+  IsEnd: 0
   IsPath: 0
   gCost: 0
   hCost: 0

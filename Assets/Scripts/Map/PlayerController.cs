@@ -33,7 +33,7 @@ public class PlayerController : MonoBehaviour
         => player.SetCharacterPosition(newPosition);
 
     public void SetCharacterPath(List<Vector3> positions, List<Vector3Int> tilesPositions)
-      => player.SetCharacterPath(positions, tilesPositions);
+        => player.SetCharacterPath(positions, tilesPositions);
 
 
     private void Update()

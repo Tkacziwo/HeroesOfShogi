@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem.XR;
 using UnityEngine.Tilemaps;
 using static UnityEditor.Progress;
 
@@ -34,6 +35,8 @@ public class OverworldMapController : MonoBehaviour
 
     private InteractibleBuilding chosenWorldBuilding;
 
+    private bool isPlayerMoving;
+
     [SerializeField] private PlayerController playerController;
 
     private void OnEnable()
@@ -41,6 +44,7 @@ public class OverworldMapController : MonoBehaviour
         PlayerCharacterController.OnPlayerOverTile += ClearTile;
         BuildingEvents.onBuildingClicked += FindPathToBuilding;
         PlayerEvents.OnPlayerBeginMove += MovePlayer;
+        PlayerEvents.OnPlayerEndMove += HandlePlayerEndMove;
     }
 
     private void OnDisable()
@@ -48,12 +52,27 @@ public class OverworldMapController : MonoBehaviour
         PlayerCharacterController.OnPlayerOverTile -= ClearTile;
         BuildingEvents.onBuildingClicked -= FindPathToBuilding;
         PlayerEvents.OnPlayerBeginMove -= MovePlayer;
+        PlayerEvents.OnPlayerEndMove -= HandlePlayerEndMove;
+    }
+
+    private void HandlePlayerEndMove(PlayerCharacterController character)
+    {
+        ReplaceStartWithEnd();
+
+        if (chosenWorldBuilding != null)
+        {
+            chosenWorldBuilding.CaptureBuilding(character.playerId, character.playerColor);
+            chosenWorldBuilding = null;
+        }
+        isPlayerMoving = false;
     }
 
     public void FindPathToBuilding(InteractibleBuilding building)
     {
-        //[ToDo] Handle doubleclicking
         //finding neighbours of tiles;
+        if (chosenWorldBuilding == building) return;
+
+
         List<Vector3Int> traversableTiles = new();
 
         var colliderBounds = building.GetComponent<BoxCollider>().bounds;
@@ -111,9 +130,9 @@ public class OverworldMapController : MonoBehaviour
         //{
         //    for (int x = 0; x < width; x++)
         //    {
-                //Vector3Int v = new(x, y, 0);
-                //var tile = tilemap.GetTile<GameObject>(v);
-                //tile.GetCompoentn.SetActive(false);
+        //Vector3Int v = new(x, y, 0);
+        //var tile = tilemap.GetTile<GameObject>(v);
+        //tile.GetCompoentn.SetActive(false);
         //    }
         //}
         // [ToDo] load buldings positions and instantiate them on the map
@@ -156,14 +175,13 @@ public class OverworldMapController : MonoBehaviour
     private Vector3Int previousTilePos;
 
     // Update is called once per frame
-    bool isBlocked = false;
     void Update()
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
         Plane ground = new(Vector3.up, Vector3.zero);
 
-        if (ground.Raycast(ray, out float enter) && !isBlocked)
+        if (ground.Raycast(ray, out float enter) && !isPlayerMoving)
         {
             Vector3 point = ray.GetPoint(enter);
 
@@ -172,15 +190,13 @@ public class OverworldMapController : MonoBehaviour
             var t = tilemap.GetTile<MapTile>(cellPos);
             if (t != null)
             {
-                if (t.IsTraversable)
+                if (Input.GetMouseButtonDown(0))
                 {
-                    if (Input.GetMouseButtonDown(0))
+                    if (t.IsTraversable)
                     {
-                        isBlocked = true;
                         ClearTiles();
                         SetEndPoint(cellPos, t);
                         FindPath();
-                        isBlocked = false;
                     }
 
                     if (previousTilePos != cellPos)
@@ -190,7 +206,6 @@ public class OverworldMapController : MonoBehaviour
                         //newGrid.SetTile(cellPos, tile);
                         previousTilePos = cellPos;
                     }
-
                 }
             }
         }
@@ -219,14 +234,8 @@ public class OverworldMapController : MonoBehaviour
         tilesPositions.Add(previousEndPos);
 
         playerController.player.GetComponent<PlayerModel>().SetCharacterPath(convertedPath, tilesPositions);
-
-        ReplaceStartWithEnd();
-
-        if (chosenWorldBuilding != null)
-        {
-            chosenWorldBuilding.CaptureBuilding(controller.playerId, controller.playerColor);
-            chosenWorldBuilding = null;
-        }
+        isPlayerMoving = true;
+        tilemap.SetTile(previousStartPos, PathTile);
     }
 
 

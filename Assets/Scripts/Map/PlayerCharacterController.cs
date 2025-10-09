@@ -27,6 +27,10 @@ public class PlayerCharacterController : MonoBehaviour
 
     private int pathIterator;
 
+    public int playerId;
+
+    public Color playerColor;
+
     public static event Action<Vector3Int> OnPlayerOverTile;
 
     public void SetPlayerPosition(Vector3 newPos)
@@ -92,6 +96,7 @@ public class PlayerCharacterController : MonoBehaviour
                 {
                     isMoving = false;
                     path.Clear();
+                    PlayerEvents.OnPlayerEndMove?.Invoke(this);
                 }
             }
         }
