@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Xml;
 using UnityEngine;
 
 public class PlayerModel : MonoBehaviour
@@ -16,11 +17,42 @@ public class PlayerModel : MonoBehaviour
 
     public PlayerResources playerResources;
 
+    private CameraController cameraController;
+
+    private bool isCameraFocusedOnPlayer = false;
+
+    private void OnDisable()
+    {
+        if (character != null) character.OnPlayerMoveUpdateCameraPosition -= UpdateCameraPosition;
+        //cameraController.OnCameraDrag -= HandleDragCamera;
+    }
+
+    private void OnEnable()
+    {
+        //cameraController.OnCameraDrag += HandleDragCamera;
+    }
+
+    public CameraController GetCameraController()
+       => cameraController;
+
+    private void SubscribeToCharacterEvents()
+    {
+        character.OnPlayerMoveUpdateCameraPosition += UpdateCameraPosition;
+    }
+
+    private void UpdateCameraPosition(Transform transform)
+    {
+        if (isCameraFocusedOnPlayer)
+            cameraController.UpdateCameraPosition(transform);
+    }
+
     public void PlayerBeginMove()
         => PlayerEvents.OnPlayerBeginMove?.Invoke(this);
 
     public void SpawnPlayer(int playerId)
     {
+        cameraController = this.GetComponentInChildren<CameraController>();
+        cameraController.InitCamera();
         this.playerId = playerId;
         isRealPlayer = true;
         var p = Instantiate(playerModel);
@@ -30,6 +62,12 @@ public class PlayerModel : MonoBehaviour
         var vec = new Vector3Int(12, 1, 0);
         playerResources = new();
         character.SetPlayerPosition(vec);
+
+
+        cameraController.UpdateCameraPosition(character.transform);
+
+        cameraController.isCameraFocusedOnPlayer = false;
+        SubscribeToCharacterEvents();
     }
     public Vector3Int GetCharacterPosition(int characterIndex = 0)
         => character.characterPosition;

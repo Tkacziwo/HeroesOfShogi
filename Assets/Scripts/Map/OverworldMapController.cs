@@ -11,6 +11,8 @@ public class OverworldMapController : MonoBehaviour
 
     private readonly PathingController pathingController = new();
 
+    [SerializeField] Camera topCamera;
+
     [SerializeField]
     private Tilemap tilemap;
 
@@ -31,6 +33,8 @@ public class OverworldMapController : MonoBehaviour
 
     public static Action onTurnEnd;
 
+    public static Action<Camera> OnCameraChange;
+
     public List<InteractibleBuilding> worldBuildings;
 
     private InteractibleBuilding chosenWorldBuilding;
@@ -38,6 +42,10 @@ public class OverworldMapController : MonoBehaviour
     private bool isPlayerMoving;
 
     [SerializeField] private PlayerController playerController;
+
+    private PlayerModel playerObject;
+
+    private Camera currentCamera;
 
     private void OnEnable()
     {
@@ -124,6 +132,12 @@ public class OverworldMapController : MonoBehaviour
 
     void Start()
     {
+        playerObject = Instantiate(playerController.GetComponent<PlayerController>().player);
+        playerObject.SpawnPlayer(100);
+        var playerCamera = playerObject.GetCameraController().GetComponentInChildren<Camera>();
+        playerCamera.enabled = false;
+        currentCamera = topCamera;
+
         //var width = tilemap.cellBounds.xMax;
         //var height = tilemap.cellBounds.yMax;
         //for (int y = 0; y < height; y++)
@@ -139,14 +153,14 @@ public class OverworldMapController : MonoBehaviour
 
         // [ToDo] load players and place them on the map
 
-        var playerControllerScript = playerController.GetComponent<PlayerController>();
-        playerControllerScript.player.SpawnPlayer(100);
-        var playerStartingPosition = playerControllerScript.player.GetPlayerPosition();
+       
+        var playerStartingPosition = playerObject.GetPlayerPosition();
         var vec = new Vector3Int((int)playerStartingPosition.x, (int)playerStartingPosition.y, (int)playerStartingPosition.z);
-        playerControllerScript.player.SetCharacterPosition(vec);
-        previousStartPos = playerControllerScript.player.GetCharacterPosition();
+        playerObject.SetCharacterPosition(vec);
+        previousStartPos = playerObject.GetCharacterPosition();
         var t = tilemap.GetTile<MapTile>(vec);
         SetStartPoint(vec, t);
+
     }
 
     private void DisplayPath(List<TileInfo> closedList)
@@ -177,7 +191,7 @@ public class OverworldMapController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        Ray ray = currentCamera.ScreenPointToRay(Input.mousePosition);
 
         Plane ground = new(Vector3.up, Vector3.zero);
 
@@ -214,6 +228,17 @@ public class OverworldMapController : MonoBehaviour
         {
             EndTurn();
         }
+
+
+        if(Input.GetKeyDown(KeyCode.C))
+        {
+            //switch camera.
+            topCamera.enabled = !topCamera.enabled;
+            var playerCamera = playerObject.GetCameraController().GetComponentInChildren<Camera>();
+            playerCamera.enabled = !playerCamera.enabled;
+            OnCameraChange?.Invoke(playerCamera);
+            currentCamera = topCamera.enabled ? topCamera : playerCamera;
+        }
     }
 
     public void MovePlayer(PlayerModel controller)
@@ -233,7 +258,7 @@ public class OverworldMapController : MonoBehaviour
         convertedPath.Add(tilemap.GetCellCenterWorld(previousEndPos));
         tilesPositions.Add(previousEndPos);
 
-        playerController.player.GetComponent<PlayerModel>().SetCharacterPath(convertedPath, tilesPositions);
+        playerObject.SetCharacterPath(convertedPath, tilesPositions);
         isPlayerMoving = true;
         tilemap.SetTile(previousStartPos, PathTile);
     }

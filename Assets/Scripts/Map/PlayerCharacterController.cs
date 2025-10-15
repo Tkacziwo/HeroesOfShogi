@@ -33,6 +33,8 @@ public class PlayerCharacterController : MonoBehaviour
 
     public static event Action<Vector3Int> OnPlayerOverTile;
 
+    public event Action<Transform> OnPlayerMoveUpdateCameraPosition;
+
     public void SetPlayerPosition(Vector3 newPos)
     {
         var p = newPos;
@@ -59,14 +61,12 @@ public class PlayerCharacterController : MonoBehaviour
     public void SetTargetPosition(Vector3 p)
     {
         targetPosition = p;
-        //targetPosition.x += 0.5f;
-        //targetPosition.y = 0.1f;
-        //targetPosition.z += 0.5f;
     }
 
     public void MakeStep(float step)
     {
         transform.position = Vector3.MoveTowards(transform.position, targetPosition, step);
+        OnPlayerMoveUpdateCameraPosition?.Invoke(transform);
     }
 
     public void SetIsMoving(bool isMoving)
