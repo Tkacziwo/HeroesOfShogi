@@ -193,7 +193,6 @@ public class PathingController
         int iterations = 0;
 
         Vector3Int vec = new(s.x, s.y);
-
         // Holds unexplored paths
         List<TileInfo> openList = new();
 
@@ -223,6 +222,7 @@ public class PathingController
                     closedList.Add(q);
                     closedList.Remove(startTile);
                     var path = TraceBackPath();
+                    path.Reverse();
                     return path;
                 }
                 else

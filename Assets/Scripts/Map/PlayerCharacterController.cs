@@ -4,11 +4,14 @@ using UnityEngine;
 
 public class PlayerCharacterController : MonoBehaviour
 {
+    public int characterId;
+
     [SerializeField]
     private string Name;
 
-    [SerializeField]
-    private double MovementPoints;
+    public int movementPoints;
+
+    public int usedMovementPointsForCurrentTurn = 0;
 
     public Vector3Int characterPosition;
 
@@ -35,13 +38,23 @@ public class PlayerCharacterController : MonoBehaviour
 
     public event Action<Transform> OnPlayerMoveUpdateCameraPosition;
 
-    public void SetPlayerPosition(Vector3 newPos)
+    public void SetPlayerTransform(Vector3 newTransform)
+        => this.transform.position = newTransform;
+
+    public void OnEnable()
     {
-        var p = newPos;
-        //p.x += 0.5f;
-        //p.y = 0.1f;
-        //p.z += 0.5f;
-        this.transform.position = p;
+        OverworldMapController.onTurnEnd += ResetUsedMovementPoints;
+    }
+
+    public void OnDisable()
+    {
+        OverworldMapController.onTurnEnd -= ResetUsedMovementPoints;
+    }
+
+
+    public void SetPlayerPosition(Vector3Int newPos)
+    {
+        characterPosition = newPos;
     }
 
     public void SetPath(List<Vector3> path, List<Vector3Int> tiles)
@@ -63,6 +76,9 @@ public class PlayerCharacterController : MonoBehaviour
         targetPosition = p;
     }
 
+    public Vector3 GetTargetPosition()
+        => targetPosition;
+
     public void MakeStep(float step)
     {
         transform.position = Vector3.MoveTowards(transform.position, targetPosition, step);
@@ -72,6 +88,23 @@ public class PlayerCharacterController : MonoBehaviour
     public void SetIsMoving(bool isMoving)
         => this.isMoving = isMoving;
 
+    public int GetMovementPoints()
+        => this.movementPoints;
+
+    public int GetUsedMovementPointsForCurrentTurn()
+        => this.usedMovementPointsForCurrentTurn;
+
+    public void ResetUsedMovementPoints()
+        => this.usedMovementPointsForCurrentTurn = 0;
+
+    public int GetRemainingMovementPoints()
+        => movementPoints - usedMovementPointsForCurrentTurn;
+
+    public int GetPathIterator()
+        => pathIterator;
+
+    public void ClearPath()
+        => path.Clear();
 
     // Update is called once per frame
     void Update()
@@ -86,17 +119,19 @@ public class PlayerCharacterController : MonoBehaviour
             else
             {
                 pathIterator++;
-                if (pathIterator < path.Count)
+                usedMovementPointsForCurrentTurn++;
+
+                if (pathIterator < path.Count && pathIterator <= movementPoints)
                 {
                     OnPlayerOverTile?.Invoke(tilesPositions[pathIterator - 1]);
-                    SetPlayerPosition(targetPosition);
+                    SetPlayerTransform(targetPosition);
                     SetTargetPosition(path[pathIterator]);
                 }
                 else
                 {
                     isMoving = false;
-                    path.Clear();
                     PlayerEvents.OnPlayerEndMove?.Invoke(this);
+                    path.Clear();
                 }
             }
         }

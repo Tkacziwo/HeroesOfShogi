@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 
 public class BuildingController : MonoBehaviour
@@ -6,22 +7,24 @@ public class BuildingController : MonoBehaviour
 
     private void OnEnable()
     {
-        OverworldMapController.OnCameraChange += HandleCameraChanged;
+        PlayerController.CameraChanged += HandleCameraChanged;
     }
 
     private void OnDisable()
     {
-        OverworldMapController.OnCameraChange -= HandleCameraChanged;
+        PlayerController.CameraChanged -= HandleCameraChanged;
+
     }
 
-    private void HandleCameraChanged(Camera cam)
+    private void HandleCameraChanged(Camera changedCamera)
     {
-        currentCamera = cam;
+        currentCamera = changedCamera;
     }
 
     private void Start()
     {
         currentCamera = Camera.main;
+        
     }
 
     private void Update()

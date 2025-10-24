@@ -11,6 +11,8 @@ public class PlayerModel : MonoBehaviour
 
     public Color playerColor;
 
+    private List<PlayerCharacterController> playerCharacters;
+
     private PlayerCharacterController character;
 
     [SerializeField] private GameObject playerModel;
@@ -19,17 +21,9 @@ public class PlayerModel : MonoBehaviour
 
     private CameraController cameraController;
 
-    private bool isCameraFocusedOnPlayer = false;
-
     private void OnDisable()
     {
         if (character != null) character.OnPlayerMoveUpdateCameraPosition -= UpdateCameraPosition;
-        //cameraController.OnCameraDrag -= HandleDragCamera;
-    }
-
-    private void OnEnable()
-    {
-        //cameraController.OnCameraDrag += HandleDragCamera;
     }
 
     public CameraController GetCameraController()
@@ -42,44 +36,83 @@ public class PlayerModel : MonoBehaviour
 
     private void UpdateCameraPosition(Transform transform)
     {
-        if (isCameraFocusedOnPlayer)
+        if (cameraController.isCameraFocusedOnPlayer)
             cameraController.UpdateCameraPosition(transform);
     }
 
     public void PlayerBeginMove()
         => PlayerEvents.OnPlayerBeginMove?.Invoke(this);
 
-    public void SpawnPlayer(int playerId)
+    public void InitPlayer(int playerId)
     {
         cameraController = this.GetComponentInChildren<CameraController>();
         cameraController.InitCamera();
         this.playerId = playerId;
         isRealPlayer = true;
-        var p = Instantiate(playerModel);
-        character = p.GetComponent<PlayerCharacterController>();
-        character.playerId = playerId;
-        character.playerColor = playerColor;
-        var vec = new Vector3Int(12, 1, 0);
         playerResources = new();
+        cameraController.isCameraFocusedOnPlayer = true;
+    }
+
+    public void SpawnPlayer()
+    {
+        var p = Instantiate(playerModel);
+
+        character = p.GetComponent<PlayerCharacterController>();
+        character.playerId = this.playerId;
+        character.playerColor = playerColor;
+        character.characterId = 1;
+        character.movementPoints = 20;
+
+        var vec = new Vector3Int(12, 1, 0);
         character.SetPlayerPosition(vec);
-
-
         cameraController.UpdateCameraPosition(character.transform);
 
-        cameraController.isCameraFocusedOnPlayer = false;
+        var p2 = Instantiate(playerModel);
+        var character2 = p2.GetComponent<PlayerCharacterController>();
+        var vec2 = new Vector3Int(1, 8, 0);
+        character2.playerId = this.playerId;
+        character2.playerColor = playerColor;
+        character2.characterId = 2;
+        character2.movementPoints = 20;
+        character2.SetPlayerPosition(vec2);
+
+        playerCharacters = new List<PlayerCharacterController>()
+        {
+            character,
+            character2
+        };
+        
         SubscribeToCharacterEvents();
     }
+
+    public void ChangeCharacters(int characterId)
+    {
+        character = playerCharacters[characterId - 1];
+        character.OnPlayerMoveUpdateCameraPosition += UpdateCameraPosition;
+        cameraController.UpdateCameraPosition(character.transform);
+    }
+
     public Vector3Int GetCharacterPosition(int characterIndex = 0)
-        => character.characterPosition;
+    {
+        return playerCharacters[characterIndex - 1].characterPosition;
+    }
 
     public void SetCharacterPosition(Vector3Int newPosition, int characterIndex = 0)
-        => character.characterPosition = newPosition;
+    {
+        playerCharacters[characterIndex - 1].characterPosition = newPosition;
+    }
+
+    public PlayerCharacterController GetCurrentPlayerCharacter()
+        => character;
 
     public void SetCharacterPath(List<Vector3> positions, List<Vector3Int> tilesPositions, int characterIndex = 0)
         => character.SetPath(positions, tilesPositions);
 
     public Vector3 GetPlayerPosition()
-        => character.transform.position;
+        => character.characterPosition;
+
+    public Vector3 GetPlayerPositionById(int characterId)
+        => playerCharacters[characterId - 1].characterPosition;
 
     public void HandleAddResources(InteractibleBuilding building)
     {
