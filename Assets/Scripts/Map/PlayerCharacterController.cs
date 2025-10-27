@@ -59,10 +59,7 @@ public class PlayerCharacterController : MonoBehaviour
 
     public void SetPath(List<Vector3> path, List<Vector3Int> tiles)
     {
-        if (path.Count == 0)
-        {
-            return;
-        }
+        if (path.Count == 0) { return; }
 
         pathIterator = 0;
         this.tilesPositions = tiles;
@@ -106,6 +103,10 @@ public class PlayerCharacterController : MonoBehaviour
     public void ClearPath()
         => path.Clear();
 
+    public void ReduceAvailableMovementPoints(int amount)
+        => usedMovementPointsForCurrentTurn += Math.Abs(amount);
+
+
     // Update is called once per frame
     void Update()
     {
@@ -119,9 +120,8 @@ public class PlayerCharacterController : MonoBehaviour
             else
             {
                 pathIterator++;
-                //usedMovementPointsForCurrentTurn++;
 
-                if (pathIterator < path.Count /*&& GetRemainingMovementPoints() > 0*/)
+                if (pathIterator < path.Count)
                 {
                     OnPlayerOverTile?.Invoke(tilesPositions[pathIterator - 1]);
                     SetPlayerTransform(targetPosition);

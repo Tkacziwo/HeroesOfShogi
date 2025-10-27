@@ -22,6 +22,8 @@ public class PlayerModel : MonoBehaviour
 
     private CameraController cameraController;
 
+    [SerializeField] uint maxCharacters = 3;
+
     private void OnDisable()
     {
         if (character != null) character.OnPlayerMoveUpdateCameraPosition -= UpdateCameraPosition;
