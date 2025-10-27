@@ -9,12 +9,6 @@ public class InteractibleBuilding : MonoBehaviour
 
     public string buildingName;
 
-    public WorldResource buildingResource;
-
-    public int ResourceAmount;
-
-    public bool ignoreClick;
-
     public static Action<InteractibleBuilding> AddResourcesToCapturer;
 
     private void OnEnable()
@@ -34,7 +28,7 @@ public class InteractibleBuilding : MonoBehaviour
     {
         if (capturerId == this.capturerId) return;
 
-        if(capturerColor != null)
+        if (capturerColor != null)
         {
             this.GetComponent<MeshRenderer>().material.color = capturerColor.Value;
         }
@@ -44,7 +38,9 @@ public class InteractibleBuilding : MonoBehaviour
     }
 
     public void OnTurnEnd()
-        => AddResourcesToCapturer?.Invoke(this);
+    {
+        AddResourcesToCapturer?.Invoke(this);
+    }
 
     public void FindPathToBuilding()
     {

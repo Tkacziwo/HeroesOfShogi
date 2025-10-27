@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class PlayerModel : MonoBehaviour
 {
@@ -114,7 +115,40 @@ public class PlayerModel : MonoBehaviour
     public Vector3 GetPlayerPositionById(int characterId)
         => playerCharacters[characterId - 1].characterPosition;
 
-    public void HandleAddResources(InteractibleBuilding building)
+    public void HandleAddResourcesFromCity(City city)
+    {
+        if (city.capturerId != playerId) return;
+
+        foreach (var building in city.cityBuildings)
+        {
+            switch (building.producedResource)
+            {
+                case WorldResource.Wood:
+                    {
+                        playerResources.Wood += (int)building.producedAmount;
+                        break;
+                    }
+                case WorldResource.Stone:
+                    {
+                        playerResources.Stone += (int)building.producedAmount;
+                        break;
+                    }
+                case WorldResource.Gold:
+                    {
+                        playerResources.Gold += (int)building.producedAmount;
+                        break;
+                    }
+                case WorldResource.LifeResing:
+                    {
+                        playerResources.LifeResin += (int)building.producedAmount;
+                        break;
+                    }
+            }
+        }
+
+    }
+
+    public void HandleAddResources(WorldBuilding building)
     {
         if (building.capturerId != playerId) return;
 
@@ -141,12 +175,6 @@ public class PlayerModel : MonoBehaviour
                     break;
                 }
         }
-
-        //Debug.Log("Player resources: ");
-        //Debug.Log("Wood: " + playerResources.Wood);
-        //Debug.Log("Stone: " + playerResources.Stone);
-        //Debug.Log("Gold: " + playerResources.Gold);
-        //Debug.Log("LifeResin: " + playerResources.LifeResin);
     }
 }
 

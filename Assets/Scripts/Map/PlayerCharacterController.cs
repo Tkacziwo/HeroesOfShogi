@@ -119,9 +119,9 @@ public class PlayerCharacterController : MonoBehaviour
             else
             {
                 pathIterator++;
-                usedMovementPointsForCurrentTurn++;
+                //usedMovementPointsForCurrentTurn++;
 
-                if (pathIterator < path.Count && pathIterator <= movementPoints)
+                if (pathIterator < path.Count /*&& GetRemainingMovementPoints() > 0*/)
                 {
                     OnPlayerOverTile?.Invoke(tilesPositions[pathIterator - 1]);
                     SetPlayerTransform(targetPosition);

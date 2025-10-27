@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.UIElements;
 
 public class PlayerController : MonoBehaviour
 {
@@ -11,6 +12,10 @@ public class PlayerController : MonoBehaviour
     public int currentPlayer;
 
     private int buildingsCount;
+
+    private int cityCount;
+
+    private int cityEventFires;
 
     private int eventFires;
 
@@ -22,13 +27,13 @@ public class PlayerController : MonoBehaviour
 
     private void OnEnable()
     {
-        InteractibleBuilding.AddResourcesToCapturer += HandleAddResources;
+        WorldBuilding.AddResourcesToCapturer += HandleAddResources;
         DoubleClickHandler.OnDoubleClick += HandleDoubleClick;
     }
 
     private void OnDisable()
     {
-        InteractibleBuilding.AddResourcesToCapturer -= HandleAddResources;
+        WorldBuilding.AddResourcesToCapturer -= HandleAddResources;
         DoubleClickHandler.OnDoubleClick -= HandleDoubleClick;
     }
 
@@ -36,9 +41,18 @@ public class PlayerController : MonoBehaviour
         => OnPlayerBeginMove();
 
 
+   
     private void HandleAddResources(InteractibleBuilding building)
     {
-        player.HandleAddResources(building);
+        if(building.TryGetComponent<City>(out City city))
+        {
+            player.HandleAddResourcesFromCity(city);
+        }
+        else if(building.TryGetComponent<WorldBuilding>(out WorldBuilding worldBuilding))
+        {
+            player.HandleAddResources(worldBuilding);
+        }
+
         eventFires++;
 
         if (eventFires == buildingsCount)
@@ -56,8 +70,9 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-        eventFires = 0;
+        eventFires = cityEventFires = 0;
         buildingsCount = FindObjectsByType<InteractibleBuilding>(FindObjectsSortMode.InstanceID).ToList().Count();
+        cityCount = FindObjectsByType<City>(FindObjectsSortMode.InstanceID).ToList().Count();
     }
 
     private void Update()

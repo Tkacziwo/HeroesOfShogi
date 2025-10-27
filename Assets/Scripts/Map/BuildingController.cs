@@ -33,8 +33,10 @@ public class BuildingController : MonoBehaviour
         {
             if (Physics.Raycast(currentCamera.ScreenPointToRay(Input.mousePosition), out RaycastHit hit))
             {
-                var script = hit.transform.GetComponent<InteractibleBuilding>();
-                script.FindPathToBuilding();
+                if (hit.transform.TryGetComponent<InteractibleBuilding>(out InteractibleBuilding script))
+                {
+                    script.FindPathToBuilding();
+                }
             }
         }
     }
