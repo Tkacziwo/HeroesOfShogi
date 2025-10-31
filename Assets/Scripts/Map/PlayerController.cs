@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Tilemaps;
-using UnityEngine.UIElements;
 
 public class PlayerController : MonoBehaviour
 {
@@ -25,21 +23,29 @@ public class PlayerController : MonoBehaviour
 
     public static event Action<Camera> CameraChanged;
 
+    public static event Action<PlayerModel> PlayerSpawned;
+
     private void OnEnable()
     {
         WorldBuilding.AddResourcesToCapturer += HandleAddResources;
         DoubleClickHandler.OnDoubleClick += HandleDoubleClick;
+        CharacterPanelController.PlayerChanged += HandleCharacterChanged;
     }
 
     private void OnDisable()
     {
         WorldBuilding.AddResourcesToCapturer -= HandleAddResources;
         DoubleClickHandler.OnDoubleClick -= HandleDoubleClick;
+        CharacterPanelController.PlayerChanged -= HandleCharacterChanged;
     }
 
     private void HandleDoubleClick(DoubleClickHandler handler)
         => OnPlayerBeginMove();
 
+    private void HandleCharacterChanged(PlayerCharacterController character)
+    {
+        OnPlayerCharacterChanged(character.characterId);
+    }
 
    
     private void HandleAddResources(InteractibleBuilding building)
@@ -121,6 +127,8 @@ public class PlayerController : MonoBehaviour
         player = Instantiate(player);
         player.InitPlayer(playerId);
         player.SpawnPlayer();
+
+        PlayerSpawned?.Invoke(player);
     }
 
     public void OnPlayerBeginMove()

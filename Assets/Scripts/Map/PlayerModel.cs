@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Xml;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class PlayerModel : MonoBehaviour
 {
@@ -107,6 +105,9 @@ public class PlayerModel : MonoBehaviour
 
     public PlayerCharacterController GetCurrentPlayerCharacter()
         => character;
+
+    public List<PlayerCharacterController> GetPlayerCharacters()
+        => playerCharacters;
 
     public void SetCharacterPath(List<Vector3> positions, List<Vector3Int> tilesPositions, int characterIndex = 0)
         => character.SetPath(positions, tilesPositions);

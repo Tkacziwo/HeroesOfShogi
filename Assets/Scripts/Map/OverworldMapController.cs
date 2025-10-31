@@ -221,12 +221,6 @@ public class OverworldMapController : MonoBehaviour
                 var pos = closedList[i].position;
                 tilemap.SetTile(pos, PathResultTile);
             }
-
-            //for (int i = remainingMovementPoints; i < closedList.Count; i++)
-            //{
-            //    var pos = closedList[i].position;
-            //    tilemap.SetTile(pos, UnreachableTile);
-            //}
         }
     }
 
@@ -278,6 +272,10 @@ public class OverworldMapController : MonoBehaviour
 
     public void MovePlayer(PlayerModel controller)
     {
+        var character = controller.GetPlayerPosition();
+        if (tilemap.WorldToCell(character) == previousEndPos) return;
+
+
         var currentCharacter = controller.GetCurrentPlayerCharacter();
 
         var remainingMovementPoints = currentCharacter.GetRemainingMovementPoints();
@@ -353,21 +351,6 @@ public class OverworldMapController : MonoBehaviour
         chosenWorldBuilding = null;
     }
 
-
-    private void ReplaceStartWithEnd()
-    {
-        if (previousEnd != null)
-        {
-            var script = tilemap.GetTile<MapTile>(previousEndPos);
-            script.IsEnd = false; script.IsStart = false;
-            tilemap.SetTile(previousEndPos, previousEnd);
-        }
-        var t = tilemap.GetTile<MapTile>(previousEndPos);
-        t.IsStart = true; t.IsEnd = false;
-        previousEnd = null;
-        SetStartPoint(previousEndPos, t);
-    }
-
     private void SetEndPoint(Vector3Int cellPos, MapTile t)
     {
         if (previousEnd != null)
@@ -390,6 +373,10 @@ public class OverworldMapController : MonoBehaviour
             var script = tilemap.GetTile<MapTile>(previousEndPos);
             script.IsEnd = false; script.IsStart = false;
             tilemap.SetTile(previousEndPos, previousEnd);
+
+            //[ToDo] fix 
+            //var currentCharacterPosition = playerController.player.GetPlayerPosition();
+            //previousEndPos = tilemap.WorldToCell(currentCharacterPosition);
         }
     }
 

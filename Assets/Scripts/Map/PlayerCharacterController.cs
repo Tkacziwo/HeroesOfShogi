@@ -24,9 +24,9 @@ public class PlayerCharacterController : MonoBehaviour
 
     private bool isMoving;
 
-    private List<Vector3> path;
+    private List<Vector3> path = new();
 
-    private List<Vector3Int> tilesPositions;
+    private List<Vector3Int> tilesPositions = new();
 
     private int pathIterator;
 
@@ -43,18 +43,25 @@ public class PlayerCharacterController : MonoBehaviour
 
     public void OnEnable()
     {
-        OverworldMapController.onTurnEnd += ResetUsedMovementPoints;
+        OverworldMapController.onTurnEnd += HandleEndTurn;
     }
 
     public void OnDisable()
     {
-        OverworldMapController.onTurnEnd -= ResetUsedMovementPoints;
+        OverworldMapController.onTurnEnd -= HandleEndTurn;
     }
 
 
     public void SetPlayerPosition(Vector3Int newPos)
     {
         characterPosition = newPos;
+    }
+
+    public void HandleEndTurn()
+    {
+        ClearPath();
+        ResetUsedMovementPoints();
+        targetPosition = transform.position;
     }
 
     public void SetPath(List<Vector3> path, List<Vector3Int> tiles)
@@ -106,8 +113,6 @@ public class PlayerCharacterController : MonoBehaviour
     public void ReduceAvailableMovementPoints(int amount)
         => usedMovementPointsForCurrentTurn += Math.Abs(amount);
 
-
-    // Update is called once per frame
     void Update()
     {
         if (isMoving)
