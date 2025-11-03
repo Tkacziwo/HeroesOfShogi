@@ -1,0 +1,90 @@
+[
+  {
+    "name": "SteelCauldrons",
+    "level": 1,
+    "amount": 1,
+    "requiredResources": {
+      "wood": 4,
+      "stone": 8,
+      "gold": 3000,
+      "lifeResin": 0
+    }
+  },
+  {
+    "name": "SteelCauldrons",
+    "level": 2,
+    "amount": 2,
+    "requiredResources": {
+      "wood": 8,
+      "stone": 10,
+      "gold": 6000,
+      "lifeResin": 1
+    }
+  },
+  {
+    "name": "SteelCauldrons",
+    "level": 3,
+    "amount": 3,
+    "requiredResources": {
+      "wood": 15,
+      "stone": 20,
+      "gold": 10000,
+      "lifeResin": 3
+    }
+  },
+  {
+    "name": "Temple",
+    "level": 1,
+    "amount": 1,
+    "requiredResources": {
+      "wood": 8,
+      "stone": 4,
+      "gold": 3000,
+      "lifeResin": 0
+    }
+  },
+  {
+    "name": "Temple",
+    "level": 2,
+    "amount": 2,
+    "requiredResources": {
+      "wood": 12,
+      "stone": 6,
+      "gold": 4000,
+      "lifeResin": 1
+    }
+  },
+  {
+    "name": "Temple",
+    "level": 3,
+    "amount": 3,
+    "requiredResources": {
+      "wood": 20,
+      "stone": 8,
+      "gold": 6000,
+      "lifeResin": 2
+    }
+  },
+  {
+    "name": "TowerOfMages",
+    "level": 1,
+    "amount": 0,
+    "requiredResources": {
+      "wood": 10,
+      "stone": 12,
+      "gold": 7000,
+      "lifeResin": 1
+    }
+  },
+  {
+    "name": "TowerOfMages",
+    "level": 2,
+    "amount": 0,
+    "requiredResources": {
+      "wood": 20,
+      "stone": 22,
+      "gold": 10000,
+      "lifeResin": 3
+    }
+  }
+]

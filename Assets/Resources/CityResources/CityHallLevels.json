@@ -1,0 +1,35 @@
+[
+  {
+    "name": "CityHall",
+    "level": 1,
+    "amount": 1000,
+    "requiredResources": {
+      "wood": 0,
+      "stone": 0,
+      "gold": 0,
+      "lifeResin": 0
+    }
+  },
+  {
+    "name": "CityHall",
+    "level": 2,
+    "amount": 3000,
+    "requiredResources": {
+      "wood": 5,
+      "stone": 3,
+      "gold": 2000,
+      "lifeResin": 0
+    }
+  },
+  {
+    "name": "CityHall",
+    "level": 3,
+    "amount": 6000,
+    "requiredResources": {
+      "wood": 8,
+      "stone": 6,
+      "gold": 5000,
+      "lifeResin": 1
+    }
+  }
+]

@@ -32,7 +32,7 @@ public class GameCreationManager : MonoBehaviour
     {
         StaticData.map = mapImage.GetComponent<Image>().sprite.name;
         StaticData.tutorial = false;
-        SceneManager.LoadScene("Game");
+        SceneManager.LoadScene("TestMap");
     }
 
     public void LoadPreviousMap()

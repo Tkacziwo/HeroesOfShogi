@@ -145,5 +145,5 @@ public class PlayerController : MonoBehaviour
     }
 
     public PlayerCharacterController GetCurrentPlayerCharacter()
-     => player.GetCurrentPlayerCharacter();
+        => player.GetCurrentPlayerCharacter();
 }

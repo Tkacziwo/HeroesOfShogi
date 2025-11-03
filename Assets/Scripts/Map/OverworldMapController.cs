@@ -114,7 +114,7 @@ public class OverworldMapController : MonoBehaviour
     {
         //finding neighbours of tiles;
         if (chosenWorldBuilding == building) return;
-        if (pathfindingResult.Count > 0) pathfindingResult.Clear();
+        if (pathfindingResult.Count > 0) ClearTiles();
 
         List<Vector3Int> traversableTiles = new();
 
@@ -317,6 +317,11 @@ public class OverworldMapController : MonoBehaviour
             tilesPositions.Add(pathfindingResult[remainingMovementPoints - 1].position);
 
             usedMovementPoints = remainingMovementPoints;
+
+            if(chosenWorldBuilding != null)
+            {
+                chosenWorldBuilding = null;
+            }
         }
 
         playerController.player.SetCharacterPath(convertedPath, tilesPositions);

@@ -1,0 +1,34 @@
+[
+  {
+    "name": "CityHall",
+    "level": 1,
+    "producedResource": "Gold",
+    "producedAmount": 1000,
+    "maxLevel": 3,
+    "producedUnits": []
+  },
+  {
+    "name": "SteelCauldrons",
+    "level": 0,
+    "producedResource": null,
+    "producedAmount": 0,
+    "maxLevel": 3,
+    "producedUnits": ["Rook"]
+  },
+  {
+    "name": "Temple",
+    "level": 0,
+    "producedResource": null,
+    "producedAmount": 0,
+    "maxLevel": 3,
+    "producedUnits": ["Bishop"]
+  },
+  {
+    "name": "Military School",
+    "level": 0,
+    "producedResource": null,
+    "producedAmount": 0,
+    "maxLevel": 3,
+    "producedUnits": [ "GoldGeneral", "SilverGeneral"]
+  }
+]
