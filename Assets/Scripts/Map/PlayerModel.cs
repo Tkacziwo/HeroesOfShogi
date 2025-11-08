@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class PlayerModel : MonoBehaviour
@@ -22,9 +23,29 @@ public class PlayerModel : MonoBehaviour
 
     [SerializeField] uint maxCharacters = 3;
 
+    public static Action<PlayerResources> UpdateResourceUI;
+
+    private void OnEnable()
+    {
+        CityViewController.OnTakePlayerResources += HandleBuildingUpgraded;
+    }
+
     private void OnDisable()
     {
         if (character != null) character.OnPlayerMoveUpdateCameraPosition -= UpdateCameraPosition;
+        CityViewController.OnTakePlayerResources -= HandleBuildingUpgraded;
+
+    }
+
+    private void HandleBuildingUpgraded(int id, RequiredResources resources)
+    {
+        if (playerId != id) return;
+
+        playerResources.Wood -= (int)resources.wood;
+        playerResources.Stone -= (int)resources.stone;
+        playerResources.Gold -= (int)resources.gold;
+        UpdateResourceUI?.Invoke(this.playerResources);
+        //playerResources.LifeResin -= (int)resources.goldResin;
     }
 
     public CameraController GetCameraController()
@@ -178,6 +199,12 @@ public class PlayerModel : MonoBehaviour
                     break;
                 }
         }
+    }
+
+    public List<City> GetPlayerCities()
+    {
+        var allCities = FindObjectsByType<City>(FindObjectsSortMode.InstanceID);
+        return allCities.Where(o => o.capturerId == playerId).ToList();
     }
 }
 

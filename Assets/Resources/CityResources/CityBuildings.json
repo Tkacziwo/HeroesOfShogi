@@ -8,7 +8,7 @@
     "producedUnits": []
   },
   {
-    "name": "SteelCauldrons",
+    "name": "Steel Cauldrons",
     "level": 0,
     "producedResource": null,
     "producedAmount": 0,
@@ -24,11 +24,19 @@
     "producedUnits": ["Bishop"]
   },
   {
-    "name": "Military School",
+    "name": "Barracks",
     "level": 0,
     "producedResource": null,
     "producedAmount": 0,
     "maxLevel": 3,
     "producedUnits": [ "GoldGeneral", "SilverGeneral"]
+  },
+  {
+    "name": "Tower Of Mages",
+    "level": 0,
+    "producedResource": null,
+    "producedAmount": 0,
+    "maxLevel": 2,
+    "producedUnits": []
   }
 ]

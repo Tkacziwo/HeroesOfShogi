@@ -1,27 +1,69 @@
-using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public class City : InteractibleBuilding
 {
     public List<CityBuilding> cityBuildings = new();
 
+    public string cityName;
+
+    public ProducedUnits producedUnits;
+
+    private void OnEnable()
+    {
+        CityViewController.OnBuildingUpgrade += HandleBuldingUpgrade;
+        OverworldMapController.onTurnEnd += OnTurnEnd;
+    }
+    private void OnDisable()
+    {
+        CityViewController.OnBuildingUpgrade -= HandleBuldingUpgrade;
+        OverworldMapController.onTurnEnd -= OnTurnEnd;
+    }
+
+    private void HandleBuldingUpgrade(string cityName, string buildingName, BuildingUpgradeInfo upgradedBuilding)
+    {
+        if (this.cityName != cityName) return;
+
+        var building = cityBuildings.Single(o => o.name == buildingName);
+        var index = cityBuildings.FindIndex(o => o.name == buildingName);
+        cityBuildings[index] = new()
+        {
+            level = upgradedBuilding.level,
+            maxLevel = building.maxLevel,
+            name = building.name,
+            producedAmount = upgradedBuilding.amount,
+            producedResource = building.producedResource,
+            producedUnits = building.producedUnits
+        };
+    }
+
     private void Start()
     {
         InitCity();
-    }
 
-    public void InitCity()
-    {
-        cityBuildings = new()
-        { new()
+        producedUnits = new()
         {
-            name = "CityHall",
-            level = 1,
-            producedResource = WorldResource.Gold,
-            producedAmount = 1000,
-            maxLevel = 3,
-            producedUnits = null,
-        }
+            pawns = 5,
+            lances = 3,
+            horses = 2
         };
     }
+
+    private void HandleWeekEnd()
+    {
+        //Replenish units
+    }
+
+    private void InitCity()
+        => cityBuildings = new(StaticData.cityBuildings);
+
+    public CityBuilding? GetCityBuildingByName(string buildingName)
+        => cityBuildings.SingleOrDefault(o => o.name == buildingName);
+}
+
+public class ProducedUnits
+{
+    public int pawns;
+    public int lances;
+    public int horses;
 }

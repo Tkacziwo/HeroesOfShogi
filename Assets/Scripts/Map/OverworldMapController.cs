@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Unity.AppUI.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps;
+using UnityEngine.UIElements;
 
 public class OverworldMapController : MonoBehaviour
 {
@@ -46,6 +48,8 @@ public class OverworldMapController : MonoBehaviour
 
     private Dictionary<int, Vector3Int> characterStartPoints = new();
 
+    private bool isPlayerInCity = false;
+
     private void OnEnable()
     {
         PlayerCharacterController.OnPlayerOverTile += ClearTile;
@@ -55,6 +59,8 @@ public class OverworldMapController : MonoBehaviour
         PlayerController.TurnEnded += HandleUpdateUIResources;
         PlayerController.PlayerCharacterChanged += HandlePlayerCharacterChanged;
         PlayerController.CameraChanged += HandleCameraChanged;
+        CityViewController.OnCityViewClose += HandleCityViewClosed;
+        PanelController.CityOpened += HandleCityOpened;
     }
 
     private void OnDisable()
@@ -66,7 +72,19 @@ public class OverworldMapController : MonoBehaviour
         PlayerController.TurnEnded -= HandleUpdateUIResources;
         PlayerController.PlayerCharacterChanged -= HandlePlayerCharacterChanged;
         PlayerController.CameraChanged -= HandleCameraChanged;
+        CityViewController.OnCityViewClose -= HandleCityViewClosed;
+        PanelController.CityOpened -= HandleCityOpened;
+
     }
+
+    private void HandleCityOpened(City city)
+    {
+        var player = playerController.GetCurrentPlayer();
+        resourceUIController.DisplayCityInfo(city, player.playerResources, player.GetCurrentPlayerCharacter());
+    }
+
+    private void HandleCityViewClosed()
+        => isPlayerInCity = false;
 
     private void HandlePlayerCharacterChanged(Tuple<Vector3Int, Vector3Int> positions)
     {
@@ -100,6 +118,14 @@ public class OverworldMapController : MonoBehaviour
         if (converted == previousEndPos && chosenWorldBuilding != null)
         {
             chosenWorldBuilding.CaptureBuilding(character.playerId, character.playerColor);
+
+            if(chosenWorldBuilding is City city)
+            {
+                isPlayerInCity = true;
+                var player = playerController.GetCurrentPlayer();
+                resourceUIController.DisplayCityInfo(city, player.playerResources, player.GetCurrentPlayerCharacter());
+                resourceUIController.UpdatePlayerCityPanels(player);
+            }
             chosenWorldBuilding = null;
         }
 
@@ -243,7 +269,7 @@ public class OverworldMapController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-      
+        if (isPlayerInCity) return;
 
         Ray ray = currentCamera.ScreenPointToRay(Input.mousePosition);
 

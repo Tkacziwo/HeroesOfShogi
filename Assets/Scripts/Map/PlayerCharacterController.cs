@@ -113,6 +113,9 @@ public class PlayerCharacterController : MonoBehaviour
     public void ReduceAvailableMovementPoints(int amount)
         => usedMovementPointsForCurrentTurn += Math.Abs(amount);
 
+    public List<Unit> GetAssignedUnits()
+        => AssignedUnits;
+
     void Update()
     {
         if (isMoving)

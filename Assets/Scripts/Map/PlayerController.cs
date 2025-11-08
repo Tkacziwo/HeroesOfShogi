@@ -29,14 +29,14 @@ public class PlayerController : MonoBehaviour
     {
         WorldBuilding.AddResourcesToCapturer += HandleAddResources;
         DoubleClickHandler.OnDoubleClick += HandleDoubleClick;
-        CharacterPanelController.PlayerChanged += HandleCharacterChanged;
+        PanelController.PlayerChanged += HandleCharacterChanged;
     }
 
     private void OnDisable()
     {
         WorldBuilding.AddResourcesToCapturer -= HandleAddResources;
         DoubleClickHandler.OnDoubleClick -= HandleDoubleClick;
-        CharacterPanelController.PlayerChanged -= HandleCharacterChanged;
+        PanelController.PlayerChanged -= HandleCharacterChanged;
     }
 
     private void HandleDoubleClick(DoubleClickHandler handler)
@@ -50,11 +50,11 @@ public class PlayerController : MonoBehaviour
    
     private void HandleAddResources(InteractibleBuilding building)
     {
-        if(building.TryGetComponent<City>(out City city))
+        if(building is City city)
         {
             player.HandleAddResourcesFromCity(city);
         }
-        else if(building.TryGetComponent<WorldBuilding>(out WorldBuilding worldBuilding))
+        else if(building is WorldBuilding worldBuilding)
         {
             player.HandleAddResources(worldBuilding);
         }
@@ -146,4 +146,7 @@ public class PlayerController : MonoBehaviour
 
     public PlayerCharacterController GetCurrentPlayerCharacter()
         => player.GetCurrentPlayerCharacter();
+
+    public PlayerModel GetCurrentPlayer()
+        => player;
 }

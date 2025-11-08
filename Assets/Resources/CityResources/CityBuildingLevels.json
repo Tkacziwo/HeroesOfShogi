@@ -1,6 +1,6 @@
 [
   {
-    "name": "SteelCauldrons",
+    "name": "Steel Cauldrons",
     "level": 1,
     "amount": 1,
     "requiredResources": {
@@ -11,7 +11,7 @@
     }
   },
   {
-    "name": "SteelCauldrons",
+    "name": "Steel Cauldrons",
     "level": 2,
     "amount": 2,
     "requiredResources": {
@@ -22,7 +22,7 @@
     }
   },
   {
-    "name": "SteelCauldrons",
+    "name": "Steel Cauldrons",
     "level": 3,
     "amount": 3,
     "requiredResources": {
@@ -85,6 +85,39 @@
       "stone": 22,
       "gold": 10000,
       "lifeResin": 3
+    }
+  },
+  {
+    "name": "Barracks",
+    "level": 1,
+    "amount": 2,
+    "requiredResources": {
+      "wood": 4,
+      "stone": 6,
+      "gold": 2000,
+      "lifeResin": 0
+    }
+  },
+  {
+    "name": "Barracks",
+    "level": 2,
+    "amount": 4,
+    "requiredResources": {
+      "wood": 9,
+      "stone": 13,
+      "gold": 4000,
+      "lifeResin": 0
+    }
+  },
+  {
+    "name": "Barracks",
+    "level": 3,
+    "amount": 6,
+    "requiredResources": {
+      "wood": 15,
+      "stone": 15,
+      "gold": 7000,
+      "lifeResin": 1
     }
   }
 ]
