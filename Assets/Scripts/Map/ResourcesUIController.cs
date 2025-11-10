@@ -95,22 +95,12 @@ public class ResourceUIController : MonoBehaviour
 
             var panelScript = obj.GetComponent<PanelController>();
             panelScript.SetCity(city);
-            //obj.transform.position = new Vector3(posX, posY);
             posX += size;
         }
     }
 
     public void DisplayCityInfo(City city, PlayerResources playerResources, PlayerCharacterController character = null)
     {
-        //if(character != null)
-        //{
-        //    currentCharacter = character;
-        //}
-        //currentCity = city;
-        //this.playerResources = playerResources;
-        //cityName.text = $"City: {currentCity.name}";
-        //upgradeButton.interactable = false;
-
         cityView = Instantiate(cityViewPrefab);
         cityView.transform.SetParent(canvasRef.transform);
         cityView.GetComponent<RectTransform>().anchoredPosition = new Vector2(408, 357);

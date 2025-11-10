@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
 /// Unit class symbolizes one unit during battle. 
@@ -24,6 +25,8 @@ public class Unit : LogicPiece
     public int ArmorPenetrationModifier { get; set; }
 
     public int SizeInArmy { get; set; }
+
+    public Sprite UnitSprite { get; set; }
 
     //[ToDo] Finish the methods
     public void Clone()

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.AppUI.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 using UnityEngine.UIElements;
 
@@ -49,6 +50,8 @@ public class OverworldMapController : MonoBehaviour
     private Dictionary<int, Vector3Int> characterStartPoints = new();
 
     private bool isPlayerInCity = false;
+
+    private int turns = 1;
 
     private void OnEnable()
     {
@@ -119,7 +122,7 @@ public class OverworldMapController : MonoBehaviour
         {
             chosenWorldBuilding.CaptureBuilding(character.playerId, character.playerColor);
 
-            if(chosenWorldBuilding is City city)
+            if (chosenWorldBuilding is City city)
             {
                 isPlayerInCity = true;
                 var player = playerController.GetCurrentPlayer();
@@ -145,6 +148,7 @@ public class OverworldMapController : MonoBehaviour
         List<Vector3Int> traversableTiles = new();
 
         var colliderBounds = building.GetComponent<BoxCollider>().bounds;
+        var currentCharacter = playerController.GetCurrentPlayerCharacter();
 
         for (int y = (int)colliderBounds.min.z; y < colliderBounds.max.z; y++)
         {
@@ -160,14 +164,28 @@ public class OverworldMapController : MonoBehaviour
                         Vector3Int destPos = new(destX, destY, 0);
 
                         var tile = tilemap.GetTile<MapTile>(destPos);
-                        if (tile != null && !traversableTiles.Contains(destPos) && tile.IsTraversable)
+
+                        if (tile != null)
                         {
-                            traversableTiles.Add(destPos);
+                            if (currentCharacter.characterPosition.Equals(destPos))
+                            {
+                                if (building is City city)
+                                {
+                                    var player = playerController.GetCurrentPlayer();
+                                    resourceUIController.DisplayCityInfo(city, player.playerResources, player.GetCurrentPlayerCharacter());
+                                }
+                                return;
+                            }
+                            else if (!traversableTiles.Contains(destPos) && tile.IsTraversable)
+                            {
+                                traversableTiles.Add(destPos);
+                            }
                         }
                     }
                 }
             }
         }
+
 
         List<TileInfo> bestPath = new();
         Vector3Int bestEndPosition = new(0, 0, 0);
@@ -266,10 +284,14 @@ public class OverworldMapController : MonoBehaviour
 
     private Vector3Int previousTilePos;
 
+    private bool isPlayerInBattle = false;
+
     // Update is called once per frame
     void Update()
     {
         if (isPlayerInCity) return;
+
+        if (isPlayerInBattle) return;
 
         Ray ray = currentCamera.ScreenPointToRay(Input.mousePosition);
 
@@ -294,13 +316,20 @@ public class OverworldMapController : MonoBehaviour
         {
             EndTurn();
         }
+
+        if (Input.GetKeyDown(KeyCode.U))
+        {
+            //Test battle
+            BattleDeploymentStaticData.playerCharacter = playerController.GetCurrentPlayerCharacter();
+            isPlayerInBattle = !isPlayerInBattle;
+            SceneManager.LoadScene("BattleDeployment", LoadSceneMode.Additive);
+        }
     }
 
     public void MovePlayer(PlayerModel controller)
     {
         var character = controller.GetPlayerPosition();
         if (tilemap.WorldToCell(character) == previousEndPos) return;
-
 
         var currentCharacter = controller.GetCurrentPlayerCharacter();
 
@@ -310,6 +339,8 @@ public class OverworldMapController : MonoBehaviour
         List<Vector3Int> tilesPositions = new();
 
         if (remainingMovementPoints <= 0) return;
+
+        if (pathfindingResult == null || pathfindingResult.Count == 0) return;
 
         int usedMovementPoints = 0;
 
@@ -344,7 +375,7 @@ public class OverworldMapController : MonoBehaviour
 
             usedMovementPoints = remainingMovementPoints;
 
-            if(chosenWorldBuilding != null)
+            if (chosenWorldBuilding != null)
             {
                 chosenWorldBuilding = null;
             }
@@ -446,9 +477,21 @@ public class OverworldMapController : MonoBehaviour
         }
     }
 
+    public static Action OnWeekEnd;
+
     public void EndTurn()
     {
         onTurnEnd?.Invoke();
         RemoveEndPoint();
+        turns++;
+
+        ClearTiles();
+
+        if ((turns - 1) % 7 == 0)
+        {
+            Debug.Log("week end");
+
+            OnWeekEnd?.Invoke();
+        }
     }
 }

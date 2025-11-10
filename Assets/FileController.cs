@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
+using System.Linq;
 
 public class FileController : MonoBehaviour
 {
@@ -9,6 +10,8 @@ public class FileController : MonoBehaviour
     void Start()
     {
         LoadFromJson();
+
+        LoadIcons();
     }
 
     private void LoadFromJson()
@@ -27,6 +30,13 @@ public class FileController : MonoBehaviour
             (Resources.Load<TextAsset>("CityResources/CityBuildings").text);
 
         StaticData.cityBuildings = new(buildingRes);
+    }
+
+    private void LoadIcons()
+    {
+        StaticData.unitIcons?.Clear();
+
+        StaticData.unitIcons =  Resources.LoadAll<Sprite>("Sprites/UnitIcons").ToList();
     }
 
     // Update is called once per frame

@@ -15,7 +15,7 @@ public class PlayerCharacterController : MonoBehaviour
 
     public Vector3Int characterPosition;
 
-    private List<Unit> AssignedUnits { get; set; } = new();
+    public List<Unit> AssignedUnits { get; set; } = new();
 
     private Vector3 targetPosition;
 
@@ -115,6 +115,9 @@ public class PlayerCharacterController : MonoBehaviour
 
     public List<Unit> GetAssignedUnits()
         => AssignedUnits;
+
+    public void SetUnits(List<Unit> units)
+        => AssignedUnits = units;
 
     void Update()
     {

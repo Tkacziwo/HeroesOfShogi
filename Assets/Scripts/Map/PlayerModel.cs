@@ -85,8 +85,19 @@ public class PlayerModel : MonoBehaviour
         character.characterId = 1;
         character.movementPoints = 20;
 
+        character.AssignedUnits.Add(new Unit()
+        {
+            UnitName = UnitEnum.King,
+            HealthPoints = 3,
+            AttackPower = 2,
+            SizeInArmy = 0,
+            isKing = true,
+            UnitSprite = StaticData.unitIcons.SingleOrDefault(o => o.name == UnitEnum.King.ToString())
+        });
+
         var vec = new Vector3Int(12, 1, 0);
         character.SetPlayerPosition(vec);
+        character.SetTargetPosition(vec);
         cameraController.UpdateCameraPosition(character.transform);
 
         var p2 = Instantiate(playerModel);
@@ -97,13 +108,23 @@ public class PlayerModel : MonoBehaviour
         character2.characterId = 2;
         character2.movementPoints = 20;
         character2.SetPlayerPosition(vec2);
+        character2.SetTargetPosition(vec2);
+        character2.AssignedUnits.Add(new Unit()
+        {
+            UnitName = UnitEnum.King,
+            HealthPoints = 3,
+            AttackPower = 2,
+            SizeInArmy = 0,
+            isKing = true,
+            UnitSprite = StaticData.unitIcons.SingleOrDefault(o => o.name == UnitEnum.King.ToString())
+        });
 
         playerCharacters = new List<PlayerCharacterController>()
         {
             character,
             character2
         };
-        
+
         SubscribeToCharacterEvents();
     }
 

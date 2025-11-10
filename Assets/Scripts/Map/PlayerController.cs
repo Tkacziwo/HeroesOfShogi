@@ -140,7 +140,7 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            player.PlayerBeginMove();
+             player.PlayerBeginMove();
         }
     }
 

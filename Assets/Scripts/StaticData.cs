@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
 /// Holds data acquired from game creation scene.
@@ -18,4 +19,6 @@ public static class StaticData
     public static List<CityBuilding> cityBuildings = new();
 
     public static List<BuildingUpgradeInfo> cityBuildingUpgrades = new();
+
+    public static List<Sprite> unitIcons = new();
 }

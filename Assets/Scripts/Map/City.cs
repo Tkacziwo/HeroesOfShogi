@@ -13,11 +13,21 @@ public class City : InteractibleBuilding
     {
         CityViewController.OnBuildingUpgrade += HandleBuldingUpgrade;
         OverworldMapController.onTurnEnd += OnTurnEnd;
+        OverworldMapController.OnWeekEnd += HandleWeekEnd;
+        AssignPanelsController.OnUnitsRecruit += HandleUnitsRecruited;
     }
     private void OnDisable()
     {
         CityViewController.OnBuildingUpgrade -= HandleBuldingUpgrade;
         OverworldMapController.onTurnEnd -= OnTurnEnd;
+        OverworldMapController.OnWeekEnd -= HandleWeekEnd;
+        AssignPanelsController.OnUnitsRecruit -= HandleUnitsRecruited;
+
+    }
+
+    private void HandleUnitsRecruited(ProducedUnits units)
+    {
+        this.producedUnits = units;
     }
 
     private void HandleBuldingUpgrade(string cityName, string buildingName, BuildingUpgradeInfo upgradedBuilding)
@@ -52,6 +62,9 @@ public class City : InteractibleBuilding
     private void HandleWeekEnd()
     {
         //Replenish units
+        producedUnits.pawns = 5;
+        producedUnits.lances = 3;
+        producedUnits.horses = 2;
     }
 
     private void InitCity()

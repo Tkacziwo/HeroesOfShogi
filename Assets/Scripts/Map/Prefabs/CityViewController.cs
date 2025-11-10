@@ -152,6 +152,6 @@ public class CityViewController : MonoBehaviour
 
         var panelScript = recruitPanel.GetComponent<AssignPanelsController>();
 
-        panelScript.Setup(currentCharacter);
+        panelScript.Setup(currentCharacter, currentCity.producedUnits);
     }
 }

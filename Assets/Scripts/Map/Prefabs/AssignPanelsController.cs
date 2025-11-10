@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,6 +21,8 @@ public class AssignPanelsController : MonoBehaviour
 
     private List<Unit> units = new();
 
+    public static Action<ProducedUnits> OnUnitsRecruit;
+
     [SerializeField] private GameObject pawnPanel;
 
     [SerializeField] private GameObject lancePanel;
@@ -37,15 +41,18 @@ public class AssignPanelsController : MonoBehaviour
 
     private ProducedUnits selectedUnits = new();
 
+    private ProducedUnits cityUnits = new();
+
     private Unit pawnTemp = new();
 
     private Unit lanceTemp = new();
 
     private Unit horseTemp = new();
 
-    public void Setup(PlayerCharacterController currentCharacter)
+    public void Setup(PlayerCharacterController currentCharacter, ProducedUnits cityUnits)
     {
         this.currentCharacter = currentCharacter;
+        this.cityUnits = cityUnits;
         units = this.currentCharacter.GetAssignedUnits();
         tempUnits = new(units);
 
@@ -67,7 +74,8 @@ public class AssignPanelsController : MonoBehaviour
             AttackPower = 1,
             SizeInArmy = 1,
             UnitName = UnitEnum.Pawn,
-            pieceName = "Pawn"
+            pieceName = "Pawn",
+            UnitSprite = StaticData.unitIcons.SingleOrDefault(o => o.name == UnitEnum.Pawn.ToString())
         };
 
         lanceTemp = new()
@@ -88,18 +96,28 @@ public class AssignPanelsController : MonoBehaviour
             pieceName = "Horse"
         };
 
-        pawnPanel.GetComponentInChildren<UnitAssignController>().Setup(5, tempSprite, pawnTemp);
+        pawnPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.pawns, tempSprite, pawnTemp);
 
-        lancePanel.GetComponentInChildren<UnitAssignController>().Setup(3, tempSprite, lanceTemp);
+        lancePanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.lances, tempSprite, lanceTemp);
 
-        horsePanel.GetComponentInChildren<UnitAssignController>().Setup(2, tempSprite, horseTemp);
+        horsePanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.horses, tempSprite, horseTemp);
     }
 
     public void OnClick()
     {
         if (!recruitButton.interactable) return;
+
+        currentCharacter.SetUnits(tempUnits);
+
+        cityUnits.pawns -= selectedUnits.pawns;
+        cityUnits.lances -= selectedUnits.lances;
+        cityUnits.horses -= selectedUnits.horses;
+
+        OnUnitsRecruit?.Invoke(cityUnits);
+
+        OnCancel();
     }
-    
+
     public void OnCancel()
     {
         this.gameObject.SetActive(false);
@@ -140,14 +158,14 @@ public class AssignPanelsController : MonoBehaviour
 
         UpdateString();
 
-        if(currentSize >= unitSizeLimit)
+        if (currentSize >= unitSizeLimit)
         {
             recruitButton.interactable = false;
             limitText.color = Color.red;
         }
         else
         {
-            recruitButton.interactable = false;
+            recruitButton.interactable = true;
             limitText.color = Color.black;
         }
     }
