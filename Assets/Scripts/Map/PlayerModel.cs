@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Xml;
+using System.Linq;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class PlayerModel : MonoBehaviour
 {
@@ -24,9 +23,29 @@ public class PlayerModel : MonoBehaviour
 
     [SerializeField] uint maxCharacters = 3;
 
+    public static Action<PlayerResources> UpdateResourceUI;
+
+    private void OnEnable()
+    {
+        CityViewController.OnTakePlayerResources += HandleBuildingUpgraded;
+    }
+
     private void OnDisable()
     {
         if (character != null) character.OnPlayerMoveUpdateCameraPosition -= UpdateCameraPosition;
+        CityViewController.OnTakePlayerResources -= HandleBuildingUpgraded;
+
+    }
+
+    private void HandleBuildingUpgraded(int id, RequiredResources resources)
+    {
+        if (playerId != id) return;
+
+        playerResources.Wood -= (int)resources.wood;
+        playerResources.Stone -= (int)resources.stone;
+        playerResources.Gold -= (int)resources.gold;
+        UpdateResourceUI?.Invoke(this.playerResources);
+        //playerResources.LifeResin -= (int)resources.goldResin;
     }
 
     public CameraController GetCameraController()
@@ -66,8 +85,19 @@ public class PlayerModel : MonoBehaviour
         character.characterId = 1;
         character.movementPoints = 20;
 
+        character.AssignedUnits.Add(new Unit()
+        {
+            UnitName = UnitEnum.King,
+            HealthPoints = 3,
+            AttackPower = 2,
+            SizeInArmy = 0,
+            isKing = true,
+            UnitSprite = StaticData.unitIcons.SingleOrDefault(o => o.name == UnitEnum.King.ToString())
+        });
+
         var vec = new Vector3Int(12, 1, 0);
         character.SetPlayerPosition(vec);
+        character.SetTargetPosition(vec);
         cameraController.UpdateCameraPosition(character.transform);
 
         var p2 = Instantiate(playerModel);
@@ -78,13 +108,23 @@ public class PlayerModel : MonoBehaviour
         character2.characterId = 2;
         character2.movementPoints = 20;
         character2.SetPlayerPosition(vec2);
+        character2.SetTargetPosition(vec2);
+        character2.AssignedUnits.Add(new Unit()
+        {
+            UnitName = UnitEnum.King,
+            HealthPoints = 3,
+            AttackPower = 2,
+            SizeInArmy = 0,
+            isKing = true,
+            UnitSprite = StaticData.unitIcons.SingleOrDefault(o => o.name == UnitEnum.King.ToString())
+        });
 
         playerCharacters = new List<PlayerCharacterController>()
         {
             character,
             character2
         };
-        
+
         SubscribeToCharacterEvents();
     }
 
@@ -107,6 +147,9 @@ public class PlayerModel : MonoBehaviour
 
     public PlayerCharacterController GetCurrentPlayerCharacter()
         => character;
+
+    public List<PlayerCharacterController> GetPlayerCharacters()
+        => playerCharacters;
 
     public void SetCharacterPath(List<Vector3> positions, List<Vector3Int> tilesPositions, int characterIndex = 0)
         => character.SetPath(positions, tilesPositions);
@@ -177,6 +220,12 @@ public class PlayerModel : MonoBehaviour
                     break;
                 }
         }
+    }
+
+    public List<City> GetPlayerCities()
+    {
+        var allCities = FindObjectsByType<City>(FindObjectsSortMode.InstanceID);
+        return allCities.Where(o => o.capturerId == playerId).ToList();
     }
 }
 

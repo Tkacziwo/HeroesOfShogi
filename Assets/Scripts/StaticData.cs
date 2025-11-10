@@ -1,9 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
 /// Holds data acquired from game creation scene.
 /// </summary>
-public class StaticData : MonoBehaviour
+public static class StaticData
 {
     public static int botDifficulty;
 
@@ -14,4 +15,10 @@ public class StaticData : MonoBehaviour
     public static bool tutorial;
 
     public static float playerMovementSpeed;
+
+    public static List<CityBuilding> cityBuildings = new();
+
+    public static List<BuildingUpgradeInfo> cityBuildingUpgrades = new();
+
+    public static List<Sprite> unitIcons = new();
 }

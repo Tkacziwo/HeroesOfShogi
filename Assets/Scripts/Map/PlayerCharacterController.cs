@@ -15,7 +15,7 @@ public class PlayerCharacterController : MonoBehaviour
 
     public Vector3Int characterPosition;
 
-    private List<Unit> AssignedUnits { get; set; } = new();
+    public List<Unit> AssignedUnits { get; set; } = new();
 
     private Vector3 targetPosition;
 
@@ -24,9 +24,9 @@ public class PlayerCharacterController : MonoBehaviour
 
     private bool isMoving;
 
-    private List<Vector3> path;
+    private List<Vector3> path = new();
 
-    private List<Vector3Int> tilesPositions;
+    private List<Vector3Int> tilesPositions = new();
 
     private int pathIterator;
 
@@ -43,18 +43,25 @@ public class PlayerCharacterController : MonoBehaviour
 
     public void OnEnable()
     {
-        OverworldMapController.onTurnEnd += ResetUsedMovementPoints;
+        OverworldMapController.onTurnEnd += HandleEndTurn;
     }
 
     public void OnDisable()
     {
-        OverworldMapController.onTurnEnd -= ResetUsedMovementPoints;
+        OverworldMapController.onTurnEnd -= HandleEndTurn;
     }
 
 
     public void SetPlayerPosition(Vector3Int newPos)
     {
         characterPosition = newPos;
+    }
+
+    public void HandleEndTurn()
+    {
+        ClearPath();
+        ResetUsedMovementPoints();
+        targetPosition = transform.position;
     }
 
     public void SetPath(List<Vector3> path, List<Vector3Int> tiles)
@@ -106,8 +113,12 @@ public class PlayerCharacterController : MonoBehaviour
     public void ReduceAvailableMovementPoints(int amount)
         => usedMovementPointsForCurrentTurn += Math.Abs(amount);
 
+    public List<Unit> GetAssignedUnits()
+        => AssignedUnits;
 
-    // Update is called once per frame
+    public void SetUnits(List<Unit> units)
+        => AssignedUnits = units;
+
     void Update()
     {
         if (isMoving)

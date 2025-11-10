@@ -11,19 +11,6 @@ public class InteractibleBuilding : MonoBehaviour
 
     public static Action<InteractibleBuilding> AddResourcesToCapturer;
 
-    private void OnEnable()
-    {
-        OverworldMapController.onTurnEnd += OnTurnEnd;
-    }
-
-    private void OnDisable()
-    {
-        OverworldMapController.onTurnEnd -= OnTurnEnd;
-    }
-
-    public bool GetIsCaptured()
-        => isCaptured;
-
     public void CaptureBuilding(int capturerId, Color? capturerColor = null)
     {
         if (capturerId == this.capturerId) return;
@@ -36,18 +23,25 @@ public class InteractibleBuilding : MonoBehaviour
         isCaptured = true;
         this.capturerId = capturerId;
     }
-
-    public void OnTurnEnd()
-    {
-        AddResourcesToCapturer?.Invoke(this);
-    }
-
+   
     public void FindPathToBuilding()
     {
         Debug.Log("Hit building: " + buildingName);
         var collider = this.transform.GetComponent<BoxCollider>();
         BuildingEvents.onBuildingClicked?.Invoke(this);
     }
+
+    private void OnEnable()
+        => OverworldMapController.onTurnEnd += OnTurnEnd;
+
+    private void OnDisable()
+        => OverworldMapController.onTurnEnd -= OnTurnEnd;
+
+    public void OnTurnEnd()
+       => AddResourcesToCapturer?.Invoke(this);
+
+    public bool GetIsCaptured()
+       => isCaptured;
 }
 
 public static class BuildingEvents
