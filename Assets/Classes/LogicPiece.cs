@@ -1,4 +1,6 @@
 using System;
+using System.Xml.Linq;
+using UnityEngine;
 
 /// <summary>
 /// Logic counterpart to Piece class. Behaves the same.
@@ -83,6 +85,71 @@ public class LogicPiece
         isPromoted = piece.isPromoted;
         isDrop = piece.isDrop;
         isBlack = piece.isBlack;
+    }
+
+    public void InitPiece(string name, int[] moveset, int x, int y, bool isSpecial )
+    {
+        switch (name)
+        {
+            case "Pawn":
+                value = 100;
+                break;
+            case "GoldGeneral":
+                value = 500;
+                break;
+            case "SilverGeneral":
+                value = 400;
+                break;
+            case "Bishop":
+                value = 800;
+                break;
+            case "Rook":
+                value = 800;
+                break;
+            case "Lance":
+                value = 400;
+                break;
+            case "Horse":
+                value = 300;
+                break;
+            case "King":
+                value = 790;
+                break;
+            default:
+                value = 0;
+                break;
+        }
+
+        //promotionEffect = Resources.Load("Prefabs/ParticleEffects/PromotionEffect") as GameObject;
+        //promotionEffect = Instantiate(promotionEffect);
+        //promotionEffect.GetComponent<ParticleSystem>().Stop();
+        //promotionEffect.GetComponent<ParticleSystem>().Clear();
+        if (name == "King")
+        {
+            isKing = true;
+        }
+        else
+        {
+            isKing = false;
+        }
+        pieceName = name;
+        originalPieceName = name;
+        Moveset = moveset;
+        BackupOriginalMoveset(moveset);
+        pos = new(x, y);
+        this.isSpecial = isSpecial;
+        isPromoted = false;
+        isDrop = false;
+        isBodyguard = false;
+        if (pos.y < 3)
+        {
+            isBlack = false;
+        }
+        else
+        {
+            ReverseMovementMatrix();
+            isBlack = true;
+        }
     }
 
     public void ReverseMovementMatrix()

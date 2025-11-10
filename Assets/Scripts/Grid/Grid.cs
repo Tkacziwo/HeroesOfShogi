@@ -32,12 +32,45 @@ public class Grid : MonoBehaviour
 
     private readonly List<Piece> botPieces = new();
 
+    private LogicCell[,] logicCells = new LogicCell[9,9];
+
+    public static Action<LogicCell[,]> OnGridFinishRender;
+
+    [SerializeField] private float movementSpeed = 20f;
+
     public void Start()
     {
         pCamp.InitializePosY(2);
         eCamp.InitializePosY(0);
         GenerateField();
         InitializePieces();
+
+
+        for (int y = 0; y < 9; y++)
+        {
+            for (int x = 0; x < 9; x++)
+            {
+                var cell = this.GetGridCell(x, y);
+                logicCells[x, y] = new LogicCell(cell);
+                if (cell.objectInThisGridSpace != null)
+                {
+                    LogicPiece p = new(cell.objectInThisGridSpace.GetComponent<Piece>());
+                    //if (p.GetIsBlack())
+                    //{
+                    //    pieces.Add(p);
+                    //}
+                    //else
+                    //{
+                    //    enemyPieces.Add(p);
+                    //}
+
+                    //allPieces.Add(p);
+                    logicCells[x, y].piece = p;
+                }
+            }
+        }
+
+        OnGridFinishRender?.Invoke(logicCells);
     }
 
     /// <summary>
@@ -46,25 +79,25 @@ public class Grid : MonoBehaviour
     /// <returns>bool</returns>
     public bool PiecesFinishedMoving()
     {
-        foreach (var piece in playerPieces)
-        {
-            if (!piece.finishedMoving)
-            {
-                return false;
-            }
-        }
-        foreach (var piece in botPieces)
-        {
-            if (!piece.finishedMoving)
-            {
-                return false;
-            }
-        }
+        //foreach (var piece in playerPieces)
+        //{
+        //    if (!piece.finishedMoving)
+        //    {
+        //        return false;
+        //    }
+        //}
+        //foreach (var piece in botPieces)
+        //{
+        //    if (!piece.finishedMoving)
+        //    {
+        //        return false;
+        //    }
+        //}
 
-        if (!playerKing.finishedMoving || !botKing.finishedMoving)
-        {
-            return false;
-        }
+        //if (!playerKing.finishedMoving || !botKing.finishedMoving)
+        //{
+        //    return false;
+        //}
 
         return true;
     }
@@ -105,32 +138,58 @@ public class Grid : MonoBehaviour
         foreach (var p in piecesPositions)
         {
             var name = p.piece;
-            var resource = Resources.Load("Prefabs/Piece/" + name + "Piece") as GameObject;
-            if (resource != null)
-            {
-                var cell = gameGrid[p.posX, p.posY].GetComponent<GridCell>();
-                var moveset = fileManager.GetMovesetByPieceName(p.piece);
-                bool isSpecialPiece = SpecialPieceCheck(p.piece);
-                cell.SetPiece(resource);
-                var pieceScript = cell.objectInThisGridSpace.GetComponent<Piece>();
-                Position piecePos = cell.GetPosition();
-                pieceScript.InitializePiece(p.piece, moveset, piecePos.x, piecePos.y, isSpecialPiece);
 
-                if (pieceScript.GetIsBlack())
-                {
-                    if (pieceScript.isKing) { botKing = pieceScript; }
-                    else { botPieces.Add(pieceScript); }
-                    cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
-                }
-                else
-                {
-                    if (pieceScript.isKing) { playerKing = pieceScript; }
-                    else { playerPieces.Add(pieceScript); }
-                    cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
-                    cell.objectInThisGridSpace.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 180, 0);
-                }
-            }
+            UnitModel resource = Resources.Load<UnitModel>($"Prefabs/Units/{name}Piece");
+
+            if (resource == null) break;
+
+            var cell = gameGrid[p.posX, p.posY].GetComponent<GridCell>();
+
+            var moveset = fileManager.GetMovesetByPieceName(p.piece);
+
+            cell.SetUnit(resource);
+
+            Position unitPos = cell.GetPosition();
+            cell.unitInGridCell.InitUnit(p.piece, moveset, unitPos.x, unitPos.y, false, movementSpeed);
         }
+
+        //foreach (var p in piecesPositions)
+        //{
+        //    var name = p.piece;
+        //    var resource = Resources.Load("Prefabs/Piece/" + name + "Piece") as GameObject;
+        //    if (resource != null)
+        //    {
+        //        var cell = gameGrid[p.posX, p.posY].GetComponent<GridCell>();
+        //        var moveset = fileManager.GetMovesetByPieceName(p.piece);
+        //        bool isSpecialPiece = SpecialPieceCheck(p.piece);
+
+
+
+
+
+        //        cell.SetPiece(resource);
+        //        var pieceScript = cell.objectInThisGridSpace.GetComponent<Piece>();
+        //        Position piecePos = cell.GetPosition();
+        //        pieceScript.InitializePiece(p.piece, moveset, piecePos.x, piecePos.y, isSpecialPiece);
+
+
+
+
+        //        if (pieceScript.GetIsBlack())
+        //        {
+        //            if (pieceScript.isKing) { botKing = pieceScript; }
+        //            else { botPieces.Add(pieceScript); }
+        //            cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+        //        }
+        //        else
+        //        {
+        //            if (pieceScript.isKing) { playerKing = pieceScript; }
+        //            else { playerPieces.Add(pieceScript); }
+        //            cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
+        //            cell.objectInThisGridSpace.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 180, 0);
+        //        }
+        //    }
+        //}
     }
 
     /// <summary>
