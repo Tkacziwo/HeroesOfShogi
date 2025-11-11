@@ -89,9 +89,9 @@ public class AssignPanelsController : MonoBehaviour
 
         horseTemp = new()
         {
-            HealthPoints = 2,
+            HealthPoints = 3,
             AttackPower = 2,
-            SizeInArmy = 1,
+            SizeInArmy = 3,
             UnitName = UnitEnum.Horse,
             pieceName = "Horse"
         };

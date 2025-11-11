@@ -19,6 +19,7 @@ public static class TransformationCalculator
         double distance = Math.Sqrt(Math.Pow(startPosition.x - endPosition.x, 2) +
             Math.Pow(startPosition.z - endPosition.z, 2));
         maxHeight = (float)distance * multiplier;
+        maxHeight += startPosition.y;
         maxHeight = Math.Max(0.5f, maxHeight);
         /*
          * Center point -> Pcenter = ((startPosition.x + endPosition.x)/2, maxHeight, (startPosition.z + endPosition.z)/2)

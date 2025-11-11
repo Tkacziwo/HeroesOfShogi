@@ -17,7 +17,6 @@ public class GridCell : MonoBehaviour
 
     private bool isPossibleMove;
 
-
     /// <summary>
     /// Initializes grid cell with values.
     /// </summary>
@@ -47,7 +46,7 @@ public class GridCell : MonoBehaviour
     public void SetUnit(UnitModel unit)
     {
         var pos = GetWorldPosition();
-        unitInGridCell = Instantiate(unit, new Vector4(pos.x, 0.2f, pos.z), Quaternion.identity);
+        unitInGridCell = Instantiate(unit, new Vector4(pos.x, 11.2f, pos.z), Quaternion.identity);
     }
 
     /// <summary>
@@ -58,9 +57,10 @@ public class GridCell : MonoBehaviour
     public void SetAndMovePiece(UnitModel unit, Vector3 position)
     {
         unitInGridCell = unit;
-        var path = TransformationCalculator.QuadraticTransformation(unitInGridCell.Model.transform.position, new Vector3(position.x, 0.2F, position.z));
+        var path = TransformationCalculator.QuadraticTransformation(unitInGridCell.Model.transform.position, new Vector3(position.x, 11.2f, position.z));
 
         unitInGridCell.SetPath(path);
+        
     }
 
     /// <summary>
@@ -71,7 +71,7 @@ public class GridCell : MonoBehaviour
     public void SetAndMovePieceLinear(GameObject piece, Vector3 position)
     {
         objectInThisGridSpace = piece;
-        objectInThisGridSpace.GetComponent<Piece>().LinearTransformation(new Vector3(position.x, 0.2F, position.z));
+        objectInThisGridSpace.GetComponent<Piece>().LinearTransformation(new Vector3(position.x, 11.2f, position.z));
     }
 
     public Position GetPosition()

@@ -22,18 +22,28 @@ public class ResourceUIController : MonoBehaviour
 
     [SerializeField] private CityViewController cityViewPrefab;
 
+    [SerializeField] private GameObject UIRef;
+
     private CityViewController cityView;
 
     private void OnEnable()
     {
         PlayerController.PlayerSpawned += UpdatePlayerCharacterPanels;
         PlayerModel.UpdateResourceUI += UpdateResourcesUI;
+        BattleDeploymentController.OnBattleStarted += HandleOnBattleStarted;
     }
 
     private void OnDisable()
     {
         PlayerController.PlayerSpawned -= UpdatePlayerCharacterPanels;
         PlayerModel.UpdateResourceUI -= UpdateResourcesUI;
+        BattleDeploymentController.OnBattleStarted -= HandleOnBattleStarted;
+
+    }
+
+    private void HandleOnBattleStarted(bool state)
+    {
+        UIRef.SetActive(state);
     }
 
     private uint turnNumber = 1;

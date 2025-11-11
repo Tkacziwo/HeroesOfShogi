@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using static UnityEngine.Rendering.DebugUI.Table;
 
 /// <summary>
 /// Logic counterpart to BoardManager. Behaves the same.
@@ -52,6 +53,68 @@ public class LogicBoardManager
                 col = -1;
             }
         }
+        return possibleMoves;
+    }
+
+
+    public List<Position> NewCalculatePossibleMoves(Unit unit, LogicCell[,] cells, bool unrestricted = false)
+    {
+        var moveset = unit.GetMoveset();
+        var pos = unit.GetPosition();
+        var isBlack = unit.GetIsBlack();
+
+        // [ToDo] review suggestion
+        //int[,] newMoveset = new int[3, 3];
+        //for (int i = 0; i < 3; i++)
+        //{
+        //    for (int j = 0; j < 3; j++)
+        //    {
+        //        newMoveset[i,j] = moveset[i * 3 + j];
+        //    }
+        //}
+
+        int row = 1;
+        int col = -1;
+        List<Position> possibleMoves = new();
+        for (int i = 1; i <= 9; i++)
+        {
+            //Regular pieces
+            if (moveset[i - 1] == 1)
+            {
+                int destX = col + pos.x;
+                int destY = row + pos.y;
+
+                if (!IsInBoard(destY, destX)) continue;
+                else if (IsCellFree(destX, destY, cells) || IsEnemy(destX, destY, isBlack, cells))
+                {
+                    possibleMoves.Add(new(destX, destY));
+                }
+            }
+            //Horse
+            else if (moveset[i - 1] == 3)
+            {
+                int destY = isBlack ? row - 1 + pos.y : row + 1 + pos.y;
+                int destX = col + pos.x;
+
+                if (IsInBoard(destX, destY)
+                    && (IsCellFree(destX, destY, cells) || IsEnemy(destX, destY, isBlack, cells)))
+                {
+                    possibleMoves.Add(new(destX, destY));
+                }
+            }
+            //Special pieces: Rook, Bishop
+            else if (moveset[i - 1] == 2)
+            {
+                ExtendSpecialPiecePossibleMoves(row, col, pos, unrestricted, ref possibleMoves, cells, isBlack);
+            }
+            col++;
+            if (i % 3 == 0 && i != 0)
+            {
+                row--;
+                col = -1;
+            }
+        }
+
         return possibleMoves;
     }
 
@@ -593,7 +656,7 @@ public class LogicBoardManager
 
     public bool IsInBoard(int row, int col)
     {
-        if (row > -1 && row < 9 && col > -1 && col < 9)
+        if (row > -1 && row < StaticData.battleMapHeight && col > -1 && col < StaticData.battleMapWidth)
             return true;
         else
             return false;

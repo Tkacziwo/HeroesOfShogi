@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 /// <summary>
@@ -14,19 +16,28 @@ public class Unit : LogicPiece
 {
     public UnitEnum UnitName { get; set; }
 
-    public float HealthPoints { get; set; }
+    public int HealthPoints { get; set; }
 
     public int AttackPower { get; set; }
 
-    public int ArmorPower { get; set; }
-
     public List<string> SpecialAbilities { get; set; }
 
-    public int ArmorPenetrationModifier { get; set; }
+    //public int ArmorPenetrationModifier { get; set; }
 
     public int SizeInArmy { get; set; }
 
     public Sprite UnitSprite { get; set; }
+
+    public static Action OnDeath;
+
+    public bool MovedInTurn { get; set; } = false;
+
+    public void InitUnit(Unit template)
+    {
+        this.UnitName = template.UnitName;
+        this.HealthPoints = template.HealthPoints;
+        this.AttackPower = template.AttackPower;
+    }
 
     //[ToDo] Finish the methods
     public void Clone()
@@ -34,9 +45,16 @@ public class Unit : LogicPiece
 
     }
 
-    public void ReduceHP()
+    public bool ReduceHP(int hp)
     {
+        HealthPoints -= hp;
 
+        if(HealthPoints <= 0)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     public void IncreaseHP()

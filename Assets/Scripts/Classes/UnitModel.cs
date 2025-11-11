@@ -13,9 +13,10 @@ public class UnitModel : MonoBehaviour
 
     private float movementSpeed = 20f;
 
-    public void InitUnit(string name, int[] moveset, int x, int y, bool isSpecial, float movementSpeed)
+    public void InitUnit(string name, int[] moveset, int x, int y, bool isSpecial, float movementSpeed, Unit template)
     {
         Unit.InitPiece(name, moveset, x, y, isSpecial);
+        Unit.InitUnit(template);
         this.movementSpeed = movementSpeed;
     }
 
