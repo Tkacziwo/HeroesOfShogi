@@ -78,8 +78,8 @@ public class Grid : MonoBehaviour
                 logicCells[x, y] = new LogicCell(cell);
                 if (cell.unitInGridCell != null)
                 {
-                    LogicPiece p = new(cell.unitInGridCell.Unit);
-                    logicCells[x, y].piece = p;
+                    Unit p = new(cell.unitInGridCell.Unit);
+                    logicCells[x, y].unit = p;
                 }
             }
         }

@@ -122,7 +122,7 @@ public class LogicKingManager
                     else
                     {
                         //enemy found
-                        var enemyPiece = cells[destX, destY].piece;
+                        var enemyPiece = cells[destX, destY].unit;
                         if (enemyPiece.GetIsSpecial())
                         {
                             return temp;

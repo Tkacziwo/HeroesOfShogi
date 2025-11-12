@@ -228,6 +228,8 @@ public class InputManager : MonoBehaviour
         botFinishedCalculating = false;
         duringBotMove = false;
         duringBotText.gameObject.SetActive(false);
+
+        doneMoves = 0;
     }
 
     // Update is called once per frame
@@ -244,24 +246,26 @@ public class InputManager : MonoBehaviour
                 }
                 var hoveredCell = MouseOverCell();
 
-                //if (botFinishedCalculating)
-                //{
-                //    if (botResult == null)
-                //    {
-                //        var text = gameOverText;
-                //        text.text = "YOU WIN";
-                //        gameOver.gameObject.SetActive(true);
-                //        GameEnd();
-                //    }
-                //    else
-                //    {
-                //        ApplyBotMinimaxResult();
-                //    }
-                //}
-                //else if (!playerTurn && botEnabled && !duringBotMove && grid.PiecesFinishedMoving())
-                //{
-                //    PrepareBotForMinimax();
-                //}
+                if (botFinishedCalculating)
+                {
+                    if (botResult == null)
+                    {
+                        var text = gameOverText;
+                        text.text = "YOU WIN";
+                        gameOver.gameObject.SetActive(true);
+                        GameEnd();
+                    }
+                    else
+                    {
+                        ApplyBotMinimaxResult();
+
+
+                    }
+                }
+                else if (!playerTurn && botEnabled && !duringBotMove && grid.PiecesFinishedMoving())
+                {
+                    PrepareBotForMinimax();
+                }
                 if (hoveredCell == null) return;
 
 
@@ -700,7 +704,6 @@ public class InputManager : MonoBehaviour
     public void ExecutePieceMove(GridCell hoveredCell, bool registerMove = true)
     {
         //Piece piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
-
         Unit unit = CellWhichHoldsPiece.unitInGridCell.Unit;
 
         //if (kingInDanger)
@@ -750,6 +753,37 @@ public class InputManager : MonoBehaviour
                 hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, hoveredCell.GetWorldPosition());
 
                 CellWhichHoldsPiece.unitInGridCell = null;
+
+                if(enemyUnit.isKing)
+                {
+                    GameEnd();
+                }
+            }
+            else
+            {
+                if (unit.UnitName == UnitEnum.Bishop || unit.UnitName == UnitEnum.Rook || unit.UnitName == UnitEnum.Lance)
+                {
+                    var unitPos = unit.GetPosition();
+
+
+                    Position destination = null;
+
+                    for (int row = -1; row <= 1; row++)
+                    {
+                        for (int col = -1; col <= 1; col++)
+                        {
+                            destination = newBestBoardManager.FindPositionBeforeEnemy(row, col, unitPos, logicCells, enemyUnit.GetPosition());
+                        }
+                    }
+
+                    if(destination != null)
+                    {
+                        unit.MovePiece(destination);
+                        var beforeEnemyCell = grid.GetGridCell(destination);
+                        beforeEnemyCell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, beforeEnemyCell.GetWorldPosition());
+                        CellWhichHoldsPiece.unitInGridCell = null;
+                    }
+                }
             }
 
             RequestLogicCellsUpdate?.Invoke();
@@ -788,7 +822,7 @@ public class InputManager : MonoBehaviour
         RemovePossibleMoves();
         chosenPiece = false;
 
-        if(doneMoves == movesPerPlayer)
+        if (playerTurn && doneMoves == movesPerPlayer)
         {
             playerTurn = !playerTurn;
             doneMoves = 0;
@@ -888,7 +922,7 @@ public class InputManager : MonoBehaviour
         //var farRes = newBestKingManager.FarScanForKing(king.Unit.GetPosition(), king.Unit.GetIsBlack(),logicCells, piecesList.Select(o =>o.Unit).ToList(), ref attackerPos);
         //if (closeRes || farRes)
         //{
-           
+
         //    CellWhichHoldsAttacker = grid.GetGridCell(attackerPos);
         //    var attacker = grid.GetPieceInGrid(attackerPos).GetComponent<Piece>();
         //    kingInDanger = true;

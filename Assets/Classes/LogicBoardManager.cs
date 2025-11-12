@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using static UnityEngine.Rendering.DebugUI.Table;
 
 /// <summary>
 /// Logic counterpart to BoardManager. Behaves the same.
@@ -180,6 +179,7 @@ public class LogicBoardManager
         bool isBlack = false)
     {
         Position destPos = new(col + pos.x, row + pos.y);
+
         if (unrestricted)
         {
             while (true)
@@ -221,6 +221,39 @@ public class LogicBoardManager
                 }
             }
         }
+
+    }
+
+    public Position FindPositionBeforeEnemy(int row, int col, Position pos, LogicCell[,] cells, Position target)
+    {
+        Position found = null;
+        int destX = col + pos.x;
+        int destY = row + pos.y;
+
+        if (row == 0 && col == 0) return found;
+
+        Position previous = new(destX, destY);
+        while (true)
+        {
+            if (IsInBoard(destX, destY))
+            {
+                if (target.Equals(new(destX,destY)))
+                {
+                    found = new(previous);
+
+                    break;
+                }
+
+                previous = new(destX, destY);
+                destX += col;
+                destY += row;
+            }
+            else
+            {
+                break;
+            }
+        }
+        return found;
     }
 
     public void ExtendSpecialPiecePossibleMovesInverted(
@@ -259,11 +292,11 @@ public class LogicBoardManager
         }
     }
 
-    public void CheckIfMovesAreLegal(ref List<Position> pMoves, LogicPiece piece, List<LogicPiece> allPieces, LogicCell[,] cells)
+    public void CheckIfMovesAreLegal(ref List<Position> pMoves, Unit piece, List<Unit> allPieces, LogicCell[,] cells)
     {
-        LogicPiece king = new();
+        Unit king = new();
 
-        List<LogicPiece> enemyPieces = new();
+        List<Unit> enemyPieces = new();
         foreach (var p in allPieces)
         {
             if (!p.GetIsBlack())
@@ -278,7 +311,7 @@ public class LogicBoardManager
         }
 
 
-        List<LogicPiece> specialEnemyPieces = new();
+        List<Unit> specialEnemyPieces = new();
         foreach (var p in enemyPieces)
         {
             if (p.GetName() == "Lance" || p.GetName() == "Bishop" || p.GetName() == "Rook")
@@ -352,7 +385,7 @@ public class LogicBoardManager
         {
             if (!IsCellFree(movesLine[i].x, movesLine[i].y, cells))
             {
-                var pieceInCell = cells[movesLine[i].x, movesLine[i].y].piece;
+                var pieceInCell = cells[movesLine[i].x, movesLine[i].y].unit;
 
                 if (!pieceInCell.isKing && pieceInCell.GetIsBlack() == isBlack)
                 {
@@ -363,7 +396,7 @@ public class LogicBoardManager
         return sum;
     }
 
-    public DirectionPossibleMoves CalculatePossibleMovesWithDirection(LogicPiece piece, LogicCell[,] cells, bool unrestricted = false)
+    public DirectionPossibleMoves CalculatePossibleMovesWithDirection(Unit piece, LogicCell[,] cells, bool unrestricted = false)
     {
         DirectionPossibleMoves directionPossibleMoves = new();
         var moveset = piece.GetMoveset();
@@ -570,7 +603,7 @@ public class LogicBoardManager
         return betterDrops;
     }
 
-    public List<Position> CalculatePossibleDrops(LogicCell[,] cells, LogicPiece piece)
+    public List<Position> CalculatePossibleDrops(LogicCell[,] cells, Unit piece)
     {
         List<Position> moves = new();
 
@@ -583,7 +616,7 @@ public class LogicBoardManager
                 {
                     if (!IsCellFree(x, y, cells))
                     {
-                        var gridPiece = cells[x, y].piece;
+                        var gridPiece = cells[x, y].unit;
                         if (gridPiece.GetName() == "Pawn" && gridPiece.GetIsBlack() != piece.GetIsBlack())
                         {
                             badX.Add(x);
@@ -623,8 +656,8 @@ public class LogicBoardManager
     {
         var cell = cells[destX, destY];
 
-        if (cell.piece != null
-            && cell.piece.GetIsBlack() == isBlack)
+        if (cell.unit != null
+            && cell.unit.GetIsBlack() == isBlack)
         {
             return false;
         }
@@ -637,15 +670,15 @@ public class LogicBoardManager
     public bool IsCellFree(int destX, int destY, LogicCell[,] cells)
     {
         var cell = cells[destX, destY];
-        return cell.piece == null;
+        return cell.unit == null;
     }
 
     public bool IsEnemy(int destX, int destY, bool isBlack, LogicCell[,] cells)
     {
         var cell = cells[destX, destY];
-        if (cell.piece != null)
+        if (cell.unit != null)
         {
-            var pieceColorInDestination = cell.piece.GetIsBlack();
+            var pieceColorInDestination = cell.unit.GetIsBlack();
             return pieceColorInDestination != isBlack;
         }
         else

@@ -9,25 +9,25 @@ public class LogicPiece
 {
     public string pieceName;
 
-    private string originalPieceName;
+    protected string originalPieceName;
 
-    private int[] Moveset;
+    protected int[] Moveset;
 
-    private int[] originalMoveset;
+    protected int[] originalMoveset;
 
-    private Position pos;
+    protected Position pos;
 
-    private bool isSpecial;
+    protected bool isSpecial;
 
-    private bool isDrop;
+    protected bool isDrop;
 
-    private bool isBodyguard;
+    protected bool isBodyguard;
 
     public bool isKing;
 
-    private bool isBlack;
+    protected bool isBlack;
 
-    private bool isPromoted;
+    protected bool isPromoted;
 
     public int value;
 

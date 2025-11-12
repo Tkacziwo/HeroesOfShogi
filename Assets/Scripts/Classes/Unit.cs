@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
 
 /// <summary>
 /// Unit class symbolizes one unit during battle. 
@@ -39,10 +40,41 @@ public class Unit : LogicPiece
         this.AttackPower = template.AttackPower;
     }
 
-    //[ToDo] Finish the methods
-    public void Clone()
+    public Unit()
     {
+    }
 
+    public Unit(Unit other)
+    {
+        UnitName = other.UnitName;
+        HealthPoints = other.HealthPoints;
+        AttackPower = other.AttackPower;
+        SpecialAbilities = other.SpecialAbilities;
+        SizeInArmy = other.SizeInArmy;
+        UnitSprite = other.UnitSprite;
+        MovedInTurn = other.MovedInTurn;
+        value = other.pieceName switch
+        {
+            "Pawn" => 100,
+            "GoldGeneral" => 500,
+            "SilverGeneral" => 400,
+            "Bishop" => 800,
+            "Rook" => 800,
+            "Lance" => 400,
+            "Horse" => 300,
+            "King" => 10000,
+            _ => 0,
+        };
+
+        isKing = other.isKing;
+        originalPieceName = pieceName = other.pieceName;
+        Moveset = other.Moveset;
+        originalMoveset = other.originalMoveset;
+        pos = other.pos;
+        isSpecial = other.isSpecial;
+        isPromoted = other.isPromoted;
+        isDrop = other.isDrop;
+        isBlack = other.isBlack;
     }
 
     public bool ReduceHP(int hp)
