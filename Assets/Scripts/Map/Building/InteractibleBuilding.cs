@@ -11,6 +11,11 @@ public class InteractibleBuilding : MonoBehaviour
 
     public static Action<InteractibleBuilding> AddResourcesToCapturer;
 
+    private void Start()
+    {
+        BuildingRegistry.Instance?.Register(this);
+    }
+
     public void CaptureBuilding(int capturerId, Color? capturerColor = null)
     {
         if (capturerId == this.capturerId) return;
@@ -34,13 +39,16 @@ public class InteractibleBuilding : MonoBehaviour
     private void OnEnable()
     {
         OverworldMapController.onTurnEnd += OnTurnEnd;
-        BuildingRegistry.Instance?.Register(this);
+
     }
 
     private void OnDisable()
     {
         OverworldMapController.onTurnEnd -= OnTurnEnd;
-        BuildingRegistry.Instance?.Unregister(this);
+        if (BuildingRegistry.Instance != null)
+        {
+            BuildingRegistry.Instance?.Unregister(this);
+        }
     }
 
     public void OnTurnEnd()

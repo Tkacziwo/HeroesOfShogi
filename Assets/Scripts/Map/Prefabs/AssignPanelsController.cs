@@ -43,11 +43,8 @@ public class AssignPanelsController : MonoBehaviour
 
     private ProducedUnits cityUnits = new();
 
-    private Unit pawnTemp = new();
 
-    private Unit lanceTemp = new();
-
-    private Unit horseTemp = new();
+    private readonly List<Unit> unitTemplates = StaticData.unitTemplates;
 
     public void Setup(PlayerCharacterController currentCharacter, ProducedUnits cityUnits)
     {
@@ -68,39 +65,19 @@ public class AssignPanelsController : MonoBehaviour
 
     private void InitPanels()
     {
-        pawnTemp = new Unit()
-        {
-            HealthPoints = 1,
-            AttackPower = 1,
-            SizeInArmy = 1,
-            UnitName = UnitEnum.Pawn,
-            pieceName = "Pawn",
-            UnitSprite = StaticData.unitIcons.SingleOrDefault(o => o.name == UnitEnum.Pawn.ToString())
-        };
+        pawnPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.pawns, tempSprite, unitTemplates.Single(o => o.UnitName == UnitEnum.Pawn));
 
-        lanceTemp = new()
-        {
-            HealthPoints = 1,
-            AttackPower = 2,
-            SizeInArmy = 1,
-            UnitName = UnitEnum.Lance,
-            pieceName = "Lance"
-        };
+        lancePanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.lances, tempSprite, unitTemplates.Single(o => o.UnitName == UnitEnum.Lance));
 
-        horseTemp = new()
-        {
-            HealthPoints = 3,
-            AttackPower = 2,
-            SizeInArmy = 3,
-            UnitName = UnitEnum.Horse,
-            pieceName = "Horse"
-        };
+        horsePanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.horses, tempSprite, unitTemplates.Single(o => o.UnitName == UnitEnum.Horse));
 
-        pawnPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.pawns, tempSprite, pawnTemp);
+        silverGeneralPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.silverGenerals, tempSprite, unitTemplates.Single(o => o.UnitName == UnitEnum.SilverGeneral));
 
-        lancePanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.lances, tempSprite, lanceTemp);
+        goldGeneralPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.goldGenerals, tempSprite, unitTemplates.Single(o => o.UnitName == UnitEnum.GoldGeneral));
 
-        horsePanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.horses, tempSprite, horseTemp);
+        rookPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.rooks, tempSprite, unitTemplates.Single(o => o.UnitName == UnitEnum.Rook));
+
+        bishopPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.bishops, tempSprite, unitTemplates.Single(o => o.UnitName == UnitEnum.Bishop));
     }
 
     public void OnClick()
@@ -142,17 +119,32 @@ public class AssignPanelsController : MonoBehaviour
 
         for (int i = 0; i < selectedUnits.pawns; i++)
         {
-            tempUnits.Add(pawnTemp);
+            tempUnits.Add(unitTemplates.Single(o => o.UnitName == UnitEnum.Pawn));
         }
         for (int i = 0; i < selectedUnits.lances; i++)
         {
-            tempUnits.Add(lanceTemp);
+            tempUnits.Add(unitTemplates.Single(o => o.UnitName == UnitEnum.Lance));
         }
         for (int i = 0; i < selectedUnits.horses; i++)
         {
-            tempUnits.Add(horseTemp);
+            tempUnits.Add(unitTemplates.Single(o => o.UnitName == UnitEnum.Horse));
         }
-
+        for (int i = 0; i < selectedUnits.goldGenerals; i++)
+        {
+            tempUnits.Add(unitTemplates.Single(o => o.UnitName == UnitEnum.GoldGeneral));
+        }
+        for (int i = 0; i < selectedUnits.silverGenerals; i++)
+        {
+            tempUnits.Add(unitTemplates.Single(o => o.UnitName == UnitEnum.SilverGeneral));
+        }
+        for (int i = 0; i < selectedUnits.rooks; i++)
+        {
+            tempUnits.Add(unitTemplates.Single(o => o.UnitName == UnitEnum.Rook));
+        }
+        for (int i = 0; i < selectedUnits.bishops; i++)
+        {
+            tempUnits.Add(unitTemplates.Single(o => o.UnitName == UnitEnum.Bishop));
+        }
 
         currentSize = CountCurrentSize(tempUnits);
 

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 
 public class City : InteractibleBuilding
 {
@@ -15,7 +16,7 @@ public class City : InteractibleBuilding
         OverworldMapController.onTurnEnd += OnTurnEnd;
         OverworldMapController.OnWeekEnd += HandleWeekEnd;
         AssignPanelsController.OnUnitsRecruit += HandleUnitsRecruited;
-        BuildingRegistry.Instance?.Register(this);
+
     }
     private void OnDisable()
     {
@@ -23,7 +24,10 @@ public class City : InteractibleBuilding
         OverworldMapController.onTurnEnd -= OnTurnEnd;
         OverworldMapController.OnWeekEnd -= HandleWeekEnd;
         AssignPanelsController.OnUnitsRecruit -= HandleUnitsRecruited;
-        BuildingRegistry.Instance?.Unregister(this);
+        if (BuildingRegistry.Instance != null)
+        {
+            BuildingRegistry.Instance?.Unregister(this);
+        }
     }
 
     private void HandleUnitsRecruited(ProducedUnits units)
@@ -56,8 +60,13 @@ public class City : InteractibleBuilding
         {
             pawns = 5,
             lances = 3,
-            horses = 2
+            horses = 2,
+            goldGenerals = 0,
+            silverGenerals = 0,
+            rooks = 0,
+            bishops = 0,
         };
+        BuildingRegistry.Instance?.Register(this);
     }
 
     private void HandleWeekEnd()
@@ -90,4 +99,8 @@ public class ProducedUnits
     public int pawns;
     public int lances;
     public int horses;
+    public int goldGenerals;
+    public int silverGenerals;
+    public int rooks;
+    public int bishops;
 }

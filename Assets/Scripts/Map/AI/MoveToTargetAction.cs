@@ -23,45 +23,40 @@ public partial class MoveToTargetAction : Action
 
     protected override Status OnStart()
     {
-        var characters = Self.Value.GetComponent<PlayerModel>().GetPlayerCharacters();
+        var character = Self.Value.GetComponent<PlayerModel>().GetCurrentPlayerCharacter();
         List<Tuple<int, List<TileInfo>>> botResults = new();
 
-        foreach (var character in characters)
+        var startPos = character.characterPosition;
+
+        Vector3Int endPos; 
+
+        if (!character.unreachedBotDestination.Equals(new Vector3Int(0, 0, 0)))
         {
-            var startPos = character.characterPosition;
-
-            Vector3Int endPos;
-
-            if (!character.unreachedBotDestination.Equals(new Vector3Int(0, 0, 0)))
-            {
-                endPos = character.unreachedBotDestination;
-                character.unreachedBuilding = null;
-            }
-            else
-            {
-                endPos = GetRandomWalkableTile(tilemap, startPos);
-                character.unreachedBuilding = null;
-            }
-
-            character.unreachedBotDestination = new Vector3Int(0, 0, 0);
-
-            var path = FindPath(startPos, endPos);
-
-            if (path.Count > character.GetRemainingMovementPoints())
-            {
-                character.unreachedBotDestination = endPos;
-                character.unreachedBuilding = null;
-            }
-
-
-            botResults.Add(new(character.characterId, path));
+            endPos = character.unreachedBotDestination;
+            character.unreachedBuilding = null;
         }
+        else
+        {
+            endPos = GetRandomWalkableTile(tilemap, startPos);
+            character.unreachedBuilding = null;
+        }
+
+        character.unreachedBotDestination = new Vector3Int(0, 0, 0);
+
+        var path = FindPath(startPos, endPos);
+
+        if (path.Count > character.GetRemainingMovementPoints())
+        {
+            character.unreachedBotDestination = endPos;
+            character.unreachedBuilding = null;
+        }
+
+
+        botResults.Add(new(character.characterId, path));
 
         OnBotMove?.Invoke(botResults);
         return Status.Success;
     }
-
-
 
     private Vector3Int GetRandomWalkableTile(Tilemap map, Vector3Int startPos)
     {

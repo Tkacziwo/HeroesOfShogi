@@ -25,53 +25,50 @@ public partial class CaptureBuildingAction : Action
 
     protected override Status OnStart()
     {
-        var characters = Self.Value.GetComponent<PlayerModel>().GetPlayerCharacters();
+        var character = Self.Value.GetComponent<PlayerModel>().GetCurrentPlayerCharacter();
         result.Value = 1;
         List<Tuple<int, List<TileInfo>>> botResults = new();
 
-        foreach (var character in characters)
+        var chosenBuilding = FindNearestBuilding(character.characterPosition, character.playerId);
+
+        if (chosenBuilding != null)
         {
-            var chosenBuilding = FindNearestBuilding(character.characterPosition, character.playerId);
-
-            if (chosenBuilding != null)
+            if (character.unreachedBuilding != null)
             {
-                if (character.unreachedBuilding != null)
-                {
-                    chosenBuilding = character.unreachedBuilding;
-                    character.unreachedBuilding = null;
-                    character.unreachedBotDestination = new Vector3Int(0, 0, 0);
-                }
-
-
-                var path = FindPathToBuilding(chosenBuilding, character);
-
-                if (path.Count > character.GetRemainingMovementPoints())
-                {
-                    character.unreachedBuilding = chosenBuilding;
-                    character.unreachedBotDestination = new Vector3Int(0, 0, 0);
-                }
-                else
-                {
-                    character.unreachedBuilding = null;
-                }
-
+                chosenBuilding = character.unreachedBuilding;
                 character.unreachedBuilding = null;
+                character.unreachedBotDestination = new Vector3Int(0, 0, 0);
+            }
 
-                BotCaptureInfo botCaptureInfo = new()
-                {
-                    character = character,
-                    chosenBuilding = chosenBuilding,
-                    pathToBuilding = path,
-                    endPos = bestEndPos
-                };
 
-                OnBotCapture?.Invoke(botCaptureInfo);
-                return Status.Success;
+            var path = FindPathToBuilding(chosenBuilding, character);
+
+            if (path.Count > character.GetRemainingMovementPoints())
+            {
+                character.unreachedBuilding = chosenBuilding;
+                character.unreachedBotDestination = new Vector3Int(0, 0, 0);
             }
             else
             {
-                result.Value = 0;
+                character.unreachedBuilding = null;
             }
+
+            character.unreachedBuilding = null;
+
+            BotCaptureInfo botCaptureInfo = new()
+            {
+                character = character,
+                chosenBuilding = chosenBuilding,
+                pathToBuilding = path,
+                endPos = bestEndPos
+            };
+
+            OnBotCapture?.Invoke(botCaptureInfo);
+            return Status.Success;
+        }
+        else
+        {
+            result.Value = 0;
         }
 
         return Status.Success;

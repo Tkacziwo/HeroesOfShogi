@@ -15,6 +15,8 @@ public class PlayerCharacterController : MonoBehaviour
 
     public Vector3Int characterPosition;
 
+    public int armySizeLimit = 30;
+
     public List<Unit> AssignedUnits { get; set; } = new();
 
     private Vector3 targetPosition;

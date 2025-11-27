@@ -29,37 +29,39 @@ public partial class MoveToCityAction : Action
 
     protected override Status OnStart()
     {
-        var characters = Self.Value.GetComponent<PlayerModel>().GetPlayerCharacters();
+        var character = Self.Value.GetComponent<PlayerModel>().GetCurrentPlayerCharacter();
         result.Value = 1;
         cityHasUnits.Value = false;
-        foreach (var character in characters)
-        {
-            var city = FindCity(character.characterPosition, character.playerId);
+        var city = FindCity(character.characterPosition, character.playerId);
 
-            if (city == null)
+        if (city == null)
+        {
+            result.Value = 0;
+            return Status.Failure;
+        }
+        else
+        {
+            var path = FindPathToBuilding(city, character);
+
+            BotCaptureInfo info = new()
             {
-                result.Value = 0;
-                return Status.Failure;
+                character = character,
+                chosenBuilding = city,
+                endPos = bestEndPos,
+                pathToBuilding = path
+            };
+
+            OnBotGoToCity?.Invoke(info);
+
+            if (city.HasAvailableUnits())
+            {
+                cityHasUnits.Value = true;
+                Chosencity.Value = city;
+                characterInCity.Value = character;
             }
             else
             {
-                var path = FindPathToBuilding(city, character);
-
-                BotCaptureInfo info = new()
-                {
-                    character = character,
-                    chosenBuilding = city,
-                    endPos = bestEndPos,
-                    pathToBuilding = path
-                };
-
-                OnBotGoToCity?.Invoke(info);
-
-                if(city.HasAvailableUnits())
-                {
-                    cityHasUnits.Value = true;
-                    Chosencity.Value = city;
-                }
+                result.Value = 0;
             }
         }
 
