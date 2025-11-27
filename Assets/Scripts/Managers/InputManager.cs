@@ -108,6 +108,8 @@ public class InputManager : MonoBehaviour
 
     private int doneMoves = 0;
 
+    private bool isUnitMoving = false;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -151,10 +153,12 @@ public class InputManager : MonoBehaviour
     private void OnEnable()
     {
         Grid.OnGridFinishRender += HandleGridFinishedRendering;
+        UnitModel.UnitFinishedMoving += () => isUnitMoving = false;
     }
     private void OnDisable()
     {
         Grid.OnGridFinishRender -= HandleGridFinishedRendering;
+        UnitModel.UnitFinishedMoving -= () => isUnitMoving = false;
     }
 
     private void HandleGridFinishedRendering(LogicCell[,] logicCells)
@@ -194,6 +198,9 @@ public class InputManager : MonoBehaviour
         botThread.Start();
     }
 
+
+    private int botMoves = 3;
+
     /// <summary>
     /// Prepares bot for Minimax algorithm by setting adequate fields.
     /// </summary>
@@ -223,83 +230,84 @@ public class InputManager : MonoBehaviour
             CellWhichHoldsPiece = grid.GetGridCell(botResult.Item1.x, botResult.Item1.y);
         }
         var cell = grid.GetGridCell(botResult.Item2.x, botResult.Item2.y);
-        ExecutePieceMove(cell);
-        playerTurn = true;
+        //playerTurn = true;
         botFinishedCalculating = false;
         duringBotMove = false;
         duringBotText.gameObject.SetActive(false);
-
-        doneMoves = 0;
+        botMoves--;
+        //doneMoves = 0; 
+        ExecutePieceMove(cell);
+        botResult = null;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (mainCamera != null)
+        if (paused) return;
+
+        if (mainCamera == null) return;
+
+        grid.ClearPossibleMoves(possibleMoves);
+        if (StaticData.tutorial)
         {
-            if (!paused)
+            tutorialGrid.ClearPossibleMoves();
+        }
+
+        if (botFinishedCalculating)
+        {
+            if (botResult == null)
             {
-                grid.ClearPossibleMoves(possibleMoves);
-                if (StaticData.tutorial)
-                {
-                    tutorialGrid.ClearPossibleMoves();
-                }
-                var hoveredCell = MouseOverCell();
-
-                if (botFinishedCalculating)
-                {
-                    if (botResult == null)
-                    {
-                        var text = gameOverText;
-                        text.text = "YOU WIN";
-                        gameOver.gameObject.SetActive(true);
-                        GameEnd();
-                    }
-                    else
-                    {
-                        ApplyBotMinimaxResult();
+                var text = gameOverText;
+                text.text = "YOU WIN";
+                gameOver.gameObject.SetActive(true);
+                GameEnd();
+            }
+            else
+            {
+                ApplyBotMinimaxResult();
 
 
-                    }
-                }
-                else if (!playerTurn && botEnabled && !duringBotMove && grid.PiecesFinishedMoving())
-                {
-                    PrepareBotForMinimax();
-                }
-                if (hoveredCell == null) return;
+            }
+        }
+        else if (!playerTurn && botEnabled && !duringBotMove && !isUnitMoving)
+        {
+            PrepareBotForMinimax();
+        }
 
 
-                if (possibleMoves == null)
-                {
-                    hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.magenta;
-                }
-                else
-                {
-                    if (possibleMoves.Contains(hoveredCell.GetPosition()))
-                    {
-                        hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
-                    }
-                    else
-                    {
-                        hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = new(1.0f, 86 / 255, 83 / 255);
-                    }
-                }
+        var hoveredCell = MouseOverCell();
 
-                if (Input.GetMouseButtonDown(0) && !duringBotMove && grid.PiecesFinishedMoving())
-                {
-                    if (duringKingAbility)
-                    {
-                        HandleKingAbility(hoveredCell);
-                    }
-                    else if (cantChangePiece)
-                    {
-                        HandleExtraMove(hoveredCell);
-                    }
-                    else
-                    {
-                        HandleBoardClick(hoveredCell);
-                    }
-                }
+        if (hoveredCell == null) return;
+
+        if (possibleMoves == null)
+        {
+            hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.magenta;
+        }
+        else
+        {
+            if (possibleMoves.Contains(hoveredCell.GetPosition()))
+            {
+                hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
+            }
+            else
+            {
+                hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = new(1.0f, 86 / 255, 83 / 255);
+            }
+        }
+
+        if (Input.GetMouseButtonDown(0) && !duringBotMove && !isUnitMoving)
+        {
+            if (duringKingAbility)
+            {
+                HandleKingAbility(hoveredCell);
+            }
+            else if (cantChangePiece)
+            {
+                HandleExtraMove(hoveredCell);
+            }
+            else
+            {
+                HandleBoardClick(hoveredCell);
             }
         }
     }
@@ -704,8 +712,8 @@ public class InputManager : MonoBehaviour
     public void ExecutePieceMove(GridCell hoveredCell, bool registerMove = true)
     {
         //Piece piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
+        isUnitMoving = true;
         Unit unit = CellWhichHoldsPiece.unitInGridCell.Unit;
-
         //if (kingInDanger)
         //{
         //    grid.GetPieceInGrid(kingPos).GetComponentInChildren<MeshRenderer>().material.color =
@@ -754,7 +762,7 @@ public class InputManager : MonoBehaviour
 
                 CellWhichHoldsPiece.unitInGridCell = null;
 
-                if(enemyUnit.isKing)
+                if (enemyUnit.UnitName == UnitEnum.King)
                 {
                     GameEnd();
                 }
@@ -773,16 +781,38 @@ public class InputManager : MonoBehaviour
                         for (int col = -1; col <= 1; col++)
                         {
                             destination = newBestBoardManager.FindPositionBeforeEnemy(row, col, unitPos, logicCells, enemyUnit.GetPosition());
+                            if(destination != null)
+                            {
+                                break;
+                            }
+                        }
+
+                        if (destination != null)
+                        {
+                            break;
                         }
                     }
 
-                    if(destination != null)
+
+                    if (destination != null && !destination.Equals(enemyUnit.GetPosition()))
                     {
                         unit.MovePiece(destination);
                         var beforeEnemyCell = grid.GetGridCell(destination);
                         beforeEnemyCell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, beforeEnemyCell.GetWorldPosition());
                         CellWhichHoldsPiece.unitInGridCell = null;
                     }
+                    else
+                    {
+                        var cell = grid.GetGridCell(CellWhichHoldsPiece.GetPosition());
+                        unit.MovePiece(cell.GetPosition());
+                        cell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, cell.GetWorldPosition());
+                    }
+                }
+                else
+                {
+                    var cell = grid.GetGridCell(CellWhichHoldsPiece.GetPosition());
+                    unit.MovePiece(cell.GetPosition());
+                    cell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, cell.GetWorldPosition());
                 }
             }
 
@@ -822,12 +852,19 @@ public class InputManager : MonoBehaviour
         RemovePossibleMoves();
         chosenPiece = false;
 
-        if (playerTurn && doneMoves == movesPerPlayer)
+        if (doneMoves == movesPerPlayer)
         {
             playerTurn = !playerTurn;
             doneMoves = 0;
             ResetUnitMoved?.Invoke();
         }
+
+        //else if (!playerTurn && botMoves <= 0)
+        //{
+        //    botMoves = 3;
+        //    playerTurn = true;
+        //    ResetUnitMoved?.Invoke();
+        //}
 
         //if (specialAbilityInUse)
         //{

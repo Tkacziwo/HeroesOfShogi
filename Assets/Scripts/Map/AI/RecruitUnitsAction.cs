@@ -5,13 +5,18 @@ using Action = Unity.Behavior.Action;
 using Unity.Properties;
 
 [Serializable, GeneratePropertyBag]
-[NodeDescription(name: "RecruitUnits", story: "Agent Recruits units in town", category: "Action", id: "de5b5f04d196b75ad5ccd6acceb27bfb")]
+[NodeDescription(name: "RecruitUnits", story: "[Self] recruits units", category: "Action", id: "c83f82cb4c83288da8fd790f32038f8d")]
 public partial class RecruitUnitsAction : Action
 {
+    [SerializeReference] public BlackboardVariable<GameObject> Self;
+    [SerializeReference] public BlackboardVariable<City> city;
+    [SerializeReference] public BlackboardVariable<PlayerCharacterController> playerInCity;
 
     protected override Status OnStart()
     {
-        return Status.Running;
+
+
+        return Status.Success;
     }
 
     protected override Status OnUpdate()

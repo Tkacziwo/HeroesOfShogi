@@ -1,13 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Behavior;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class PlayerController : MonoBehaviour
 {
     public PlayerModel player;
 
-    public int currentPlayer;
+    public List<GameObject> bots;
+
+    public int currentPlayerId;
 
     private int buildingsCount;
 
@@ -17,7 +21,7 @@ public class PlayerController : MonoBehaviour
 
     private int eventFires;
 
-    public static event Action TurnEnded;
+    public static event System.Action TurnEnded;
 
     public static event Action<Tuple<Vector3Int, Vector3Int>> PlayerCharacterChanged;
 
@@ -25,11 +29,14 @@ public class PlayerController : MonoBehaviour
 
     public static event Action<PlayerModel> PlayerSpawned;
 
+    [SerializeField] private GameObject botGM;
+
     private void OnEnable()
     {
         WorldBuilding.AddResourcesToCapturer += HandleAddResources;
         DoubleClickHandler.OnDoubleClick += HandleDoubleClick;
         PanelController.PlayerChanged += HandleCharacterChanged;
+        OverworldMapController.onTurnEnd += HandleTurnEnd;
     }
 
     private void OnDisable()
@@ -37,6 +44,14 @@ public class PlayerController : MonoBehaviour
         WorldBuilding.AddResourcesToCapturer -= HandleAddResources;
         DoubleClickHandler.OnDoubleClick -= HandleDoubleClick;
         PanelController.PlayerChanged -= HandleCharacterChanged;
+        OverworldMapController.onTurnEnd -= HandleTurnEnd;
+    }
+
+    private Tilemap tilemap;
+
+    public void OnTilemapShared(Tilemap incoming)
+    {
+        this.tilemap = incoming;
     }
 
     private void HandleDoubleClick(DoubleClickHandler handler)
@@ -126,9 +141,87 @@ public class PlayerController : MonoBehaviour
     {
         player = Instantiate(player);
         player.InitPlayer(playerId);
-        player.SpawnPlayer();
+        Vector3Int target = new(6, 4, 0);
+        player.SpawnPlayer(target);
 
         PlayerSpawned?.Invoke(player);
+    }
+
+    public void SpawnBots()
+    {
+        int iterator = 0;
+        bots.Add(Instantiate(botGM));
+        var player = bots[iterator].GetComponent<PlayerModel>();
+        Vector3Int target = new(40, 15, 0);
+        int nextId = GetNextPlayerId();
+        player.InitBot(nextId);
+        player.SpawnBotPlayer(target);
+    }
+
+    public Dictionary<int, Dictionary<int, Vector3Int>> GetBotsCharacterPositions()
+    {
+        Dictionary<int, Dictionary<int, Vector3Int>> positions = new();
+
+        foreach (var bot in bots)
+        {
+            var model = bot.GetComponent<PlayerModel>();
+
+            var characters = model.GetPlayerCharacters();
+
+            Dictionary<int, Vector3Int> botCharacterPositions = new();
+            foreach (var character in characters)
+            {
+                botCharacterPositions.Add(character.characterId, character.characterPosition);
+            }
+
+            positions.Add(model.playerId, botCharacterPositions);
+        }
+
+        return positions;
+    }
+
+    public List<PlayerCharacterController> GetCharactersForPlayer(int playerId)
+    {
+        if(playerId == player.playerId)
+        {
+            return player.GetPlayerCharacters();
+        }
+        else
+        {
+            foreach (var bot in bots)
+            {
+                var model = bot.GetComponent<PlayerModel>();
+                if(model.playerId == playerId)
+                {
+                    return model.GetPlayerCharacters();
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public int GetNextPlayerId()
+    {
+        var playerId = player.playerId;
+
+        var botsModels = new List<PlayerModel>();
+
+        foreach (var bot in bots)
+        {
+            botsModels.Add(bot.GetComponent<PlayerModel>());
+        }
+
+        var botMaxId = botsModels.Select(o => o.playerId).Max();
+
+        if(playerId < botMaxId)
+        {
+            return botMaxId + 1;
+        }
+        else
+        {
+            return playerId + 1;
+        }
     }
 
     public void OnPlayerBeginMove()
@@ -142,6 +235,23 @@ public class PlayerController : MonoBehaviour
         {
              player.PlayerBeginMove();
         }
+    }
+
+    public void HandleTurnEnd()
+    {
+        // start AI
+
+        foreach (var bot in bots)
+        {
+            currentPlayerId = bot.GetComponent<PlayerModel>().playerId;
+            var agent = bot.GetComponent<BehaviorGraphAgent>();
+            agent.BlackboardReference.SetVariableValue("tilemap", tilemap);
+            agent.BlackboardReference.SetVariableValue("IsMyTurn", true);
+            agent.Start();
+        }
+
+
+      
     }
 
     public PlayerCharacterController GetCurrentPlayerCharacter()

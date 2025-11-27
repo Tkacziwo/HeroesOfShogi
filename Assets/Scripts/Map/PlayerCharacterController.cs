@@ -38,6 +38,9 @@ public class PlayerCharacterController : MonoBehaviour
 
     public event Action<Transform> OnPlayerMoveUpdateCameraPosition;
 
+    public Vector3Int unreachedBotDestination;
+
+    public InteractibleBuilding unreachedBuilding;
     public void SetPlayerTransform(Vector3 newTransform)
         => this.transform.position = newTransform;
 

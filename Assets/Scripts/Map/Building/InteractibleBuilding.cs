@@ -23,7 +23,7 @@ public class InteractibleBuilding : MonoBehaviour
         isCaptured = true;
         this.capturerId = capturerId;
     }
-   
+
     public void FindPathToBuilding()
     {
         Debug.Log("Hit building: " + buildingName);
@@ -32,10 +32,16 @@ public class InteractibleBuilding : MonoBehaviour
     }
 
     private void OnEnable()
-        => OverworldMapController.onTurnEnd += OnTurnEnd;
+    {
+        OverworldMapController.onTurnEnd += OnTurnEnd;
+        BuildingRegistry.Instance?.Register(this);
+    }
 
     private void OnDisable()
-        => OverworldMapController.onTurnEnd -= OnTurnEnd;
+    {
+        OverworldMapController.onTurnEnd -= OnTurnEnd;
+        BuildingRegistry.Instance?.Unregister(this);
+    }
 
     public void OnTurnEnd()
        => AddResourcesToCapturer?.Invoke(this);

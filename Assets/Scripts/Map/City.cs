@@ -15,6 +15,7 @@ public class City : InteractibleBuilding
         OverworldMapController.onTurnEnd += OnTurnEnd;
         OverworldMapController.OnWeekEnd += HandleWeekEnd;
         AssignPanelsController.OnUnitsRecruit += HandleUnitsRecruited;
+        BuildingRegistry.Instance?.Register(this);
     }
     private void OnDisable()
     {
@@ -22,7 +23,7 @@ public class City : InteractibleBuilding
         OverworldMapController.onTurnEnd -= OnTurnEnd;
         OverworldMapController.OnWeekEnd -= HandleWeekEnd;
         AssignPanelsController.OnUnitsRecruit -= HandleUnitsRecruited;
-
+        BuildingRegistry.Instance?.Unregister(this);
     }
 
     private void HandleUnitsRecruited(ProducedUnits units)
@@ -65,6 +66,16 @@ public class City : InteractibleBuilding
         producedUnits.pawns = 5;
         producedUnits.lances = 3;
         producedUnits.horses = 2;
+    }
+
+    public bool HasAvailableUnits()
+    {
+        if (producedUnits.lances != 0 || producedUnits.pawns != 0 || producedUnits.horses != 0)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private void InitCity()

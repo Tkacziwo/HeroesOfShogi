@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,6 +13,8 @@ public class UnitModel : MonoBehaviour
     private int pathIterator = 0;
 
     private float movementSpeed = 20f;
+
+    public static Action UnitFinishedMoving;
 
     public void InitUnit(string name, int[] moveset, int x, int y, bool isSpecial, float movementSpeed, Unit template)
     {
@@ -39,7 +42,11 @@ public class UnitModel : MonoBehaviour
         {
             pathIterator++;
 
-            if (pathIterator >= curvePath.Count) { curvePath.Clear(); }
+            if (pathIterator >= curvePath.Count)
+            {
+                curvePath.Clear();
+                UnitFinishedMoving?.Invoke();
+            }
         }
     }
 

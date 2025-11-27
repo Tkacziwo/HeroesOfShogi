@@ -22,7 +22,7 @@ public static class StaticData
 
     public static List<Sprite> unitIcons = new();
 
-    public static readonly int battleMapHeight = 15;
+    public static readonly int battleMapHeight = 9;
 
     public static readonly int battleMapWidth = 9;
 

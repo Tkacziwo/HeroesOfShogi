@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
@@ -27,10 +28,6 @@ public class LogicBoard
 
     private readonly int battleHeight = StaticData.battleMapHeight;
 
-    public int remainingMoves = 3;
-
-    public bool isPlayerTurn = true;
-
     public LogicCell[,] cells = new LogicCell[StaticData.battleMapWidth, StaticData.battleMapHeight];
     /// <summary>
     /// Clones board from Grid instance to LogicBoard instance and sets all data inside LogicBoard.
@@ -49,6 +46,7 @@ public class LogicBoard
 
         cells = new LogicCell[battleWidth, battleHeight];
 
+
         for (int y = 0; y < battleHeight; y++)
         {
             for (int x = 0; x < battleWidth; x++)
@@ -58,7 +56,6 @@ public class LogicBoard
                 if (cell.unitInGridCell != null)
                 {
                     Unit unit = new(cell.unitInGridCell.Unit);
-                    unit.MovedInTurn = false;
                     if (unit.GetIsBlack())
                     {
                         pieces.Add(unit);
@@ -118,7 +115,6 @@ public class LogicBoard
                 if (cell.unit != null)
                 {
                     Unit unit = new(cell.unit);
-                    unit.MovedInTurn = false;
                     if (unit.GetIsBlack())
                     {
                         pieces.Add(unit);
@@ -163,6 +159,13 @@ public class LogicBoard
 
             pieceValue += p.HealthPoints * 2;
             pieceValue += p.AttackPower * 3;
+
+            var king = pieces.Single(o => o.UnitName == UnitEnum.King);
+
+            if (kingManager.IsThreatened(king.GetPosition(), enemyPieces, cells))
+            {
+                score -= 1000000;
+            }
 
 
             score += p.GetIsBlack() ? pieceValue : -pieceValue;
@@ -233,23 +236,40 @@ public class LogicBoard
                 }
             }
             movedUnit.MovedInTurn = true;
+
+            //remainingMoves--;
+
+            //if(remainingMoves <= 0)
+            //{
+            //    remainingMoves = 3;
+            //    isPlayerTurn = !isPlayerTurn;
+
+            //    ResetMovedFlagsForSide(isPlayerTurn ? pieces : enemyPieces);
+            //}
         }
 
-        //allPieces.Clear();
-        //pieces.Clear();
-        //enemyPieces.Clear();
+        //rebuild state
+        allPieces.Clear();
+        pieces.Clear();
+        enemyPieces.Clear();
 
-        //for (int y = 0; y < battleHeight; y++)
-        //{
-        //    for (int x = 0; x < battleWidth; x++)
-        //    {
-        //        var u = cells[x, y].unit;
-        //        if (u == null) continue;
-        //        allPieces.Add(u);
-        //        if (u.GetIsBlack()) pieces.Add(u);
-        //        else enemyPieces.Add(u);
-        //    }
-        //}
+        for (int y = 0; y < battleHeight; y++)
+        {
+            for (int x = 0; x < battleWidth; x++)
+            {
+                var u = cells[x, y].unit;
+                if (u == null) continue;
+                allPieces.Add(u);
+                if (u.GetIsBlack()) pieces.Add(u);
+                else enemyPieces.Add(u);
+            }
+        }
+    }
+
+    public void ResetMovedFlagsForSide(List<Unit> sideUnits)
+    {
+        foreach (var u in sideUnits)
+            u.MovedInTurn = false;
     }
 
     /// <summary>
@@ -298,6 +318,8 @@ public class LogicBoard
 
         foreach (var p in usedPieces)
         {
+            if (p.MovedInTurn) continue;
+
             List<Position> moves = new();
             //if (p.isKing)
             //{

@@ -102,35 +102,6 @@ public class Grid : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns true when all pieces finish their move. False otherwise.
-    /// </summary>
-    /// <returns>bool</returns>
-    public bool PiecesFinishedMoving()
-    {
-        //foreach (var piece in playerPieces)
-        //{
-        //    if (!piece.finishedMoving)
-        //    {
-        //        return false;
-        //    }
-        //}
-        //foreach (var piece in botPieces)
-        //{
-        //    if (!piece.finishedMoving)
-        //    {
-        //        return false;
-        //    }
-        //}
-
-        //if (!playerKing.finishedMoving || !botKing.finishedMoving)
-        //{
-        //    return false;
-        //}
-
-        return true;
-    }
-
-    /// <summary>
     /// Generates 9 x 9 field of GridCells.
     /// </summary>
     public void GenerateField()

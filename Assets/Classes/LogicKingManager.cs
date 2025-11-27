@@ -7,6 +7,22 @@ public class LogicKingManager
 {
     private readonly LogicBoardManager boardManager = new();
 
+
+    public bool IsThreatened(Position kingPos, List<Unit> units, LogicCell[,] cells)
+    {
+        foreach (var unit in units)
+        {
+            var moves = boardManager.NewCalculatePossibleMoves(unit, cells);
+
+            if(moves.Contains(kingPos))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public List<LogicPiece> FindGuards(Position attackerPos, List<LogicPiece> piecesList, LogicCell[,] cells)
     {
         List<LogicPiece> guards = new();
