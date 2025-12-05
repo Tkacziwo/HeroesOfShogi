@@ -19,8 +19,6 @@ public partial class MoveToTargetAction : Action
 
     public static Action<List<Tuple<int, List<TileInfo>>>> OnBotMove;
 
-
-
     protected override Status OnStart()
     {
         var character = Self.Value.GetComponent<PlayerModel>().GetCurrentPlayerCharacter();

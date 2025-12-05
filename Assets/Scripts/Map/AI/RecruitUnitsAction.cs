@@ -57,10 +57,10 @@ public partial class RecruitUnitsAction : Action
         }
 
         playerInCity.Value.AssignedUnits.Clear();
+        playerInCity.Value.AssignedUnits.Add(unitTemplates.Single(o => o.UnitName == UnitEnum.King));
 
         foreach (var unitType in unitsDict)
         {
-            playerInCity.Value.AssignedUnits.Add(unitTemplates.Single(o => o.UnitName == UnitEnum.King));
             var template = unitTemplates.Single(o => o.UnitName == unitType.Key);
 
             for (int i = 0; i < unitType.Value; i++)
@@ -71,7 +71,7 @@ public partial class RecruitUnitsAction : Action
         }
 
 
-
+        Debug.Log("Bot recruited units");
         return Status.Success;
     }
 

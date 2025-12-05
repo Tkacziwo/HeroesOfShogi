@@ -5,7 +5,8 @@ using UnityEngine;
 public class BuildingRegistry : MonoBehaviour
 {
     public List<InteractibleBuilding> buildings = new();
-    public static BuildingRegistry Instance;
+
+    public static BuildingRegistry Instance { get; set; }
 
     private void Awake()
     {

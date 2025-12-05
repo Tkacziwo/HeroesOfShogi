@@ -96,6 +96,28 @@ public class PlayerController : MonoBehaviour
         cityCount = FindObjectsByType<City>(FindObjectsSortMode.InstanceID).ToList().Count();
     }
 
+    public PlayerModel? GetPlayerOverTile(Vector3Int position, int myPlayerId)
+    {
+        if(player.GetCurrentPlayerCharacter().characterPosition.Equals(position) && player.playerId != myPlayerId)
+        {
+            return player;
+        }
+        else
+        {
+            foreach (var bot in bots)
+            {
+                var model = bot.GetComponent<PlayerModel>();
+
+                if(model.GetCurrentPlayerCharacter().characterPosition.Equals(position) && model.playerId != myPlayerId)
+                {
+                    return model;
+                }
+            }
+        }
+
+        return null;
+    }
+
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))

@@ -215,7 +215,6 @@ public class LogicPiece
             ReverseMovementMatrix();
         }
         isPromoted = true;
-        //todo change textures
     }
 
     public void BackupOriginalMoveset(int[] moveset)

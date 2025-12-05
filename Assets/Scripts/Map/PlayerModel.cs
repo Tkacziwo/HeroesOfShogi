@@ -25,6 +25,11 @@ public class PlayerModel : MonoBehaviour
 
     public static Action<PlayerResources> UpdateResourceUI;
 
+    private void Start()
+    {
+        PlayerRegistry.Instance.Register(this);
+    }
+
     private void OnEnable()
     {
         CityViewController.OnTakePlayerResources += HandleBuildingUpgraded;
@@ -34,7 +39,10 @@ public class PlayerModel : MonoBehaviour
     {
         if (character != null) character.OnPlayerMoveUpdateCameraPosition -= UpdateCameraPosition;
         CityViewController.OnTakePlayerResources -= HandleBuildingUpgraded;
-
+        if (PlayerRegistry.Instance != null)
+        {
+            PlayerRegistry.Instance.Unregister(this);
+        }
     }
 
     private void HandleBuildingUpgraded(int id, RequiredResources resources)

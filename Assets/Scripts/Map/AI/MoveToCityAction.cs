@@ -21,7 +21,7 @@ public partial class MoveToCityAction : Action
 
 
 
-    PathingController pathing = new();
+    private PathingController Pathing { get; set; } = new();
 
     private Vector3Int bestEndPos;
 
@@ -140,8 +140,8 @@ public partial class MoveToCityAction : Action
 
         foreach (var item in traversableTiles)
         {
-            pathing.SetParameters(tilemap, currentCharacter.characterPosition, item);
-            var path = pathing.FindPath();
+            Pathing.SetParameters(tilemap, currentCharacter.characterPosition, item);
+            var path = Pathing.FindPath();
 
             if (bestPath.Count == 0 || bestPath.Count > path.Count)
             {

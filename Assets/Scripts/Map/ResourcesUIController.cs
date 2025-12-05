@@ -31,6 +31,7 @@ public class ResourceUIController : MonoBehaviour
         PlayerController.PlayerSpawned += UpdatePlayerCharacterPanels;
         PlayerModel.UpdateResourceUI += UpdateResourcesUI;
         BattleDeploymentController.OnBattleStarted += HandleOnBattleStarted;
+        GameOverController.OnBackToMap += HandleOnBattleEnded;
     }
 
     private void OnDisable()
@@ -38,12 +39,17 @@ public class ResourceUIController : MonoBehaviour
         PlayerController.PlayerSpawned -= UpdatePlayerCharacterPanels;
         PlayerModel.UpdateResourceUI -= UpdateResourcesUI;
         BattleDeploymentController.OnBattleStarted -= HandleOnBattleStarted;
-
+        GameOverController.OnBackToMap -= HandleOnBattleEnded;
     }
 
     private void HandleOnBattleStarted(bool state)
     {
         UIRef.SetActive(state);
+    }
+
+    private void HandleOnBattleEnded()
+    {
+        UIRef.SetActive(true);
     }
 
     private uint turnNumber = 1;

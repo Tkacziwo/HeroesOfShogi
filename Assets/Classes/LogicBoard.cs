@@ -160,9 +160,13 @@ public class LogicBoard
             pieceValue += p.HealthPoints * 2;
             pieceValue += p.AttackPower * 3;
 
-            var king = pieces.Single(o => o.UnitName == UnitEnum.King);
+            var king = pieces.SingleOrDefault(o => o.UnitName == UnitEnum.King);
 
-            if (kingManager.IsThreatened(king.GetPosition(), enemyPieces, cells))
+            if (king == null)
+            {
+                score -= 1000000000;
+            }
+            else if (kingManager.IsThreatened(king.GetPosition(), enemyPieces, cells))
             {
                 score -= 1000000;
             }

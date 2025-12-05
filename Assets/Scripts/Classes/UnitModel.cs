@@ -16,11 +16,18 @@ public class UnitModel : MonoBehaviour
 
     public static Action UnitFinishedMoving;
 
+    public GameObject promotionEffect;
+
     public void InitUnit(string name, int[] moveset, int x, int y, bool isSpecial, float movementSpeed, Unit template)
     {
         Unit.InitPiece(name, moveset, x, y, isSpecial);
         Unit.InitUnit(template);
         this.movementSpeed = movementSpeed;
+        promotionEffect = Resources.Load("Prefabs/ParticleEffects/PromotionEffect") as GameObject;
+        promotionEffect = Instantiate(promotionEffect);
+        promotionEffect.transform.position = this.transform.position;
+        promotionEffect.GetComponent<ParticleSystem>().Stop();
+        promotionEffect.GetComponent<ParticleSystem>().Clear();
     }
 
     public void SetPath(List<Vector3> path)
@@ -50,6 +57,22 @@ public class UnitModel : MonoBehaviour
         }
     }
 
+    public void PromoteUnit(int[] changedMoveset)
+    {
+        this.Unit.Promote(changedMoveset);
+        promotionEffect.GetComponent<ParticleSystem>().Play();
+    }
+
+    public void DemoteUnit()
+    {
+        promotionEffect.GetComponent<ParticleSystem>().Stop();
+        promotionEffect.GetComponent<ParticleSystem>().Clear();
+        Unit.Demote();
+    }
+
     private void MakeStep(Vector3 targetPosition, float step)
-        => Model.transform.position = Vector3.MoveTowards(Model.transform.position, targetPosition, step);
+    {
+        Model.transform.position = Vector3.MoveTowards(Model.transform.position, targetPosition, step);
+        promotionEffect.transform.position = Model.transform.position;
+    }
 }

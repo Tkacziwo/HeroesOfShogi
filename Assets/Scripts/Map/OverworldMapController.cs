@@ -72,6 +72,8 @@ public class OverworldMapController : MonoBehaviour
         MoveToTargetAction.OnBotMove += HandleBotMove;
         CaptureBuildingAction.OnBotCapture += HandleBotCapture;
         MoveToCityAction.OnBotGoToCity += HandleBotCapture;
+        AIEvents.OnBotMove += HandleBotMoveSingle;
+        GameOverController.OnBackToMap += HandleBackToMap;
     }
 
     private void OnDisable()
@@ -88,8 +90,19 @@ public class OverworldMapController : MonoBehaviour
         MoveToTargetAction.OnBotMove -= HandleBotMove;
         CaptureBuildingAction.OnBotCapture -= HandleBotCapture;
         MoveToCityAction.OnBotGoToCity -= HandleBotCapture;
-
+        AIEvents.OnBotMove -= HandleBotMoveSingle;
+        GameOverController.OnBackToMap -= HandleBackToMap;
     }
+
+    private void HandleBackToMap()
+    {
+        isPlayerInBattle = false;
+        var playerModel = playerController.GetCurrentPlayer();
+        var playerCamera = playerModel.GetCameraController().GetComponentInChildren<Camera>();
+
+        playerCamera.transform.SetPositionAndRotation(previousCameraPosition, previousCameraRotation);
+    }
+
     private void HandleCityOpened(City city)
     {
         var player = playerController.GetCurrentPlayer();
@@ -145,7 +158,13 @@ public class OverworldMapController : MonoBehaviour
         var t = tilemap.GetTile<MapTile>(cellPos);
         character.SetPlayerPosition(cellPos);
 
-        if (converted == previousEndPos && chosenWorldBuilding != null)
+        var playerOverTile = playerController.GetPlayerOverTile(converted, character.playerId);
+
+        if (playerOverTile != null && playerOverTile.playerId != character.playerId)
+        {
+            StartBattle(playerOverTile, character);
+        }
+        else if (converted == previousEndPos && chosenWorldBuilding != null)
         {
             chosenWorldBuilding.CaptureBuilding(character.playerId, character.playerColor);
 
@@ -176,9 +195,7 @@ public class OverworldMapController : MonoBehaviour
             BotsEndTurn?.Invoke();
             playerController.currentPlayerId = 100;
             previousStartPos = playerController.player.GetCharacterPosition(1);
-
             botStartPoints[character.playerId][character.characterId] = cellPos;
-
         }
 
         isPlayerMoving = false;
@@ -338,7 +355,10 @@ public class OverworldMapController : MonoBehaviour
 
     private bool isPlayerInBattle = false;
 
-    // Update is called once per frame
+    private Vector3 previousCameraPosition;
+
+    private Quaternion previousCameraRotation;
+
     void Update()
     {
         if (isPlayerInCity) return;
@@ -356,11 +376,28 @@ public class OverworldMapController : MonoBehaviour
             Vector3Int cellPos = tilemap.WorldToCell(point);
 
             var t = tilemap.GetTile<MapTile>(cellPos);
-            if (t != null && Input.GetMouseButtonDown(0) && t.IsTraversable)
+
+            if (t != null && Input.GetMouseButtonDown(0))
             {
                 ClearTiles();
-                SetEndPoint(cellPos, t);
-                FindPath();
+                if (t.IsTraversable)
+                {
+                    SetEndPoint(cellPos, t);
+                    FindPath();
+                }
+                else
+                {
+                    foreach (var bot in playerController.bots)
+                    {
+                        var character = bot.GetComponent<PlayerModel>().GetCurrentPlayerCharacter();
+
+                        if (character.characterPosition == cellPos)
+                        {
+                            SetEndPoint(cellPos, t);
+                            FindPath();
+                        }
+                    }
+                }
             }
         }
 
@@ -368,14 +405,44 @@ public class OverworldMapController : MonoBehaviour
         {
             EndTurn();
         }
+    }
 
-        if (Input.GetKeyDown(KeyCode.U))
+
+    private void StartBattle(PlayerModel playerOverTile, PlayerCharacterController character)
+    {
+
+        if (playerOverTile.isRealPlayer)
         {
-            //Test battle
-            BattleDeploymentStaticData.playerCharacter = playerController.GetCurrentPlayerCharacter();
-            isPlayerInBattle = !isPlayerInBattle;
-            SceneManager.LoadScene("BattleDeployment", LoadSceneMode.Additive);
+            BattleDeploymentStaticData.playerCharacter = playerOverTile.GetCurrentPlayerCharacter();
+            BattleDeploymentStaticData.enemyCharacter = character;
+
         }
+        else
+        {
+            BattleDeploymentStaticData.playerCharacter = character;
+            BattleDeploymentStaticData.enemyCharacter = playerOverTile.GetCurrentPlayerCharacter();
+        }
+
+
+
+
+
+        var playerModel = PlayerRegistry.Instance.GetAllPlayers().Single(o => o.isRealPlayer);
+        var playerCamera = playerModel.GetCameraController().GetComponentInChildren<Camera>();
+
+        playerCamera.transform.GetPositionAndRotation(out Vector3 position, out Quaternion rotation);
+
+        previousCameraPosition = DeepCopyVector3(position);
+        previousCameraRotation = DeepCopyQuaternion(rotation);
+
+
+        Vector3 battleCameraPosition = new(20, 30.3f, 15);
+        Quaternion battleCameraRotation = Quaternion.Euler(60, -90, 0);
+
+        playerCamera.transform.SetPositionAndRotation(battleCameraPosition, battleCameraRotation);
+
+        isPlayerInBattle = !isPlayerInBattle;
+        SceneManager.LoadScene("BattleDeployment", LoadSceneMode.Additive);
     }
 
     public void HandleBotMove(List<Tuple<int, List<TileInfo>>> botResults)
@@ -406,6 +473,38 @@ public class OverworldMapController : MonoBehaviour
                 tilemap.SetTile(previousStartPos, PathTile);
                 MovePlayer(character);
             }
+        }
+    }
+
+    public void HandleBotMoveSingle(Tuple<int, List<TileInfo>> botResult)
+    {
+        //Move bots 
+        int currentPlayerId = playerController.currentPlayerId;
+
+        //List<PlayerModel> botModels = new();
+        //playerController.bots.ForEach(o => botModels.Add(o.GetComponent<PlayerModel>()));
+        //var botModel = botModels.Single(o => o.playerId == currentPlayerId);
+
+        var botModel = PlayerRegistry.Instance.GetAllPlayers().SingleOrDefault(o => o.playerId == currentPlayerId);
+
+        if (botModel == null) return;
+
+        var character = botModel.GetCurrentPlayerCharacter();
+        pathfindingResult = botResult.Item2;
+
+        if (pathfindingResult.Count != 0)
+        {
+            var cellPos = pathfindingResult[pathfindingResult.Count - 1].position;
+
+            var tile = tilemap.GetTile<MapTile>(cellPos);
+
+            SetEndPoint(cellPos, tile);
+            pathfindingResult.RemoveAt(pathfindingResult.Count - 1);
+            DisplayPath(pathfindingResult);
+            previousStartPos = botStartPoints[currentPlayerId][character.characterId];
+
+            tilemap.SetTile(previousStartPos, PathTile);
+            MovePlayer(character);
         }
     }
 
@@ -579,4 +678,10 @@ public class OverworldMapController : MonoBehaviour
             OnWeekEnd?.Invoke();
         }
     }
+
+    private Vector3 DeepCopyVector3(Vector3 vec)
+        => new(vec.x, vec.y, vec.z);
+
+    private Quaternion DeepCopyQuaternion(Quaternion q)
+        => new(q.x, q.y, q.z, q.w);
 }

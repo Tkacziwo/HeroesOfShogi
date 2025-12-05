@@ -6,6 +6,7 @@ using System.Threading;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -52,9 +53,7 @@ public class InputManager : MonoBehaviour
 
     [SerializeField] private Canvas canvas;
 
-    [SerializeField] private Canvas gameOver;
-
-    [SerializeField] private TextMeshProUGUI gameOverText;
+    [SerializeField] private GameObject gameOver;
 
     [SerializeField] private AbilitiesManager abilitiesManager;
 
@@ -63,6 +62,8 @@ public class InputManager : MonoBehaviour
     [SerializeField] private Material grayMaterial;
 
     [SerializeField] private Canvas tutorialCanvas;
+
+    [SerializeField] private Canvas mainCanvas;
 
     private bool specialAbilityInUse;
 
@@ -122,43 +123,58 @@ public class InputManager : MonoBehaviour
         botFinishedCalculating = false;
         botEnabled = StaticData.botEnabled;
         bot.InitializeBot(StaticData.botDifficulty);
-        if (!StaticData.tutorial)
-        {
-            tutorialGrid.gameObject.SetActive(false);
-            tutorialCanvas.gameObject.SetActive(false);
-            if (StaticData.map == "GrasslandsImage")
-            {
-                currentTerrain = Instantiate(Resources.Load<Terrain>("Terrains/Grasslands"));
-                currentTerrain.transform.position = new Vector3(-110, 10, -150);
-            }
-            else
-            {
-                currentTerrain = Instantiate(Resources.Load<Terrain>("Terrains/Desert"));
-                currentTerrain.transform.position = new Vector3(-110, 10, -150);
-            }
-        }
-        else
+
+        Scene active = SceneManager.GetSceneByName("Game");
+        SceneManager.SetActiveScene(active);
+
+        if (StaticData.tutorial)
         {
             tutorialGrid.gameObject.SetActive(true);
             tutorialCanvas.gameObject.SetActive(true);
             currentTerrain = Instantiate(Resources.Load<Terrain>("Terrains/TutorialPlayground"));
         }
+        else
+        {
+            tutorialGrid.gameObject.SetActive(false);
+            tutorialCanvas.gameObject.SetActive(false);
+
+            string mapName = StaticData.map == "GrasslandsImage" ? "Grasslands" : "Desert";
+
+            GameObject terrain = Resources.Load($"Terrains/{mapName}") as GameObject;
+
+            if (terrain != null)
+            {
+                var instantiated = Instantiate(terrain, active);
+                instantiated.GetComponent<Transform>().transform.position = new Vector3(-110, 10, -150);
+            }
+        }
 
         attackerPos = new();
-
-        gameOverText.text = "GAME OVER";
-        gameOverText.fontMaterial.color = Color.red;
     }
 
     private void OnEnable()
     {
         Grid.OnGridFinishRender += HandleGridFinishedRendering;
-        UnitModel.UnitFinishedMoving += () => isUnitMoving = false;
+        UnitModel.UnitFinishedMoving += HandleUnitFinishedMoving;
+        GameOverController.OnBackToMap += HandleBackToMap;
     }
     private void OnDisable()
     {
         Grid.OnGridFinishRender -= HandleGridFinishedRendering;
-        UnitModel.UnitFinishedMoving -= () => isUnitMoving = false;
+        UnitModel.UnitFinishedMoving -= HandleUnitFinishedMoving;
+        GameOverController.OnBackToMap -= HandleBackToMap;
+    }
+
+    private void HandleUnitFinishedMoving()
+    {
+        isUnitMoving = false;
+    }
+
+    private async void HandleBackToMap()
+    {
+        Destroy(gameOver);
+        SceneManager.SetActiveScene(SceneManager.GetSceneByName("TestMap"));
+        await SceneManager.UnloadSceneAsync("Game");
     }
 
     private void HandleGridFinishedRendering(LogicCell[,] logicCells)
@@ -237,8 +253,12 @@ public class InputManager : MonoBehaviour
         botMoves--;
         //doneMoves = 0; 
         ExecutePieceMove(cell);
+
+
         botResult = null;
     }
+
+    int maxPossibleMovesForBot = 0;
 
     // Update is called once per frame
     void Update()
@@ -257,10 +277,9 @@ public class InputManager : MonoBehaviour
         {
             if (botResult == null)
             {
-                var text = gameOverText;
-                text.text = "YOU WIN";
-                gameOver.gameObject.SetActive(true);
-                GameEnd();
+                ShowGameOverScreen("YOU WIN", Color.green);
+                botFinishedCalculating = false;
+                EndTurn();
             }
             else
             {
@@ -271,7 +290,20 @@ public class InputManager : MonoBehaviour
         }
         else if (!playerTurn && botEnabled && !duringBotMove && !isUnitMoving)
         {
-            PrepareBotForMinimax();
+            var botUnits = grid.GetBotPieces();
+
+            //incude king thats why is + 1
+            maxPossibleMovesForBot = Math.Min(botUnits.Count, movesPerPlayer) + 1;
+
+            if (doneMoves == maxPossibleMovesForBot)
+            {
+                maxPossibleMovesForBot = 0;
+                EndTurn();
+            }
+            else
+            {
+                PrepareBotForMinimax();
+            }
         }
 
 
@@ -557,93 +589,6 @@ public class InputManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Handler for King while King is in danger. Ends game if there are no possible moves for King or his pieces left.
-    /// </summary>
-    public void HandleKingClickedWhileInDanger(Piece piece, GridCell hoveredCell)
-    {
-        // Find valid moves for king
-        possibleMoves = kingManager.ValidMovesScan(piece);
-        var attacker = CellWhichHoldsAttacker.objectInThisGridSpace.GetComponent<Piece>();
-
-        // Attacker protected -> remove attacker pos from possible moves
-        bool attackerProtected = kingManager.IsAttackerProtected(attacker);
-        if (attackerProtected && possibleMoves.Contains(attacker.GetPosition()))
-        {
-            possibleMoves.Remove(attacker.GetPosition());
-        }
-
-        var attackerPossibleMovesUnrestricted = boardManager.CalculatePossibleMoves(attacker, true);
-        if (attackerPossibleMovesUnrestricted != null && attackerPossibleMovesUnrestricted.Count != 0)
-        {
-            possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, attackerPossibleMovesUnrestricted, false);
-        }
-
-        var additionalDangerMoves = kingManager.KingDangerMovesScan(possibleMoves, piece.GetIsBlack());
-        if (additionalDangerMoves != null && additionalDangerMoves.Count != 0)
-        {
-            possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, additionalDangerMoves, false);
-        }
-
-        PossibleMovesDisplayLoop();
-        CellWhichHoldsPiece = hoveredCell;
-        chosenPiece = true;
-
-        if (possibleMoves == null || possibleMoves.Count == 0)
-        {
-            if (GameEndCheck(piece.GetIsBlack()))
-            {
-                GameEnd();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Handler for guards, sacrifices, drop sacrifices while king is in danger.
-    /// </summary>
-    public void SaveTheKing(Piece piece, GridCell hoveredCell)
-    {
-        foreach (var b in bodyguards)
-        {
-            if (hoveredCell.GetPosition().Equals(b.GetPosition()))
-            {
-                possibleMoves = new() { CellWhichHoldsAttacker.objectInThisGridSpace.GetComponent<Piece>().GetPosition() };
-                PossibleMovesDisplayLoop();
-
-                CellWhichHoldsPiece = hoveredCell;
-                chosenPiece = true;
-                break;
-            }
-        }
-        if (piece.GetIsDrop())
-        {
-            possibleMoves = boardManager.CalculatePossibleDrops(piece);
-            possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, endangeredMoves, true);
-            PossibleMovesDisplayLoop();
-            CellWhichHoldsPiece = hoveredCell;
-            chosenPiece = true;
-        }
-        else if (sacrifices != null && endangeredMoves != null)
-        {
-            foreach (var s in sacrifices)
-            {
-                if (hoveredCell.GetPosition().Equals(s.GetPosition()))
-                {
-                    possibleMoves = kingManager.CalculateProtectionMoves(piece, endangeredMoves); ;
-                    PossibleMovesDisplayLoop();
-                    CellWhichHoldsPiece = hoveredCell;
-                    chosenPiece = true;
-                    break;
-                }
-            }
-        }
-
-        if (possibleMoves == null || possibleMoves.Count == 0)
-        {
-            GameEnd();
-        }
-    }
-
-    /// <summary>
     /// Check for Game End. Returns true when game is lost, false otherwise.
     /// </summary>
     public bool GameEndCheck(bool isBlack)
@@ -670,15 +615,6 @@ public class InputManager : MonoBehaviour
         }
 
         return true;
-    }
-
-    /// <summary>
-    /// Ends game.
-    /// </summary>
-    public void GameEnd()
-    {
-        gameOver.gameObject.SetActive(true);
-        paused = true;
     }
 
     /// <summary>
@@ -764,7 +700,14 @@ public class InputManager : MonoBehaviour
 
                 if (enemyUnit.UnitName == UnitEnum.King)
                 {
-                    GameEnd();
+                    if (enemyUnit.GetIsBlack())
+                    {
+                        ShowGameOverScreen("YOU WIN", Color.green);
+                    }
+                    else
+                    {
+                        ShowGameOverScreen("YOU LOSE", Color.red);
+                    }
                 }
             }
             else
@@ -781,7 +724,7 @@ public class InputManager : MonoBehaviour
                         for (int col = -1; col <= 1; col++)
                         {
                             destination = newBestBoardManager.FindPositionBeforeEnemy(row, col, unitPos, logicCells, enemyUnit.GetPosition());
-                            if(destination != null)
+                            if (destination != null)
                             {
                                 break;
                             }
@@ -828,6 +771,12 @@ public class InputManager : MonoBehaviour
             RequestLogicCellsUpdate?.Invoke();
             unit.MovedInTurn = true;
             doneMoves++;
+        }
+
+        if (CheckForPromotion(hoveredCell, unit.GetIsBlack()))
+        {
+            var changedMoveset = newBestBoardManager.GetPromotedUnitMoveset(unit);
+            hoveredCell.unitInGridCell.PromoteUnit(changedMoveset);
         }
 
         //var handlePieceKillResult = HandlePieceKill(hoveredCell, unit);
@@ -907,6 +856,23 @@ public class InputManager : MonoBehaviour
         {
             HandleKingEndangerement(unit);
         }
+    }
+
+    private void ShowGameOverScreen(string text, Color color)
+    {
+        gameOver = Instantiate(gameOver);
+        gameOver.transform.SetParent(mainCanvas.transform);
+        this.gameOver.GetComponent<RectTransform>().anchoredPosition = new(0, 0);
+        gameOver.GetComponent<GameOverController>().SetText(text, color);
+    }
+
+    public void EndTurn()
+    {
+        chosenPiece = false;
+
+        playerTurn = !playerTurn;
+        doneMoves = 0;
+        ResetUnitMoved?.Invoke();
     }
 
     /// <summary>

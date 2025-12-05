@@ -28,6 +28,22 @@ public class CameraController : MonoBehaviour
 
     public bool isCameraFocusedOnPlayer;
 
+    public bool battleStarted = false;
+
+    private void OnEnable()
+    {
+        BattleDeploymentController.OnBattleStarted += HandleBattleStarted;
+        GameOverController.OnBackToMap += HandleBattleEnded;
+    }
+
+    private void OnDisable()
+    {
+        BattleDeploymentController.OnBattleStarted -= HandleBattleStarted;
+        GameOverController.OnBackToMap -= HandleBattleEnded;
+    }
+
+    
+
     public void UpdateCameraPosition(Transform transform)
     {
         var characterTransform = transform.position;
@@ -59,8 +75,11 @@ public class CameraController : MonoBehaviour
 
     private void Update()
     {
+        if (battleStarted) return;
+
         float mouseX = Input.GetAxis("Mouse X");
         float mouseY = Input.GetAxis("Mouse Y");
+
         if (Input.GetMouseButton(1))
         {
             float angleX = -mouseX * mouseSensitivity;
@@ -142,4 +161,10 @@ public class CameraController : MonoBehaviour
         //    }
         //}
     }
+
+    private void HandleBattleStarted(bool r)
+        => battleStarted = true;
+
+    private void HandleBattleEnded()
+        => battleStarted = false;
 }

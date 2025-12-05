@@ -616,4 +616,27 @@ public class BoardManager : MonoBehaviour
             }
         }
     }
+
+    public void PromoteUnit(Unit unit)
+    {
+        if (unit.isKing) return;
+
+        if(unit.GetIsSpecial())
+        {
+            unit.BackupOriginalMoveset(unit.GetMoveset());
+            int[] moveset = unit.GetMoveset();
+            for (int i = 0; i < 9; i++)
+            {
+                if (moveset[i] != 2 && i != 4)
+                {
+                    moveset[i]++;
+                }
+            }
+            unit.Promote(moveset);
+        }
+        else
+        {
+            unit.Promote(fileManager.GetMovesetByPieceName("GoldGeneral"));
+        }
+    }
 }

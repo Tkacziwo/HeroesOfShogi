@@ -237,7 +237,7 @@ public class LogicBoardManager
         {
             if (IsInBoard(destX, destY))
             {
-                if (target.Equals(new(destX,destY)))
+                if (target.Equals(new(destX, destY)))
                 {
                     found = new(previous);
 
@@ -695,7 +695,7 @@ public class LogicBoardManager
             return false;
     }
 
-    public void ApplyPromotion(LogicPiece piece)
+    public void PromoteUnit(LogicPiece piece)
     {
         if (!piece.isKing)
         {
@@ -724,6 +724,37 @@ public class LogicBoardManager
                 }
                 piece.Promote(moveset);
             }
+        }
+    }
+
+    public int[] GetPromotedUnitMoveset(Unit unit)
+    {
+        if (unit.UnitName == UnitEnum.King) return null;
+
+        if (unit.UnitName == UnitEnum.Bishop || unit.UnitName == UnitEnum.Rook)
+        {
+            //piece.BackupOriginalMoveset(piece.GetMoveset());
+            int[] moveset = unit.GetMoveset();
+            int[] originalMoveset = unit.GetOriginalMoveset();
+
+            for (int i = 0; i < moveset.Length; i++)
+            {
+                moveset[i] = originalMoveset[i];
+            }
+
+            for (int i = 0; i < 9; i++)
+            {
+                if (moveset[i] != 2 && i != 4)
+                {
+                    moveset[i]++;
+                }
+            }
+            return moveset;
+        }
+        else
+        {
+            int[] gg = { 1, 1, 1, 1, 0, 1, 0, 1, 0 };
+            return gg;
         }
     }
 }
