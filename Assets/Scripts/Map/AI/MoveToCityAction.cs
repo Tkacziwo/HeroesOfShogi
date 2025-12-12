@@ -7,7 +7,7 @@ using UnityEngine.Tilemaps;
 using Action = Unity.Behavior.Action;
 
 [Serializable, GeneratePropertyBag]
-[NodeDescription(name: "MoveToCity", story: "[Self] moves to city", category: "Action", id: "a9cc5b9cd1d449f60b95bccdd526716c")]
+[NodeDescription(name: "MoveToCity", story: "[Self] finds city", category: "Action", id: "a9cc5b9cd1d449f60b95bccdd526716c")]
 public partial class MoveToCityAction : Action
 {
     [SerializeReference] public BlackboardVariable<GameObject> Self;
@@ -29,7 +29,7 @@ public partial class MoveToCityAction : Action
 
     protected override Status OnStart()
     {
-        var character = Self.Value.GetComponent<PlayerModel>().GetCurrentPlayerCharacter();
+        var character = Self.Value.GetComponent<NPCModel>().GetCurrentPlayerCharacter();
         result.Value = 1;
         cityHasUnits.Value = false;
         var city = FindCity(character.characterPosition, character.playerId);

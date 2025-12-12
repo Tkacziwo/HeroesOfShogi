@@ -21,7 +21,7 @@ public partial class MoveToTargetAction : Action
 
     protected override Status OnStart()
     {
-        var character = Self.Value.GetComponent<PlayerModel>().GetCurrentPlayerCharacter();
+        var character = Self.Value.GetComponent<NPCModel>().GetCurrentPlayerCharacter();
         List<Tuple<int, List<TileInfo>>> botResults = new();
 
         var startPos = character.characterPosition;

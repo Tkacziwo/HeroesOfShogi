@@ -395,98 +395,6 @@ public class InputManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Handler activated when player clicks special ability window.
-    /// </summary>
-    public void HandleSpecialAbilityUsage()
-    {
-        throw new NotImplementedException();
-        //if (chosenPiece)
-        //{
-        //    var piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
-        //    if (piece.abilityCooldown == 0)
-        //    {
-        //        switch (piece.GetName())
-        //        {
-        //            case "King":
-        //                {
-        //                    var pieceList = piece.GetIsBlack() ? grid.GetBotPieces() : grid.GetPlayerPieces();
-        //                    bool promoted = false;
-        //                    foreach (var p in pieceList)
-        //                    {
-        //                        if (p.GetIsPromoted())
-        //                        {
-        //                            promoted = true;
-        //                            break;
-        //                        }
-        //                    }
-        //                    if (promoted)
-        //                    {
-        //                        foreach (var p in pieceList)
-        //                        {
-        //                            if (p.GetIsPromoted())
-        //                            {
-        //                                promotedPieces.Add(p);
-        //                                p.GetComponentInChildren<MeshRenderer>().material.color = Color.yellow;
-        //                            }
-        //                            else
-        //                            {
-        //                                p.GetComponentInChildren<MeshRenderer>().material.color = Color.blue;
-        //                                nonPromotedPieces.Add(p);
-        //                            }
-        //                        }
-        //                        abilityImage.material = grayMaterial;
-        //                        duringKingAbility = true;
-        //                        piece.abilityCooldown = -1;
-        //                    }
-        //                    break;
-        //                }
-        //            case "GoldGeneral":
-        //                {
-        //                    bool turn = playerTurn;
-        //                    var positions = abilitiesManager.Onward(piece.GetPosition(), piece.GetIsBlack());
-        //                    foreach (var p in positions)
-        //                    {
-        //                        CellWhichHoldsPiece = grid.GetGridCell(p.Item1.x, p.Item1.y);
-        //                        ExecutePieceMove(grid.GetGridCell(p.Item2.x, p.Item2.y));
-        //                    }
-        //                    int destY;
-        //                    var piecePos = piece.GetPosition();
-        //                    if (piece.GetIsBlack())
-        //                    {
-        //                        destY = piecePos.y - 1;
-        //                    }
-        //                    else
-        //                    {
-        //                        destY = piecePos.y + 1;
-        //                    }
-        //                    if (boardManager.IsInBoard(destY, piecePos.x) && boardManager.IsCellFree(piecePos.x, destY))
-        //                    {
-        //                        CellWhichHoldsPiece = grid.GetGridCell(piece.GetPosition());
-        //                        ExecutePieceMove(grid.GetGridCell(piecePos.x, destY));
-        //                    }
-        //                    abilityImage.material = grayMaterial;
-        //                    specialAbilityInUse = false;
-        //                    piece.abilityCooldown = 2;
-        //                    playerTurn = !turn;
-        //                    break;
-        //                }
-        //            case "SilverGeneral":
-        //            case "Rook":
-        //                specialAbilityInUse = true;
-        //                abilityImage.material = grayMaterial;
-        //                break;
-        //            default:
-        //                break;
-        //        }
-        //        if (StaticData.tutorial)
-        //        {
-        //            tutorialGrid.SetAbilityUsageMessage(piece.GetName());
-        //        }
-        //    }
-        //}
-    }
-
-    /// <summary>
     /// Handler for clicking cell on the board.
     /// </summary>
     private void HandleBoardClick(GridCell hoveredCell)
@@ -589,35 +497,6 @@ public class InputManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Check for Game End. Returns true when game is lost, false otherwise.
-    /// </summary>
-    public bool GameEndCheck(bool isBlack)
-    {
-        var pieces = isBlack ? grid.GetBotPieces() : grid.GetPlayerPieces();
-        if ((sacrifices != null && sacrifices.Count != 0) ||
-            (bodyguards != null && bodyguards.Count != 0))
-        {
-            return false;
-        }
-
-        foreach (var piece in pieces)
-        {
-            //[ToDo] adjust
-            //if (piece.Unit.GetIsDrop())
-            //{
-            //    possibleMoves = boardManager.CalculatePossibleDrops(piece);
-            //    possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, endangeredMoves, true);
-            //    if (possibleMoves != null || possibleMoves.Count != 0)
-            //    {
-            //        return false;
-            //    }
-            //}
-        }
-
-        return true;
-    }
-
-    /// <summary>
     /// Loop which displays possible moves.
     /// </summary>
     public void PossibleMovesDisplayLoop()
@@ -678,9 +557,11 @@ public class InputManager : MonoBehaviour
         //    }
         //}
 
-        //[ToDo] handle new kill stuff
-
-
+        if (CheckForPromotion(hoveredCell, unit.GetIsBlack()))
+        {
+            var changedMoveset = newBestBoardManager.GetPromotedUnitMoveset(unit);
+            CellWhichHoldsPiece.unitInGridCell.PromoteUnit(changedMoveset);
+        }
 
         if (hoveredCell.unitInGridCell != null)
         {
@@ -700,6 +581,7 @@ public class InputManager : MonoBehaviour
 
                 if (enemyUnit.UnitName == UnitEnum.King)
                 {
+                    grid.SetWinner(unit.GetIsBlack());
                     if (enemyUnit.GetIsBlack())
                     {
                         ShowGameOverScreen("YOU WIN", Color.green);
@@ -715,7 +597,6 @@ public class InputManager : MonoBehaviour
                 if (unit.UnitName == UnitEnum.Bishop || unit.UnitName == UnitEnum.Rook || unit.UnitName == UnitEnum.Lance)
                 {
                     var unitPos = unit.GetPosition();
-
 
                     Position destination = null;
 
@@ -758,43 +639,17 @@ public class InputManager : MonoBehaviour
                     cell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, cell.GetWorldPosition());
                 }
             }
-
-            RequestLogicCellsUpdate?.Invoke();
-            unit.MovedInTurn = true;
-            doneMoves++;
         }
         else
         {
             unit.MovePiece(hoveredCell.GetPosition());
             hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, hoveredCell.GetWorldPosition());
             CellWhichHoldsPiece.unitInGridCell = null;
-            RequestLogicCellsUpdate?.Invoke();
-            unit.MovedInTurn = true;
-            doneMoves++;
         }
 
-        if (CheckForPromotion(hoveredCell, unit.GetIsBlack()))
-        {
-            var changedMoveset = newBestBoardManager.GetPromotedUnitMoveset(unit);
-            hoveredCell.unitInGridCell.PromoteUnit(changedMoveset);
-        }
-
-        //var handlePieceKillResult = HandlePieceKill(hoveredCell, unit);
-
-
-
-
-
-        //unit.MovePiece(hoveredCell.GetPosition());
-        ////if (piece.abilityCooldown > 0)
-        ////{
-        ////    piece.abilityCooldown--;
-        ////}
-
-        ////grid.GetGridCell(CellWhichHoldsPiece.GetPosition()).unitInGridCell = null;
-        //hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, hoveredCell.GetWorldPosition());
-        //CellWhichHoldsPiece.unitInGridCell = null;
-        //RequestLogicCellsUpdate?.Invoke();
+        RequestLogicCellsUpdate?.Invoke();
+        unit.MovedInTurn = true;
+        doneMoves++;
 
         //HandleDropCheck(piece);
 
@@ -807,50 +662,6 @@ public class InputManager : MonoBehaviour
             doneMoves = 0;
             ResetUnitMoved?.Invoke();
         }
-
-        //else if (!playerTurn && botMoves <= 0)
-        //{
-        //    botMoves = 3;
-        //    playerTurn = true;
-        //    ResetUnitMoved?.Invoke();
-        //}
-
-        //if (specialAbilityInUse)
-        //{
-        //    switch (piece.GetName())
-        //    {
-        //        case "SilverGeneral":
-        //            var turn = playerTurn;
-        //            playerTurn = !turn;
-        //            possibleMoves = abilitiesManager.Rush(piece.GetPosition());
-        //            if (possibleMoves != null && possibleMoves.Count != 0)
-        //            {
-        //                CellWhichHoldsPiece = grid.GetGridCell(piece.GetPosition());
-        //                cantChangePiece = true;
-        //                cantChangePossibleMoves = new(possibleMoves);
-        //            }
-        //            specialAbilityInUse = false;
-        //            piece.abilityCooldown = 4;
-        //            break;
-        //        case "Rook":
-        //            {
-        //                if (handlePieceKillResult.Item1)
-        //                {
-        //                    Position p = new(hoveredCell.GetPosition());
-        //                    var infernoResult = abilitiesManager.Inferno(p, handlePieceKillResult.Item2);
-        //                    if (infernoResult != null)
-        //                    {
-        //                        KillPiece(grid.GetGridCell(infernoResult.x, infernoResult.y));
-        //                    }
-        //                    specialAbilityInUse = false;
-        //                    piece.abilityCooldown = -1;
-        //                }
-        //                break;
-        //            }
-        //        default:
-        //            break;
-        //    }
-        //}
 
         if (!unit.isKing)
         {

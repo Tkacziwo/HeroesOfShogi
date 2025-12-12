@@ -13,7 +13,7 @@ public partial class ExecuteMoveAction : Action
 
     protected override Status OnStart()
     {
-        var character = Self.Value.GetComponent<PlayerModel>().GetCurrentPlayerCharacter();
+        var character = Self.Value.GetComponent<NPCModel>().GetCurrentPlayerCharacter();
         List<TileInfo> path = new(PathingResult.Instance.GetPath());
         Tuple<int, List<TileInfo>> botResults = new(character.characterId, path);
 

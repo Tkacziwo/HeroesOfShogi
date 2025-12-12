@@ -31,12 +31,15 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private GameObject botGM;
 
+    private readonly Unit kingTemplate = StaticData.unitTemplates.SingleOrDefault(o => o.UnitName == UnitEnum.King) ?? null;
+
     private void OnEnable()
     {
         WorldBuilding.AddResourcesToCapturer += HandleAddResources;
         DoubleClickHandler.OnDoubleClick += HandleDoubleClick;
         PanelController.PlayerChanged += HandleCharacterChanged;
-        OverworldMapController.onTurnEnd += HandleTurnEnd;
+        OverworldMapController.onTurnEnd += HandleEndTurn;
+        ReturnControlToPlayerControllerAction.OnReturnControlToController += RunNextAI;
     }
 
     private void OnDisable()
@@ -44,7 +47,8 @@ public class PlayerController : MonoBehaviour
         WorldBuilding.AddResourcesToCapturer -= HandleAddResources;
         DoubleClickHandler.OnDoubleClick -= HandleDoubleClick;
         PanelController.PlayerChanged -= HandleCharacterChanged;
-        OverworldMapController.onTurnEnd -= HandleTurnEnd;
+        OverworldMapController.onTurnEnd -= HandleEndTurn;
+        ReturnControlToPlayerControllerAction.OnReturnControlToController -= RunNextAI;
     }
 
     private Tilemap tilemap;
@@ -62,14 +66,14 @@ public class PlayerController : MonoBehaviour
         OnPlayerCharacterChanged(character.characterId);
     }
 
-   
+
     private void HandleAddResources(InteractibleBuilding building)
     {
-        if(building is City city)
+        if (building is City city)
         {
             player.HandleAddResourcesFromCity(city);
         }
-        else if(building is WorldBuilding worldBuilding)
+        else if (building is WorldBuilding worldBuilding)
         {
             player.HandleAddResources(worldBuilding);
         }
@@ -83,12 +87,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    public void SetCharacterPosition(Vector3Int newPosition)
-        => player.SetCharacterPosition(newPosition);
-
-    public void SetCharacterPath(List<Vector3> positions, List<Vector3Int> tilesPositions)
-        => player.SetCharacterPath(positions, tilesPositions);
-
     private void Start()
     {
         eventFires = cityEventFires = 0;
@@ -96,9 +94,9 @@ public class PlayerController : MonoBehaviour
         cityCount = FindObjectsByType<City>(FindObjectsSortMode.InstanceID).ToList().Count();
     }
 
-    public PlayerModel? GetPlayerOverTile(Vector3Int position, int myPlayerId)
+    public PlayerModel GetPlayerOverTile(Vector3Int position, int myPlayerId)
     {
-        if(player.GetCurrentPlayerCharacter().characterPosition.Equals(position) && player.playerId != myPlayerId)
+        if (player.GetCurrentPlayerCharacter().characterPosition.Equals(position) && player.playerId != myPlayerId)
         {
             return player;
         }
@@ -106,9 +104,9 @@ public class PlayerController : MonoBehaviour
         {
             foreach (var bot in bots)
             {
-                var model = bot.GetComponent<PlayerModel>();
+                var model = bot.GetComponent<NPCModel>();
 
-                if(model.GetCurrentPlayerCharacter().characterPosition.Equals(position) && model.playerId != myPlayerId)
+                if (model.GetCurrentPlayerCharacter().characterPosition.Equals(position) && model.playerId != myPlayerId)
                 {
                     return model;
                 }
@@ -128,15 +126,6 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.C))
         {
             OnCameraChanged();
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            OnPlayerCharacterChanged(1);
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            OnPlayerCharacterChanged(2);
         }
     }
 
@@ -159,25 +148,81 @@ public class PlayerController : MonoBehaviour
         Debug.Log($"Changed character to: {characterId}");
     }
 
-    public void SpawnRealPlayer(int playerId)
+    private readonly List<Vector3Int> playerStartingPositions = new()
+    {
+        new(7,3,0),
+        new(40,15,0),
+        new(15,40,0),
+        new(43,49,0),
+        new(53,3,0)
+    };
+
+    private readonly List<Vector3Int> playerChosenStartingPositions = new();
+
+    private readonly System.Random rnd = new();
+
+    public void SpawnPlayers(Tilemap tilemap, int botCount)
+    {
+        int playerId = 1;
+
+        int index = rnd.Next(playerStartingPositions.Count);
+
+        playerChosenStartingPositions.Add(playerStartingPositions[index]);
+        var worldPosition = tilemap.GetCellCenterWorld(playerStartingPositions[index]);
+        SpawnRealPlayer(playerId, playerStartingPositions[index], worldPosition);
+
+
+        for (int i = 0; i < botCount; i++)
+        {
+            var vec = RandomBotPosition();
+            worldPosition = tilemap.GetCellCenterWorld(vec);
+            SpawnBot(i + 2, vec, worldPosition);
+        }
+    }
+
+    public Vector3Int RandomBotPosition(int maxIterations = 100)
+    {
+        int iterations = 0;
+        int nextRnd = rnd.Next(playerStartingPositions.Count);
+        Vector3Int chosenVec = playerStartingPositions[nextRnd];
+        if (!playerChosenStartingPositions.Contains(chosenVec))
+        {
+            playerChosenStartingPositions.Add(chosenVec);
+            return chosenVec;
+        }
+        else
+        {
+            while (iterations < maxIterations)
+            {
+                nextRnd = rnd.Next(playerStartingPositions.Count);
+                chosenVec = playerStartingPositions[nextRnd];
+                if (!playerChosenStartingPositions.Contains(chosenVec))
+                {
+                    playerChosenStartingPositions.Add(chosenVec);
+                    return chosenVec;
+                }
+                iterations++;
+            }
+
+            return new Vector3Int(0, 0, 0);
+        }
+    }
+
+    public void SpawnRealPlayer(int playerId, Vector3Int targetPosition, Vector3 positionInWorld)
     {
         player = Instantiate(player);
         player.InitPlayer(playerId);
-        Vector3Int target = new(6, 4, 0);
-        player.SpawnPlayer(target);
+        player.SpawnPlayer(targetPosition, positionInWorld, kingTemplate);
 
         PlayerSpawned?.Invoke(player);
     }
 
-    public void SpawnBots()
+    public void SpawnBot(int nextId, Vector3Int targetPosition, Vector3 positionInWorld)
     {
-        int iterator = 0;
-        bots.Add(Instantiate(botGM));
-        var player = bots[iterator].GetComponent<PlayerModel>();
-        Vector3Int target = new(40, 15, 0);
-        int nextId = GetNextPlayerId();
-        player.InitBot(nextId);
-        player.SpawnBotPlayer(target);
+        var bot = Instantiate(botGM);
+        bot.GetComponent<NPCModel>().InitBot(nextId);
+        bot.GetComponent<NPCModel>().SpawnBotPlayer(targetPosition, positionInWorld, kingTemplate);
+        bots.Add(bot);
     }
 
     public Dictionary<int, Dictionary<int, Vector3Int>> GetBotsCharacterPositions()
@@ -186,7 +231,7 @@ public class PlayerController : MonoBehaviour
 
         foreach (var bot in bots)
         {
-            var model = bot.GetComponent<PlayerModel>();
+            var model = bot.GetComponent<NPCModel>();
 
             var characters = model.GetPlayerCharacters();
 
@@ -204,7 +249,7 @@ public class PlayerController : MonoBehaviour
 
     public List<PlayerCharacterController> GetCharactersForPlayer(int playerId)
     {
-        if(playerId == player.playerId)
+        if (playerId == player.playerId)
         {
             return player.GetPlayerCharacters();
         }
@@ -213,7 +258,7 @@ public class PlayerController : MonoBehaviour
             foreach (var bot in bots)
             {
                 var model = bot.GetComponent<PlayerModel>();
-                if(model.playerId == playerId)
+                if (model.playerId == playerId)
                 {
                     return model.GetPlayerCharacters();
                 }
@@ -221,29 +266,6 @@ public class PlayerController : MonoBehaviour
         }
 
         return null;
-    }
-
-    public int GetNextPlayerId()
-    {
-        var playerId = player.playerId;
-
-        var botsModels = new List<PlayerModel>();
-
-        foreach (var bot in bots)
-        {
-            botsModels.Add(bot.GetComponent<PlayerModel>());
-        }
-
-        var botMaxId = botsModels.Select(o => o.playerId).Max();
-
-        if(playerId < botMaxId)
-        {
-            return botMaxId + 1;
-        }
-        else
-        {
-            return playerId + 1;
-        }
     }
 
     public void OnPlayerBeginMove()
@@ -255,25 +277,37 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-             player.PlayerBeginMove();
+            player.PlayerBeginMove();
         }
     }
 
-    public void HandleTurnEnd()
+    public void HandleEndTurn()
+    {
+        StartMapAI(0);
+    }
+
+    public void RunNextAI(int id)
+    {
+        StartMapAI(id - 1);
+    }
+
+    public void StartMapAI(int botId)
     {
         // start AI
-
-        foreach (var bot in bots)
+        try
         {
-            currentPlayerId = bot.GetComponent<PlayerModel>().playerId;
+            if (botId > bots.Count - 1) return;
+            var bot = bots[botId];
+            currentPlayerId = bot.GetComponent<NPCModel>().playerId;
             var agent = bot.GetComponent<BehaviorGraphAgent>();
             agent.BlackboardReference.SetVariableValue("tilemap", tilemap);
             agent.BlackboardReference.SetVariableValue("IsMyTurn", true);
             agent.Start();
         }
-
-
-      
+        catch (Exception ex)
+        {
+            Debug.LogError(ex.Message);
+        }
     }
 
     public PlayerCharacterController GetCurrentPlayerCharacter()

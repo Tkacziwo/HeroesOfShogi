@@ -25,13 +25,16 @@ public partial class CaptureBuildingAction : Action
 
     protected override Status OnStart()
     {
-        var character = Self.Value.GetComponent<PlayerModel>().GetCurrentPlayerCharacter();
+        var character = Self.Value.GetComponent<NPCModel>().GetCurrentPlayerCharacter();
         result.Value = 1;
         List<Tuple<int, List<TileInfo>>> botResults = new();
 
         var chosenBuilding = FindNearestBuilding(character.characterPosition, character.playerId);
 
-        if (chosenBuilding != null)
+        var npcModel = Self.Value.GetComponent<NPCModel>();
+
+        if (chosenBuilding == null) { result.Value = 0; }
+        else
         {
             if (character.unreachedBuilding != null)
             {
@@ -42,18 +45,32 @@ public partial class CaptureBuildingAction : Action
 
 
             var path = FindPathToBuilding(chosenBuilding, character);
+            TileInfo end = new() { position = bestEndPos };
+            path.Add(end);
+            npcModel.RemainingPath = new(path);
+            npcModel.ChosenBuilding = chosenBuilding;
+            //var remainingMovementPoints = character.GetRemainingMovementPoints();
+            //if (path.Count <= remainingMovementPoints)
+            //{
+            //    npcModel.RemainingPath.Clear();
+            //}
+            //else
+            //{
+            //    npcModel.RemainingPath.RemoveRange(0, remainingMovementPoints);
+            //}
 
-            if (path.Count > character.GetRemainingMovementPoints())
-            {
-                character.unreachedBuilding = chosenBuilding;
-                character.unreachedBotDestination = new Vector3Int(0, 0, 0);
-            }
-            else
-            {
-                character.unreachedBuilding = null;
-            }
 
-            character.unreachedBuilding = null;
+            //if (path.Count > character.GetRemainingMovementPoints())
+            //{
+            //    character.unreachedBuilding = chosenBuilding;
+            //    character.unreachedBotDestination = new Vector3Int(0, 0, 0);
+            //}
+            //else
+            //{
+            //    character.unreachedBuilding = null;
+            //}
+
+            //character.unreachedBuilding = null;
 
             BotCaptureInfo botCaptureInfo = new()
             {
@@ -63,12 +80,7 @@ public partial class CaptureBuildingAction : Action
                 endPos = bestEndPos
             };
 
-            OnBotCapture?.Invoke(botCaptureInfo);
-            return Status.Success;
-        }
-        else
-        {
-            result.Value = 0;
+            //OnBotCapture?.Invoke(botCaptureInfo);
         }
 
         return Status.Success;

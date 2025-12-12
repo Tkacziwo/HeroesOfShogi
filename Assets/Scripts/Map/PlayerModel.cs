@@ -15,7 +15,7 @@ public class PlayerModel : MonoBehaviour
 
     private PlayerCharacterController character;
 
-    [SerializeField] private GameObject playerModel;
+    [SerializeField] private GameObject characterPrefab;
 
     public PlayerResources playerResources;
 
@@ -53,7 +53,6 @@ public class PlayerModel : MonoBehaviour
         playerResources.Stone -= (int)resources.stone;
         playerResources.Gold -= (int)resources.gold;
         UpdateResourceUI?.Invoke(this.playerResources);
-        //playerResources.LifeResin -= (int)resources.goldResin;
     }
 
     public CameraController GetCameraController()
@@ -89,32 +88,9 @@ public class PlayerModel : MonoBehaviour
         playerResources = new();
     }
 
-    public void SpawnOneCharacter()
+    public void SpawnBotPlayer(Vector3Int targetPos, Vector3 worldTargetPos, Unit template)
     {
-        var p = Instantiate(playerModel);
-        character = p.GetComponent<PlayerCharacterController>();
-        character.playerId = this.playerId;
-        character.playerColor = playerColor;
-        character.characterId = 1;
-        character.movementPoints = 20;
-        character.AssignedUnits.Add(new Unit()
-        {
-            UnitName = UnitEnum.King,
-            HealthPoints = 3,
-            AttackPower = 2,
-            SizeInArmy = 0,
-            isKing = true,
-            UnitSprite = StaticData.unitIcons.SingleOrDefault(o => o.name == UnitEnum.King.ToString())
-
-        });
-        var vec = new Vector3Int(39, 13, 0);
-        character.SetPlayerPosition(vec);
-        character.SetTargetPosition(vec);
-    }
-
-    public void SpawnBotPlayer(Vector3Int targetPos)
-    {
-        var p = Instantiate(playerModel);
+        var p = Instantiate(characterPrefab);
 
         character = p.GetComponent<PlayerCharacterController>();
         character.playerId = this.playerId;
@@ -124,23 +100,24 @@ public class PlayerModel : MonoBehaviour
 
         character.AssignedUnits.Add(new Unit()
         {
-            UnitName = UnitEnum.King,
-            HealthPoints = 3,
-            AttackPower = 2,
-            SizeInArmy = 0,
+            UnitName = template.UnitName,
+            HealthPoints = template.HealthPoints,
+            AttackPower = template.AttackPower,
+            SizeInArmy = template.SizeInArmy,
             isKing = true,
             UnitSprite = StaticData.unitIcons.SingleOrDefault(o => o.name == UnitEnum.King.ToString())
         });
 
         character.SetPlayerPosition(targetPos);
-        character.SetTargetPosition(targetPos);
+        character.SetTargetPosition(worldTargetPos);
+        character.SetIsMoving(true);
 
         playerCharacters = new List<PlayerCharacterController>() { character };
     }
 
-    public void SpawnPlayer(Vector3Int targetPos)
+    public void SpawnPlayer(Vector3Int targetPos, Vector3 worldTargetPos, Unit template)
     {
-        var p = Instantiate(playerModel);
+        var p = Instantiate(characterPrefab);
 
         character = p.GetComponent<PlayerCharacterController>();
         character.playerId = this.playerId;
@@ -150,16 +127,17 @@ public class PlayerModel : MonoBehaviour
 
         character.AssignedUnits.Add(new Unit()
         {
-            UnitName = UnitEnum.King,
-            HealthPoints = 3,
-            AttackPower = 2,
-            SizeInArmy = 0,
+            UnitName = template.UnitName,
+            HealthPoints = template.HealthPoints,
+            AttackPower = template.AttackPower,
+            SizeInArmy = template.SizeInArmy,
             isKing = true,
             UnitSprite = StaticData.unitIcons.SingleOrDefault(o => o.name == UnitEnum.King.ToString())
         });
 
         character.SetPlayerPosition(targetPos);
-        character.SetTargetPosition(targetPos);
+        character.SetTargetPosition(worldTargetPos);
+        character.SetIsMoving(true);
         cameraController.UpdateCameraPosition(character.transform);
 
         playerCharacters = new List<PlayerCharacterController>()
@@ -168,6 +146,16 @@ public class PlayerModel : MonoBehaviour
         };
 
         SubscribeToCharacterEvents();
+    }
+
+    public void UpdateCharacter(PlayerCharacterController character)
+    {
+        this.character = character;
+    }
+
+    public void KillCharacter()
+    {
+        Destroy(character.gameObject);
     }
 
     public void ChangeCharacters(int characterId)
@@ -193,8 +181,8 @@ public class PlayerModel : MonoBehaviour
     public List<PlayerCharacterController> GetPlayerCharacters()
         => playerCharacters;
 
-    public void SetCharacterPath(List<Vector3> positions, List<Vector3Int> tilesPositions, int characterIndex = 0)
-        => character.SetPath(positions, tilesPositions);
+    public void SetCharacterPath(List<Vector3> positions)
+        => character.SetPath(positions);
 
     public PlayerCharacterController GetCharacterById(int id)
     {

@@ -12,7 +12,7 @@ public partial class IsEnoughArmyCondition : Condition
     {
         int armySize = 0;
 
-        var units = Self.Value.GetComponent<PlayerModel>().GetCurrentPlayerCharacter().AssignedUnits;
+        var units = Self.Value.GetComponent<NPCModel>().GetCurrentPlayerCharacter().AssignedUnits;
 
         foreach (var unit in units)
         {

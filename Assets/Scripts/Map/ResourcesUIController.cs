@@ -4,6 +4,7 @@ using System.Linq;
 using TMPro;
 using Unity.AppUI.UI;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 public class ResourceUIController : MonoBehaviour
@@ -23,6 +24,9 @@ public class ResourceUIController : MonoBehaviour
     [SerializeField] private CityViewController cityViewPrefab;
 
     [SerializeField] private GameObject UIRef;
+
+    [SerializeField] private GameObject gameOver;
+
 
     private CityViewController cityView;
 
@@ -123,5 +127,13 @@ public class ResourceUIController : MonoBehaviour
 
         var script = cityView.GetComponent<CityViewController>();
         script.Setup(city, playerResources, canvasRef, character);
+    }
+
+    public void ShowGameOverScreen(int score)
+    {
+        gameOver = Instantiate(gameOver);
+        gameOver.transform.SetParent(canvasRef.transform);
+        this.gameOver.GetComponent<RectTransform>().anchoredPosition = new(0, 0);
+        gameOver.GetComponent<GameEndController>().SetScore(score.ToString());
     }
 }

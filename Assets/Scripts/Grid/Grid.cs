@@ -518,6 +518,38 @@ public class Grid : MonoBehaviour
     /// <summary>
     /// Restores default color of GridCell on mouse hover exit.
     /// </summary>
+    ///
+
+    public void SetWinner(bool isBlack)
+    {
+        if(isBlack)
+        {
+            var units = new List<Unit>();
+
+            foreach (var unit in botPieces.Select(o => o.Unit))
+            {
+                units.Add(unit);
+            }
+
+            units.Add(botKing.Unit);
+            BattleDeploymentStaticData.enemyCharacter.AssignedUnits = new(units);
+            BattleDeploymentStaticData.winner = BattleDeploymentStaticData.enemyCharacter;
+        }
+        else
+        {
+            var units = new List<Unit>();
+
+            foreach (var unit in playerPieces.Select(o => o.Unit))
+            {
+                units.Add(unit);
+            }
+
+            units.Add(playerKing.Unit);
+            BattleDeploymentStaticData.playerCharacter.AssignedUnits = new(units);
+            BattleDeploymentStaticData.winner = BattleDeploymentStaticData.playerCharacter;
+        }
+    }
+
     public void OnHoverExitRestoreDefaultColor()
     {
         Color defaultColor = new(0.04f, 0.43f, 0.96f);

@@ -197,6 +197,7 @@ public class PathingController
         List<TileInfo> openList = new();
 
         TileInfo startTile = MapTiles[s.y, s.x];
+
         openList.Add(startTile);
 
         // Setting init values to starting point

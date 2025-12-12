@@ -20,7 +20,7 @@ public partial class AttackPlayerAction : Action
 
     protected override Status OnStart()
     {
-        var character = Self.Value.GetComponent<PlayerModel>().GetCurrentPlayerCharacter();
+        var character = Self.Value.GetComponent<NPCModel>().GetCurrentPlayerCharacter();
 
         var players = PlayerRegistry.Instance.GetAllPlayers();
 

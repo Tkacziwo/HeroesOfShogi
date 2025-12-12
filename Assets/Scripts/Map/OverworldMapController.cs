@@ -48,6 +48,7 @@ public class OverworldMapController : MonoBehaviour
 
     [SerializeField] private ResourceUIController resourceUIController;
 
+
     private Dictionary<int, Vector3Int> characterStartPoints = new();
 
     private Dictionary<int, Dictionary<int, Vector3Int>> botStartPoints = new();
@@ -74,6 +75,7 @@ public class OverworldMapController : MonoBehaviour
         MoveToCityAction.OnBotGoToCity += HandleBotCapture;
         AIEvents.OnBotMove += HandleBotMoveSingle;
         GameOverController.OnBackToMap += HandleBackToMap;
+        ContinuePathAction.OnNPCContinuePath += HandleNPCContinuesPath;
     }
 
     private void OnDisable()
@@ -92,6 +94,7 @@ public class OverworldMapController : MonoBehaviour
         MoveToCityAction.OnBotGoToCity -= HandleBotCapture;
         AIEvents.OnBotMove -= HandleBotMoveSingle;
         GameOverController.OnBackToMap -= HandleBackToMap;
+        ContinuePathAction.OnNPCContinuePath -= HandleNPCContinuesPath;
     }
 
     private void HandleBackToMap()
@@ -101,6 +104,104 @@ public class OverworldMapController : MonoBehaviour
         var playerCamera = playerModel.GetCameraController().GetComponentInChildren<Camera>();
 
         playerCamera.transform.SetPositionAndRotation(previousCameraPosition, previousCameraRotation);
+
+        var winner = BattleDeploymentStaticData.winner;
+        HandleCharacterDefeated(winner);
+    }
+
+    private void HandleCharacterDefeated(PlayerCharacterController winner)
+    {
+        var players = PlayerRegistry.Instance.GetAllPlayers();
+        var realPlayer = players.Single(o => o.isRealPlayer);
+        var buildings = BuildingRegistry.Instance.GetAllBuildings();
+
+        if (winner.playerId == realPlayer.playerId)
+        {
+            //real player won
+            realPlayer.UpdateCharacter(winner);
+            var loser = BattleDeploymentStaticData.enemyCharacter;
+
+            var loserPlayer = players.Single(o => o.playerId == loser.playerId);
+
+            loserPlayer.KillCharacter();
+
+            foreach (var building in buildings)
+            {
+                if (building is City city)
+                {
+                    if (city.capturerId == loserPlayer.playerId)
+                    {
+                        SpawnPlayerAtCity(city, realPlayer);
+                        return;
+                    }
+                }
+            }
+
+            resourceUIController.ShowGameOverScreen(10000);
+
+        }
+        else
+        {
+            //npc won
+            var npcPlayer = players.Single(o => o.playerId == winner.playerId);
+            npcPlayer.UpdateCharacter(winner);
+
+            realPlayer.KillCharacter();
+            botStartPoints = playerController.GetBotsCharacterPositions();
+            foreach (var bot in botStartPoints)
+            {
+                foreach (var position in bot.Value)
+                {
+                    tilemap.SetTile(position.Value, StartTile);
+                }
+            }
+            foreach (var building in buildings)
+            {
+                if (building is City city)
+                {
+                    if (city.capturerId == realPlayer.playerId)
+                    {
+                        SpawnPlayerAtCity(city, npcPlayer);
+                        return;
+                    }
+                }
+            }
+
+
+            resourceUIController.ShowGameOverScreen(10000);
+        }
+        GameOverController.OnBackToMap -= HandleBackToMap;
+    }
+
+    private void SpawnPlayerAtCity(City building, PlayerModel playerModel)
+    {
+
+        var colliderBounds = building.GetComponent<BoxCollider>().bounds;
+
+        for (int y = (int)colliderBounds.min.z; y < colliderBounds.max.z; y++)
+        {
+            for (int x = (int)colliderBounds.min.x; x < colliderBounds.max.x; x++)
+            {
+                for (int cellY = -1; cellY <= 1; cellY++)
+                {
+                    for (int cellX = -1; cellX <= 1; cellX++)
+                    {
+                        int destX = cellX + x;
+                        int destY = cellY + y;
+
+                        Vector3Int destPos = new(destX, destY, 0);
+
+                        var tile = tilemap.GetTile<MapTile>(destPos);
+
+                        if (tile != null && tile.IsTraversable)
+                        {
+                            var worldPosition = tilemap.GetCellCenterWorld(destPos);
+                            playerModel.SpawnPlayer(destPos, worldPosition, StaticData.unitTemplates.Single(o => o.UnitName == UnitEnum.King));
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void HandleCityOpened(City city)
@@ -233,8 +334,13 @@ public class OverworldMapController : MonoBehaviour
                             {
                                 if (building is City city)
                                 {
+                                    city.CaptureBuilding(currentCharacter.playerId, currentCharacter.playerColor);
                                     var player = playerController.GetCurrentPlayer();
                                     resourceUIController.DisplayCityInfo(city, player.playerResources, player.GetCurrentPlayerCharacter());
+                                }
+                                else if (building is WorldBuilding worldBuilding)
+                                {
+                                    worldBuilding.CaptureBuilding(currentCharacter.playerId, currentCharacter.playerColor);
                                 }
                                 return;
                             }
@@ -268,12 +374,19 @@ public class OverworldMapController : MonoBehaviour
         SetEndPoint(bestEndPosition, t);
         pathfindingResult = bestPath;
         DisplayPath(pathfindingResult);
+        TileInfo endTile = new()
+        {
+            position = bestEndPosition,
+        };
+        pathfindingResult.Add(endTile);
+
         chosenWorldBuilding = building;
     }
 
     void Start()
     {
-        playerController.SpawnRealPlayer(100);
+        playerController.SpawnPlayers(tilemap, 1);
+
 
         var playerCamera = playerController.player.GetCameraController().GetComponentInChildren<Camera>();
         playerCamera.enabled = false;
@@ -285,9 +398,10 @@ public class OverworldMapController : MonoBehaviour
 
         previousStartPos = playerController.player.GetCharacterPosition(1);
         var t = tilemap.GetTile<MapTile>(vec);
-        SetStartPoint(vec, t);
-
-        playerController.SpawnBots();
+        if (t != null)
+        {
+            SetStartPoint(vec, t);
+        }
 
         botStartPoints = playerController.GetBotsCharacterPositions();
 
@@ -423,10 +537,6 @@ public class OverworldMapController : MonoBehaviour
             BattleDeploymentStaticData.enemyCharacter = playerOverTile.GetCurrentPlayerCharacter();
         }
 
-
-
-
-
         var playerModel = PlayerRegistry.Instance.GetAllPlayers().Single(o => o.isRealPlayer);
         var playerCamera = playerModel.GetCameraController().GetComponentInChildren<Camera>();
 
@@ -445,13 +555,36 @@ public class OverworldMapController : MonoBehaviour
         SceneManager.LoadScene("BattleDeployment", LoadSceneMode.Additive);
     }
 
+    public void HandleNPCContinuesPath(List<TileInfo> path)
+    {
+        int currentPlayerId = playerController.currentPlayerId;
+
+        List<NPCModel> botModels = new();
+        playerController.bots.ForEach(o => botModels.Add(o.GetComponent<NPCModel>()));
+        var botModel = botModels.Single(o => o.playerId == currentPlayerId);
+
+        chosenWorldBuilding = botModel.ChosenBuilding != null ? botModel.ChosenBuilding : null;
+
+        pathfindingResult = new(path);
+        if (pathfindingResult.Count == 0) return;
+
+        var cellPos = pathfindingResult[pathfindingResult.Count - 1].position;
+
+        var tile = tilemap.GetTile<MapTile>(cellPos);
+
+        SetEndPoint(cellPos, tile);
+        DisplayPath(pathfindingResult);
+
+        MovePlayer(botModel.GetCurrentPlayerCharacter());
+    }
+
     public void HandleBotMove(List<Tuple<int, List<TileInfo>>> botResults)
     {
         //Move bots 
         int currentPlayerId = playerController.currentPlayerId;
 
-        List<PlayerModel> botModels = new();
-        playerController.bots.ForEach(o => botModels.Add(o.GetComponent<PlayerModel>()));
+        List<NPCModel> botModels = new();
+        playerController.bots.ForEach(o => botModels.Add(o.GetComponent<NPCModel>()));
         var botModel = botModels.Single(o => o.playerId == currentPlayerId);
 
         foreach (var characterResult in botResults)
@@ -515,14 +648,11 @@ public class OverworldMapController : MonoBehaviour
         var remainingMovementPoints = currentCharacter.GetRemainingMovementPoints();
 
         List<Vector3> convertedPath = new();
-        List<Vector3Int> tilesPositions = new();
 
-        if (remainingMovementPoints <= 0) return;
-
-        if (pathfindingResult == null || pathfindingResult.Count == 0) return;
+        if (remainingMovementPoints <= 0 || pathfindingResult.Count == 0) return;
 
         int usedMovementPoints;
-        if (remainingMovementPoints >= pathfindingResult.Count + 1)
+        if (remainingMovementPoints >= pathfindingResult.Count)
         {
             // Move the whole path
             foreach (var item in pathfindingResult)
@@ -530,48 +660,29 @@ public class OverworldMapController : MonoBehaviour
                 var tileWorldCenterPosition = tilemap.GetCellCenterWorld(item.position);
                 convertedPath.Add(tileWorldCenterPosition);
 
-                tilesPositions.Add(item.position);
             }
-
-            convertedPath.Add(tilemap.GetCellCenterWorld(previousEndPos));
-            tilesPositions.Add(previousEndPos);
-
-            usedMovementPoints = pathfindingResult.Count + 1;
+            usedMovementPoints = pathfindingResult.Count;
         }
         else
         {
             // Less movement points than path
-            for (int i = 0; i < remainingMovementPoints - 1; i++)
+            for (int i = 0; i < remainingMovementPoints; i++)
             {
                 var tileWorldCenterPosition = tilemap.GetCellCenterWorld(pathfindingResult[i].position);
                 convertedPath.Add(tileWorldCenterPosition);
-                tilesPositions.Add(pathfindingResult[i].position);
             }
-
-            convertedPath.Add(tilemap.GetCellCenterWorld(pathfindingResult[remainingMovementPoints - 1].position));
-            tilesPositions.Add(pathfindingResult[remainingMovementPoints - 1].position);
-
             usedMovementPoints = remainingMovementPoints;
 
-            if (chosenWorldBuilding != null)
-            {
-                chosenWorldBuilding = null;
-            }
+            if (chosenWorldBuilding != null) chosenWorldBuilding = null;
         }
 
-        currentCharacter.SetPath(convertedPath, tilesPositions);
+        currentCharacter.SetPath(convertedPath);
 
         currentCharacter.ReduceAvailableMovementPoints(usedMovementPoints);
         isPlayerMoving = true;
         tilemap.SetTile(previousStartPos, PathTile);
 
         pathfindingResult.Clear();
-    }
-
-
-    public void ClearTile(Vector3Int tilePosition)
-    {
-        tilemap.SetTile(tilePosition, PathTile);
     }
 
     private void FindPath()
@@ -584,6 +695,12 @@ public class OverworldMapController : MonoBehaviour
         pathfindingResult = pathingController.FindPath();
 
         DisplayPath(pathfindingResult);
+
+        TileInfo endTile = new()
+        {
+            position = previousEndPos,
+        };
+        pathfindingResult.Add(endTile);
 
         float elapsed = watch.ElapsedMilliseconds * 0.001f;
         Debug.Log($"Elapsed: {elapsed} seconds");
@@ -684,4 +801,7 @@ public class OverworldMapController : MonoBehaviour
 
     private Quaternion DeepCopyQuaternion(Quaternion q)
         => new(q.x, q.y, q.z, q.w);
+
+    public void ClearTile(Vector3 tilePosition)
+        => tilemap.SetTile(tilemap.WorldToCell(tilePosition), PathTile);
 }
