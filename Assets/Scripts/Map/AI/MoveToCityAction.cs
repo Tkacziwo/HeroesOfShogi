@@ -19,16 +19,13 @@ public partial class MoveToCityAction : Action
     [SerializeReference] public BlackboardVariable<City> Chosencity;
     [SerializeReference] public BlackboardVariable<PlayerCharacterController> characterInCity;
 
-
-
     private PathingController Pathing { get; set; } = new();
 
     private Vector3Int bestEndPos;
 
-    public static event Action<BotCaptureInfo> OnBotGoToCity;
-
     protected override Status OnStart()
     {
+        var npc = Self.Value.GetComponent<NPCModel>();
         var character = Self.Value.GetComponent<NPCModel>().GetCurrentPlayerCharacter();
         result.Value = 1;
         cityHasUnits.Value = false;
@@ -37,45 +34,20 @@ public partial class MoveToCityAction : Action
         if (city == null)
         {
             result.Value = 0;
-            return Status.Failure;
         }
         else
         {
             var path = FindPathToBuilding(city, character);
+            TileInfo end = new() { position = bestEndPos };
+            path.Add(end);
+            npc.RemainingPath = new(path);
+            npc.ChosenBuilding = city;
+            npc.ReachedDestination = false;
 
-            BotCaptureInfo info = new()
-            {
-                character = character,
-                chosenBuilding = city,
-                endPos = bestEndPos,
-                pathToBuilding = path
-            };
-
-            OnBotGoToCity?.Invoke(info);
-
-            if (city.HasAvailableUnits())
-            {
-                cityHasUnits.Value = true;
-                Chosencity.Value = city;
-                characterInCity.Value = character;
-            }
-            else
-            {
-                result.Value = 0;
-            }
+            if (!city.HasAvailableUnits()) result.Value = 0;
         }
 
         return Status.Success;
-    }
-
-    protected override Status OnUpdate()
-    {
-        return Status.Success;
-    }
-
-    protected override void OnEnd()
-    {
-
     }
 
     private City FindCity(Vector3Int startPos, int playerId)

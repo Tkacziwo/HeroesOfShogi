@@ -91,7 +91,7 @@ public class PlayerModel : MonoBehaviour
     public void SpawnBotPlayer(Vector3Int targetPos, Vector3 worldTargetPos, Unit template)
     {
         var p = Instantiate(characterPrefab);
-
+        p.GetComponent<Transform>().position = worldTargetPos;
         character = p.GetComponent<PlayerCharacterController>();
         character.playerId = this.playerId;
         character.playerColor = playerColor;
@@ -109,8 +109,8 @@ public class PlayerModel : MonoBehaviour
         });
 
         character.SetPlayerPosition(targetPos);
-        character.SetTargetPosition(worldTargetPos);
-        character.SetIsMoving(true);
+        //character.SetTargetPosition(worldTargetPos);
+        //character.SetIsMoving(true);
 
         playerCharacters = new List<PlayerCharacterController>() { character };
     }
@@ -118,7 +118,7 @@ public class PlayerModel : MonoBehaviour
     public void SpawnPlayer(Vector3Int targetPos, Vector3 worldTargetPos, Unit template)
     {
         var p = Instantiate(characterPrefab);
-
+        p.GetComponent<Transform>().position = worldTargetPos;
         character = p.GetComponent<PlayerCharacterController>();
         character.playerId = this.playerId;
         character.playerColor = playerColor;
@@ -136,14 +136,11 @@ public class PlayerModel : MonoBehaviour
         });
 
         character.SetPlayerPosition(targetPos);
-        character.SetTargetPosition(worldTargetPos);
-        character.SetIsMoving(true);
+        //character.SetTargetPosition(worldTargetPos);
+        //character.SetIsMoving(true);
         cameraController.UpdateCameraPosition(character.transform);
 
-        playerCharacters = new List<PlayerCharacterController>()
-        {
-            character,
-        };
+        playerCharacters = new List<PlayerCharacterController>() { character };
 
         SubscribeToCharacterEvents();
     }

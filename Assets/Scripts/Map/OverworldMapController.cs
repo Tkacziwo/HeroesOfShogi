@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.AppUI.UI;
+using Unity.Behavior;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
-using UnityEngine.TextCore.Text;
 using UnityEngine.Tilemaps;
-using UnityEngine.UIElements;
 
 public class OverworldMapController : MonoBehaviour
 {
@@ -34,7 +32,7 @@ public class OverworldMapController : MonoBehaviour
     [SerializeField]
     private TileBase PathTile;
 
-    public static Action onTurnEnd;
+    public static System.Action onTurnEnd;
 
     public List<InteractibleBuilding> worldBuildings;
 
@@ -48,16 +46,15 @@ public class OverworldMapController : MonoBehaviour
 
     [SerializeField] private ResourceUIController resourceUIController;
 
+    private Vector3Int playerCharacterStartPoint = Vector3Int.zero;
 
-    private Dictionary<int, Vector3Int> characterStartPoints = new();
-
-    private Dictionary<int, Dictionary<int, Vector3Int>> botStartPoints = new();
+    private Vector3Int npcCharacterStartPoint = Vector3Int.zero;
 
     private bool isPlayerInCity = false;
 
     private int turns = 1;
 
-    public static event Action BotsEndTurn;
+    public static event System.Action BotsEndTurn;
 
     private void OnEnable()
     {
@@ -66,16 +63,12 @@ public class OverworldMapController : MonoBehaviour
         PlayerEvents.OnPlayerBeginMove += MovePlayer;
         PlayerEvents.OnPlayerEndMove += HandlePlayerEndMove;
         PlayerController.TurnEnded += HandleUpdateUIResources;
-        PlayerController.PlayerCharacterChanged += HandlePlayerCharacterChanged;
         PlayerController.CameraChanged += HandleCameraChanged;
-        CityViewController.OnCityViewClose += HandleCityViewClosed;
+        CityEvents.OnPlayerInCity += HandleOnPlayerInCity;
         PanelController.CityOpened += HandleCityOpened;
-        MoveToTargetAction.OnBotMove += HandleBotMove;
-        CaptureBuildingAction.OnBotCapture += HandleBotCapture;
-        MoveToCityAction.OnBotGoToCity += HandleBotCapture;
-        AIEvents.OnBotMove += HandleBotMoveSingle;
         GameOverController.OnBackToMap += HandleBackToMap;
         ContinuePathAction.OnNPCContinuePath += HandleNPCContinuesPath;
+        PlayerRegistry.OnPlayersLoaded += AfterPlayersLoaded;
     }
 
     private void OnDisable()
@@ -85,16 +78,21 @@ public class OverworldMapController : MonoBehaviour
         PlayerEvents.OnPlayerBeginMove -= MovePlayer;
         PlayerEvents.OnPlayerEndMove -= HandlePlayerEndMove;
         PlayerController.TurnEnded -= HandleUpdateUIResources;
-        PlayerController.PlayerCharacterChanged -= HandlePlayerCharacterChanged;
         PlayerController.CameraChanged -= HandleCameraChanged;
-        CityViewController.OnCityViewClose -= HandleCityViewClosed;
+        CityEvents.OnPlayerInCity -= HandleOnPlayerInCity;
         PanelController.CityOpened -= HandleCityOpened;
-        MoveToTargetAction.OnBotMove -= HandleBotMove;
-        CaptureBuildingAction.OnBotCapture -= HandleBotCapture;
-        MoveToCityAction.OnBotGoToCity -= HandleBotCapture;
-        AIEvents.OnBotMove -= HandleBotMoveSingle;
         GameOverController.OnBackToMap -= HandleBackToMap;
         ContinuePathAction.OnNPCContinuePath -= HandleNPCContinuesPath;
+        PlayerRegistry.OnPlayersLoaded -= AfterPlayersLoaded;
+    }
+
+    void Start()
+    {
+        playerController.SpawnPlayers(tilemap, 1);
+
+        var playerCamera = playerController.player.GetCameraController().GetComponentInChildren<Camera>();
+        playerCamera.enabled = false;
+        currentCamera = topCamera;
     }
 
     private void HandleBackToMap()
@@ -131,14 +129,13 @@ public class OverworldMapController : MonoBehaviour
                 {
                     if (city.capturerId == loserPlayer.playerId)
                     {
-                        SpawnPlayerAtCity(city, realPlayer);
+                        SpawnPlayerAtCity(city, loserPlayer);
                         return;
                     }
                 }
             }
 
             resourceUIController.ShowGameOverScreen(10000);
-
         }
         else
         {
@@ -147,26 +144,18 @@ public class OverworldMapController : MonoBehaviour
             npcPlayer.UpdateCharacter(winner);
 
             realPlayer.KillCharacter();
-            botStartPoints = playerController.GetBotsCharacterPositions();
-            foreach (var bot in botStartPoints)
-            {
-                foreach (var position in bot.Value)
-                {
-                    tilemap.SetTile(position.Value, StartTile);
-                }
-            }
+            
             foreach (var building in buildings)
             {
                 if (building is City city)
                 {
                     if (city.capturerId == realPlayer.playerId)
                     {
-                        SpawnPlayerAtCity(city, npcPlayer);
+                        SpawnPlayerAtCity(city, realPlayer);
                         return;
                     }
                 }
             }
-
 
             resourceUIController.ShowGameOverScreen(10000);
         }
@@ -175,7 +164,6 @@ public class OverworldMapController : MonoBehaviour
 
     private void SpawnPlayerAtCity(City building, PlayerModel playerModel)
     {
-
         var colliderBounds = building.GetComponent<BoxCollider>().bounds;
 
         for (int y = (int)colliderBounds.min.z; y < colliderBounds.max.z; y++)
@@ -197,6 +185,7 @@ public class OverworldMapController : MonoBehaviour
                         {
                             var worldPosition = tilemap.GetCellCenterWorld(destPos);
                             playerModel.SpawnPlayer(destPos, worldPosition, StaticData.unitTemplates.Single(o => o.UnitName == UnitEnum.King));
+                            return;
                         }
                     }
                 }
@@ -210,16 +199,8 @@ public class OverworldMapController : MonoBehaviour
         resourceUIController.DisplayCityInfo(city, player.playerResources, player.GetCurrentPlayerCharacter());
     }
 
-    private void HandleCityViewClosed()
-        => isPlayerInCity = false;
-
-    private void HandlePlayerCharacterChanged(Tuple<Vector3Int, Vector3Int> positions)
-    {
-        previousStartPos = positions.Item1;
-
-        ClearTiles();
-        RemoveEndPoint();
-    }
+    private void HandleOnPlayerInCity(bool res)
+        => isPlayerInCity = res;
 
     private void HandleCameraChanged(Camera changedCamera)
     {
@@ -232,23 +213,6 @@ public class OverworldMapController : MonoBehaviour
         resourceUIController.UpdateResourcesUI(playerController.player.playerResources);
 
         resourceUIController.IncrementTurnNumber();
-    }
-
-    private void HandleBotCapture(BotCaptureInfo info)
-    {
-        chosenWorldBuilding = info.chosenBuilding;
-        pathfindingResult = info.pathToBuilding;
-
-        if (pathfindingResult.Count != 0)
-        {
-            var t = tilemap.GetTile<MapTile>(info.endPos);
-            SetEndPoint(info.endPos, t);
-            DisplayPath(pathfindingResult);
-            previousStartPos = botStartPoints[info.character.playerId][info.character.characterId];
-
-            tilemap.SetTile(previousStartPos, PathTile);
-            MovePlayer(info.character);
-        }
     }
 
     private void HandlePlayerEndMove(PlayerCharacterController character)
@@ -274,9 +238,23 @@ public class OverworldMapController : MonoBehaviour
                 if (character.playerId == playerController.player.playerId)
                 {
                     isPlayerInCity = true;
+
+                    CityEvents.OnPlayerInCity?.Invoke(true);
+
                     var player = playerController.GetCurrentPlayer();
                     resourceUIController.DisplayCityInfo(city, player.playerResources, player.GetCurrentPlayerCharacter());
                     resourceUIController.UpdatePlayerCityPanels(player);
+                }
+                else
+                {
+                    var agent = playerController.GetBot().GetComponent<BehaviorGraphAgent>();
+
+                    agent.BlackboardReference.SetVariableValue("tilemap", tilemap);
+                    agent.BlackboardReference.SetVariableValue("IsMyTurn", true);
+                    agent.BlackboardReference.SetVariableValue("reachedCity", true);
+                    agent.BlackboardReference.SetVariableValue("ChosenCity", city);
+                    agent.BlackboardReference.SetVariableValue("cityHasUnits", city.HasAvailableUnits());
+                    agent.Start();
                 }
             }
             chosenWorldBuilding = null;
@@ -286,17 +264,17 @@ public class OverworldMapController : MonoBehaviour
         character.ClearPath();
         SetStartPoint(cellPos, t);
 
-        if (character.playerId == playerController.player.playerId)
+        bool isRealPlayer = PlayerRegistry.Instance.GetAllPlayers().Single(o => o.playerId == character.playerId).isRealPlayer;
+
+        if (isRealPlayer)
         {
-            characterStartPoints[character.characterId] = cellPos;
+            playerCharacterStartPoint = character.characterPosition;
         }
         else
         {
-
             BotsEndTurn?.Invoke();
-            playerController.currentPlayerId = 100;
-            previousStartPos = playerController.player.GetCharacterPosition(1);
-            botStartPoints[character.playerId][character.characterId] = cellPos;
+            SetStartPoint(playerCharacterStartPoint, tilemap.GetTile<MapTile>(playerCharacterStartPoint));
+            npcCharacterStartPoint = character.characterPosition;
         }
 
         isPlayerMoving = false;
@@ -383,45 +361,21 @@ public class OverworldMapController : MonoBehaviour
         chosenWorldBuilding = building;
     }
 
-    void Start()
+    private void AfterPlayersLoaded()
     {
-        playerController.SpawnPlayers(tilemap, 1);
+        var players = PlayerRegistry.Instance.GetAllPlayers();
 
+        playerCharacterStartPoint = players.Single(o => o.isRealPlayer).GetCurrentPlayerCharacter().characterPosition;
 
-        var playerCamera = playerController.player.GetCameraController().GetComponentInChildren<Camera>();
-        playerCamera.enabled = false;
-        currentCamera = topCamera;
-
-        var playerStartingPosition = playerController.player.GetPlayerPositionById(1);
-        var vec = tilemap.WorldToCell(playerStartingPosition);
-        playerController.player.SetCharacterPosition(vec, 1);
-
-        previousStartPos = playerController.player.GetCharacterPosition(1);
-        var t = tilemap.GetTile<MapTile>(vec);
+        var t = tilemap.GetTile<MapTile>(playerCharacterStartPoint);
         if (t != null)
         {
-            SetStartPoint(vec, t);
+            SetStartPoint(playerCharacterStartPoint, t);
         }
 
-        botStartPoints = playerController.GetBotsCharacterPositions();
-
-        characterStartPoints = new()
-        {
-            { 1, vec },
-        };
-
-        foreach (var item in characterStartPoints)
-        {
-            tilemap.SetTile(item.Value, StartTile);
-        }
-
-        foreach (var bot in botStartPoints)
-        {
-            foreach (var position in bot.Value)
-            {
-                tilemap.SetTile(position.Value, StartTile);
-            }
-        }
+        npcCharacterStartPoint = playerController.GetBot().GetComponent<NPCModel>().GetCurrentPlayerCharacter().characterPosition;
+        tilemap.SetTile(playerCharacterStartPoint, StartTile);
+        tilemap.SetTile(npcCharacterStartPoint, StartTile);
     }
 
     private void DisplayPath(List<TileInfo> closedList)
@@ -453,13 +407,9 @@ public class OverworldMapController : MonoBehaviour
 
     private MapTile start;
 
-    private TileBase previousStart;
-
     private Vector3Int previousStartPos;
 
     private MapTile end;
-
-    private TileBase previousEnd;
 
     private Vector3Int previousEndPos;
 
@@ -493,24 +443,15 @@ public class OverworldMapController : MonoBehaviour
 
             if (t != null && Input.GetMouseButtonDown(0))
             {
-                ClearTiles();
+                if (!previousEndPos.Equals(cellPos))
+                {
+                    ClearTiles();
+                }
+
                 if (t.IsTraversable)
                 {
                     SetEndPoint(cellPos, t);
                     FindPath();
-                }
-                else
-                {
-                    foreach (var bot in playerController.bots)
-                    {
-                        var character = bot.GetComponent<PlayerModel>().GetCurrentPlayerCharacter();
-
-                        if (character.characterPosition == cellPos)
-                        {
-                            SetEndPoint(cellPos, t);
-                            FindPath();
-                        }
-                    }
                 }
             }
         }
@@ -518,6 +459,11 @@ public class OverworldMapController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Return))
         {
             EndTurn();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            HandleCharacterDefeated(playerController.GetBot().GetComponent<PlayerModel>().GetCurrentPlayerCharacter());
         }
     }
 
@@ -563,7 +509,7 @@ public class OverworldMapController : MonoBehaviour
         playerController.bots.ForEach(o => botModels.Add(o.GetComponent<NPCModel>()));
         var botModel = botModels.Single(o => o.playerId == currentPlayerId);
 
-        chosenWorldBuilding = botModel.ChosenBuilding != null ? botModel.ChosenBuilding : null;
+        chosenWorldBuilding = botModel.ChosenBuilding != null && botModel.ReachedDestination ? botModel.ChosenBuilding : null;
 
         pathfindingResult = new(path);
         if (pathfindingResult.Count == 0) return;
@@ -572,73 +518,11 @@ public class OverworldMapController : MonoBehaviour
 
         var tile = tilemap.GetTile<MapTile>(cellPos);
 
+        tilemap.SetTile(botModel.GetCurrentPlayerCharacter().characterPosition, PathTile);
         SetEndPoint(cellPos, tile);
         DisplayPath(pathfindingResult);
 
         MovePlayer(botModel.GetCurrentPlayerCharacter());
-    }
-
-    public void HandleBotMove(List<Tuple<int, List<TileInfo>>> botResults)
-    {
-        //Move bots 
-        int currentPlayerId = playerController.currentPlayerId;
-
-        List<NPCModel> botModels = new();
-        playerController.bots.ForEach(o => botModels.Add(o.GetComponent<NPCModel>()));
-        var botModel = botModels.Single(o => o.playerId == currentPlayerId);
-
-        foreach (var characterResult in botResults)
-        {
-            var character = botModel.GetCharacterById(characterResult.Item1);
-            pathfindingResult = characterResult.Item2;
-
-            if (pathfindingResult.Count != 0)
-            {
-                var cellPos = pathfindingResult[pathfindingResult.Count - 1].position;
-
-                var tile = tilemap.GetTile<MapTile>(cellPos);
-
-                SetEndPoint(cellPos, tile);
-                pathfindingResult.RemoveAt(pathfindingResult.Count - 1);
-                DisplayPath(pathfindingResult);
-                previousStartPos = botStartPoints[currentPlayerId][character.characterId];
-
-                tilemap.SetTile(previousStartPos, PathTile);
-                MovePlayer(character);
-            }
-        }
-    }
-
-    public void HandleBotMoveSingle(Tuple<int, List<TileInfo>> botResult)
-    {
-        //Move bots 
-        int currentPlayerId = playerController.currentPlayerId;
-
-        //List<PlayerModel> botModels = new();
-        //playerController.bots.ForEach(o => botModels.Add(o.GetComponent<PlayerModel>()));
-        //var botModel = botModels.Single(o => o.playerId == currentPlayerId);
-
-        var botModel = PlayerRegistry.Instance.GetAllPlayers().SingleOrDefault(o => o.playerId == currentPlayerId);
-
-        if (botModel == null) return;
-
-        var character = botModel.GetCurrentPlayerCharacter();
-        pathfindingResult = botResult.Item2;
-
-        if (pathfindingResult.Count != 0)
-        {
-            var cellPos = pathfindingResult[pathfindingResult.Count - 1].position;
-
-            var tile = tilemap.GetTile<MapTile>(cellPos);
-
-            SetEndPoint(cellPos, tile);
-            pathfindingResult.RemoveAt(pathfindingResult.Count - 1);
-            DisplayPath(pathfindingResult);
-            previousStartPos = botStartPoints[currentPlayerId][character.characterId];
-
-            tilemap.SetTile(previousStartPos, PathTile);
-            MovePlayer(character);
-        }
     }
 
     public void MovePlayer(PlayerCharacterController currentCharacter)
@@ -688,8 +572,6 @@ public class OverworldMapController : MonoBehaviour
     private void FindPath()
     {
         var watch = System.Diagnostics.Stopwatch.StartNew();
-        start = tilemap.GetTile<MapTile>(previousStartPos);
-        end = tilemap.GetTile<MapTile>(previousEndPos);
 
         pathingController.SetParameters(tilemap, previousStartPos, previousEndPos);
         pathfindingResult = pathingController.FindPath();
@@ -710,50 +592,22 @@ public class OverworldMapController : MonoBehaviour
 
     private void SetEndPoint(Vector3Int cellPos, MapTile t)
     {
-        if (previousEnd != null)
-        {
-            var script = tilemap.GetTile<MapTile>(previousEndPos);
-            script.IsEnd = false; script.IsStart = false;
-            tilemap.SetTile(previousEndPos, previousEnd);
-        }
-
-        t.IsStart = false; t.IsEnd = true;
-        tilemap.SetTile(cellPos, EndTile);
-        previousEnd = t;
+        tilemap.SetTile(previousEndPos, PathTile);
+        tilemap.SetTile(cellPos, PathResultTile);
         previousEndPos = cellPos;
     }
 
     private void RemoveEndPoint()
     {
-        if (previousEnd != null)
+        if(previousEndPos != Vector3Int.zero)
         {
-            var script = tilemap.GetTile<MapTile>(previousEndPos);
-            script.IsEnd = false; script.IsStart = false;
-            tilemap.SetTile(previousEndPos, previousEnd);
-
-            //[ToDo] fix 
-            //var currentCharacterPosition = playerController.player.GetPlayerPosition();
-            //previousEndPos = tilemap.WorldToCell(currentCharacterPosition);
+            tilemap.SetTile(previousEndPos, PathTile);
         }
     }
 
     private void SetStartPoint(Vector3Int cellPos, MapTile t)
     {
-        if (previousStart != null)
-        {
-            var script = tilemap.GetTile<MapTile>(previousStartPos);
-
-            if (!script.IsEnd)
-            {
-                script.IsStart = false; script.IsEnd = false;
-                tilemap.SetTile(previousStartPos, previousStart);
-            }
-
-        }
-
-        t.IsStart = true; t.IsEnd = false;
         tilemap.SetTile(cellPos, StartTile);
-        previousStart = t;
         previousStartPos = cellPos;
     }
 
@@ -766,21 +620,11 @@ public class OverworldMapController : MonoBehaviour
 
         pathfindingResult.Clear();
 
-        foreach (var item in characterStartPoints)
-        {
-            tilemap.SetTile(item.Value, StartTile);
-        }
-
-        foreach (var bot in botStartPoints)
-        {
-            foreach (var position in bot.Value)
-            {
-                tilemap.SetTile(position.Value, StartTile);
-            }
-        }
+        tilemap.SetTile(playerCharacterStartPoint, StartTile);
+        tilemap.SetTile(npcCharacterStartPoint, StartTile);
     }
 
-    public static Action OnWeekEnd;
+    public static System.Action OnWeekEnd;
 
     public void EndTurn()
     {

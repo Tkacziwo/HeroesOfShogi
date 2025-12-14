@@ -80,21 +80,15 @@ public class ResourceUIController : MonoBehaviour
     {
         if (!player.isRealPlayer) return;
 
-        float size = playerCharacterPanel.GetComponent<RectTransform>().rect.width;
         float posX = 60f;
 
         float posY = -60f;
 
-        foreach (var character in player.GetPlayerCharacters())
-        {
-            var obj = Instantiate(playerCharacterPanel, new(posX, posY), Quaternion.identity);
-            obj.transform.SetParent(canvasRef.transform, false);
+        var obj = Instantiate(playerCharacterPanel, new(posX, posY), Quaternion.identity);
+        obj.transform.SetParent(canvasRef.transform, false);
 
-            var panelScript = obj.GetComponent<PanelController>();
-            panelScript.SetPlayer(character);
-            //obj.transform.position = new Vector3(posX, posY);
-            posX += size;
-        }
+        var panelScript = obj.GetComponent<PanelController>();
+        panelScript.SetPlayer(player.GetCurrentPlayerCharacter());
 
         UpdatePlayerCityPanels(player);
     }

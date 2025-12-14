@@ -8,15 +8,48 @@ public class PanelController : MonoBehaviour
 
     City city;
 
+    private int MaxMovementPoints { get; set; }
+
+    private int PlayerId { get; set; }
+
     public static Action<PlayerCharacterController> PlayerChanged;
 
     public static Action<City> CityOpened;
 
+    private void OnEnable()
+    {
+        PlayerEvents.OnPlayerEndMove += UpdateMovementPointsString;
+        OverworldMapController.onTurnEnd += ResetMovementPointsString;
+    }
+
+    private void OnDisable()
+    {
+        PlayerEvents.OnPlayerEndMove -= UpdateMovementPointsString;
+        OverworldMapController.onTurnEnd -= ResetMovementPointsString;
+    }
+
     public void SetPlayer(PlayerCharacterController character)
     {
         this.character = character;
-        var characterId = character.characterId;
-        this.GetComponentInChildren<TextMeshProUGUI>().text = characterId.ToString();
+        PlayerId = character.playerId;
+        MaxMovementPoints = character.GetMovementPoints();
+        UpdateMovementPointsString(character);
+    }
+
+    public void UpdateMovementPointsString(PlayerCharacterController character)
+    {
+        if (PlayerId != character.playerId) return;
+
+        string movementPointsString = $"{character.GetRemainingMovementPoints()} / {character.GetMovementPoints()}";
+
+        this.GetComponentInChildren<TextMeshProUGUI>().text = movementPointsString;
+    }
+
+    public void ResetMovementPointsString()
+    {
+        string movementPointsString = $"{MaxMovementPoints} / {MaxMovementPoints}";
+
+        this.GetComponentInChildren<TextMeshProUGUI>().text = movementPointsString;
     }
 
     public void SetCity(City city)
@@ -28,7 +61,7 @@ public class PanelController : MonoBehaviour
 
     public void OnClick()
     {
-        if(character != null)
+        if (character != null)
         {
             OnPlayerPanelClicked();
         }

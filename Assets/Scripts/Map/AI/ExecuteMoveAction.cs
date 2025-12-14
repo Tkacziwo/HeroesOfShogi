@@ -19,7 +19,7 @@ public partial class ExecuteMoveAction : Action
 
 
         PathingResult.Instance.ClearPath();
-        AIEvents.OnBotMove?.Invoke(botResults);
+        //AIEvents.OnBotMove?.Invoke(botResults);
 
         return Status.Success;
     }

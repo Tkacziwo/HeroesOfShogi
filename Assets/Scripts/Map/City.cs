@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
@@ -50,17 +51,26 @@ public class City : InteractibleBuilding
             producedResource = building.producedResource,
             producedUnits = building.producedUnits
         };
+
+        var barracks = cityBuildings.Single(o => o.name == "Barracks");
+        producedUnits.goldGenerals = (int)barracks.producedAmount;
+        producedUnits.silverGenerals = (int)barracks.producedAmount;
+
+        var temple = cityBuildings.Single(o => o.name == "Temple");
+        producedUnits.bishops = (int)temple.producedAmount;
+        var cauldrons = cityBuildings.Single(o => o.name == "Steel Cauldrons");
+        producedUnits.rooks = (int)cauldrons.producedAmount;
     }
 
     private void Start()
     {
         InitCity();
-
+        cityName = Guid.NewGuid().ToString();
         producedUnits = new()
         {
-            pawns = 5,
-            lances = 3,
-            horses = 2,
+            pawns = 3,
+            lances = 2,
+            horses = 1,
             goldGenerals = 0,
             silverGenerals = 0,
             rooks = 0,
@@ -69,23 +79,29 @@ public class City : InteractibleBuilding
         BuildingRegistry.Instance?.Register(this);
     }
 
+    public ProducedUnits GetAvailableUnits()
+    {
+        return producedUnits;
+    }
+
     private void HandleWeekEnd()
     {
-        //Replenish units
-        producedUnits.pawns = 5;
-        producedUnits.lances = 3;
-        producedUnits.horses = 2;
+        producedUnits.pawns = 3;
+        producedUnits.lances = 2;
+        producedUnits.horses = 1;
+
+        var barracks = cityBuildings.Single(o => o.name == "Barracks");
+        producedUnits.goldGenerals = (int)barracks.producedAmount;
+        producedUnits.silverGenerals = (int)barracks.producedAmount;
+
+        var temple = cityBuildings.Single(o => o.name == "Temple");
+        producedUnits.bishops = (int)temple.producedAmount;
+        var cauldrons = cityBuildings.Single(o => o.name == "Steel Cauldrons");
+        producedUnits.rooks = (int)cauldrons.producedAmount;
     }
 
     public bool HasAvailableUnits()
-    {
-        if (producedUnits.lances != 0 || producedUnits.pawns != 0 || producedUnits.horses != 0)
-        {
-            return true;
-        }
-
-        return false;
-    }
+        => producedUnits.HasAvailableUnits();
 
     private void InitCity()
         => cityBuildings = new(StaticData.cityBuildings);
@@ -103,4 +119,7 @@ public class ProducedUnits
     public int silverGenerals;
     public int rooks;
     public int bishops;
+
+    public bool HasAvailableUnits()
+        => pawns != 0 || lances != 0 || horses != 0 || goldGenerals != 0 || silverGenerals != 0 || rooks != 0 || bishops != 0;
 }

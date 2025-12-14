@@ -5,7 +5,6 @@ using Action = Unity.Behavior.Action;
 using Unity.Properties;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Win32.SafeHandles;
 
 [Serializable, GeneratePropertyBag]
 [NodeDescription(name: "RecruitUnits", story: "[Self] recruits units", category: "Action", id: "c83f82cb4c83288da8fd790f32038f8d")]
@@ -13,13 +12,16 @@ public partial class RecruitUnitsAction : Action
 {
     [SerializeReference] public BlackboardVariable<GameObject> Self;
     [SerializeReference] public BlackboardVariable<City> city;
-    [SerializeReference] public BlackboardVariable<PlayerCharacterController> playerInCity;
 
     private readonly List<Unit> unitTemplates = StaticData.unitTemplates;
 
     protected override Status OnStart()
     {
-        var units = playerInCity.Value.AssignedUnits;
+        var npc = Self.Value.GetComponent<NPCModel>();
+
+        var character = npc.GetCurrentPlayerCharacter();
+
+        List<Unit> units = new(character.AssignedUnits);
 
         var unitsDict = GetUnitsDictionary(units);
 
@@ -46,7 +48,7 @@ public partial class RecruitUnitsAction : Action
 
         foreach (var unitType in unitMaxLimits)
         {
-            var newAmount = RecruitUnits(availableUnits[unitType.Key], unitsDict[unitType.Key], unitMaxLimits[unitType.Key], playerInCity.Value.armySizeLimit - size);
+            var newAmount = RecruitUnits(availableUnits[unitType.Key], unitsDict[unitType.Key], unitMaxLimits[unitType.Key], character.armySizeLimit - size);
 
             int oldAmount = unitsDict[unitType.Key];
 
@@ -56,8 +58,8 @@ public partial class RecruitUnitsAction : Action
             size += (newAmount - oldAmount) * unitTemplates.Single(o => o.UnitName == unitType.Key).SizeInArmy;
         }
 
-        playerInCity.Value.AssignedUnits.Clear();
-        playerInCity.Value.AssignedUnits.Add(unitTemplates.Single(o => o.UnitName == UnitEnum.King));
+        units.Clear();
+        units.Add(unitTemplates.Single(o => o.UnitName == UnitEnum.King));
 
         foreach (var unitType in unitsDict)
         {
@@ -65,11 +67,11 @@ public partial class RecruitUnitsAction : Action
 
             for (int i = 0; i < unitType.Value; i++)
             {
-                playerInCity.Value.AssignedUnits.Add(template);
+                units.Add(template);
             }
-
         }
 
+        character.AssignedUnits = new(units);
 
         Debug.Log("Bot recruited units");
         return Status.Success;

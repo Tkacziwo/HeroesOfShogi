@@ -15,44 +15,21 @@ public partial class MoveToTargetAction : Action
 {
     [SerializeReference] public BlackboardVariable<GameObject> Self;
     [SerializeReference] public BlackboardVariable<Tilemap> tilemap;
-    private PathingController pathing = new();
 
-    public static Action<List<Tuple<int, List<TileInfo>>>> OnBotMove;
+    private PathingController Pathing { get; set; } = new();
+
 
     protected override Status OnStart()
     {
         var character = Self.Value.GetComponent<NPCModel>().GetCurrentPlayerCharacter();
-        List<Tuple<int, List<TileInfo>>> botResults = new();
 
         var startPos = character.characterPosition;
 
-        Vector3Int endPos; 
+        var npc = Self.Value.GetComponent<NPCModel>();
 
-        if (!character.unreachedBotDestination.Equals(new Vector3Int(0, 0, 0)))
-        {
-            endPos = character.unreachedBotDestination;
-            character.unreachedBuilding = null;
-        }
-        else
-        {
-            endPos = GetRandomWalkableTile(tilemap, startPos);
-            character.unreachedBuilding = null;
-        }
-
-        character.unreachedBotDestination = new Vector3Int(0, 0, 0);
-
-        var path = FindPath(startPos, endPos);
-
-        if (path.Count > character.GetRemainingMovementPoints())
-        {
-            character.unreachedBotDestination = endPos;
-            character.unreachedBuilding = null;
-        }
-
-
-        botResults.Add(new(character.characterId, path));
-
-        OnBotMove?.Invoke(botResults);
+        npc.RemainingPath = FindPath(startPos, GetRandomWalkableTile(tilemap, startPos));
+        npc.ChosenBuilding = null;
+        npc.ReachedDestination = false;
         return Status.Success;
     }
 
@@ -65,7 +42,7 @@ public partial class MoveToTargetAction : Action
             int x = UnityEngine.Random.Range(bounds.xMin, bounds.xMax);
             int y = UnityEngine.Random.Range(bounds.yMin, bounds.yMax);
 
-            Vector3Int pos = new Vector3Int(x, y, 0);
+            Vector3Int pos = new(x, y, 0);
 
             if (map.HasTile(pos))
             {
@@ -82,16 +59,7 @@ public partial class MoveToTargetAction : Action
 
     private List<TileInfo> FindPath(Vector3Int start, Vector3Int end)
     {
-        pathing.SetParameters(tilemap, start, end);
-        return pathing.FindPath();
-    }
-
-    protected override Status OnUpdate()
-    {
-        return Status.Success;
-    }
-
-    protected override void OnEnd()
-    {
+        Pathing.SetParameters(tilemap, start, end);
+        return Pathing.FindPath();
     }
 }

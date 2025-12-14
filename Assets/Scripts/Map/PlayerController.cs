@@ -163,6 +163,7 @@ public class PlayerController : MonoBehaviour
 
     public void SpawnPlayers(Tilemap tilemap, int botCount)
     {
+        PlayerRegistry.Instance.NumberOfPlayers = botCount + 1;
         int playerId = 1;
 
         int index = rnd.Next(playerStartingPositions.Count);
@@ -302,12 +303,22 @@ public class PlayerController : MonoBehaviour
             var agent = bot.GetComponent<BehaviorGraphAgent>();
             agent.BlackboardReference.SetVariableValue("tilemap", tilemap);
             agent.BlackboardReference.SetVariableValue("IsMyTurn", true);
+            agent.BlackboardReference.SetVariableValue("reachedCity", false);
             agent.Start();
         }
         catch (Exception ex)
         {
             Debug.LogError(ex.Message);
         }
+    }
+
+    public GameObject GetBot()
+    {
+        if(bots != null)
+        {
+            return bots[0];
+        }
+        return null;
     }
 
     public PlayerCharacterController GetCurrentPlayerCharacter()

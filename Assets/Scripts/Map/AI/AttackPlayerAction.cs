@@ -21,6 +21,7 @@ public partial class AttackPlayerAction : Action
     protected override Status OnStart()
     {
         var character = Self.Value.GetComponent<NPCModel>().GetCurrentPlayerCharacter();
+        var npc = Self.Value.GetComponent<NPCModel>();
 
         var players = PlayerRegistry.Instance.GetAllPlayers();
 
@@ -43,7 +44,11 @@ public partial class AttackPlayerAction : Action
             }
         }
 
-        if (chosenCharacter != null)
+        if (chosenCharacter == null)
+        {
+            result.Value = false;
+        }
+        else
         {
             Pathing.SetParameters(tilemap.Value, character.characterPosition, chosenCharacter.characterPosition);
             var path = Pathing.FindPath();
@@ -52,15 +57,19 @@ public partial class AttackPlayerAction : Action
                 position = chosenCharacter.characterPosition,
             });
 
+            npc.RemainingPath = path;
+            npc.ChosenBuilding = null;
+
             if (path != null && path.Count != 0)
             {
-                PathingResult.Instance.SetPath(path);
                 result.Value = true;
-                return Status.Success;
+            }
+            else
+            {
+                result.Value = false;
             }
         }
 
-        result.Value = false;
-        return Status.Failure;
+        return Status.Success;
     }
 }

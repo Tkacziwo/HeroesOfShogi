@@ -39,7 +39,7 @@ public class AssignPanelsController : MonoBehaviour
 
     [SerializeField] private Sprite tempSprite;
 
-    private ProducedUnits selectedUnits = new();
+    private readonly ProducedUnits selectedUnits = new();
 
     private ProducedUnits cityUnits = new();
 
@@ -89,6 +89,10 @@ public class AssignPanelsController : MonoBehaviour
         cityUnits.pawns -= selectedUnits.pawns;
         cityUnits.lances -= selectedUnits.lances;
         cityUnits.horses -= selectedUnits.horses;
+        cityUnits.silverGenerals -= selectedUnits.silverGenerals;
+        cityUnits.goldGenerals -= selectedUnits.goldGenerals;
+        cityUnits.rooks -= selectedUnits.rooks;
+        cityUnits.bishops -= selectedUnits.bishops;
 
         OnUnitsRecruit?.Invoke(cityUnits);
 
@@ -115,6 +119,22 @@ public class AssignPanelsController : MonoBehaviour
         else if (unit.UnitName == UnitEnum.Horse)
         {
             selectedUnits.horses = amount;
+        }
+        else if (unit.UnitName == UnitEnum.SilverGeneral)
+        {
+            selectedUnits.silverGenerals = amount;
+        }
+        else if (unit.UnitName == UnitEnum.GoldGeneral)
+        {
+            selectedUnits.goldGenerals = amount;
+        }
+        else if (unit.UnitName == UnitEnum.Rook)
+        {
+            selectedUnits.rooks = amount;
+        }
+        else if (unit.UnitName == UnitEnum.Bishop)
+        {
+            selectedUnits.bishops = amount;
         }
 
         for (int i = 0; i < selectedUnits.pawns; i++)
@@ -163,16 +183,8 @@ public class AssignPanelsController : MonoBehaviour
     }
 
     private int CountCurrentSize(List<Unit> units)
-    {
-        int sum = 0;
-
-        foreach (var unit in units)
-        {
-            sum += unit.SizeInArmy;
-        }
-
-        return sum;
-    }
+        => units.Select(o => o.SizeInArmy).Sum();
+    
 
     private void OnEnable()
     {

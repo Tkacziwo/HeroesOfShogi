@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,6 +9,10 @@ public class PlayerRegistry : MonoBehaviour
 
     public static PlayerRegistry Instance { get; set; }
 
+    public int NumberOfPlayers { get; set; } = 0;
+
+    public static Action OnPlayersLoaded;
+
     private void Awake()
     {
         Instance = this;
@@ -16,7 +21,10 @@ public class PlayerRegistry : MonoBehaviour
     public void Register(PlayerModel b)
     {
         if (!players.Contains(b))
+        {
             players.Add(b);
+            CheckPlayersLoaded();
+        }
     }
 
     public void Unregister(PlayerModel b)
@@ -27,5 +35,13 @@ public class PlayerRegistry : MonoBehaviour
     public List<PlayerModel> GetAllPlayers()
     {
         return players;
+    }
+
+    public void CheckPlayersLoaded()
+    {
+        if (NumberOfPlayers == players.Count)
+        {
+            OnPlayersLoaded?.Invoke();
+        }
     }
 }

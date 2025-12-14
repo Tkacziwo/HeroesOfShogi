@@ -15,6 +15,7 @@ public partial class ContinuePathAction : Action
 
     protected override Status OnStart()
     {
+        var npc = Self.Value.GetComponent<NPCModel>();
         var remainingPath = Self.Value.GetComponent<NPCModel>().RemainingPath;
 
         int remainingMovementPoints = Self.Value.GetComponent<NPCModel>().GetCurrentPlayerCharacter().GetRemainingMovementPoints();
@@ -24,13 +25,14 @@ public partial class ContinuePathAction : Action
         if (remainingPath.Count <= remainingMovementPoints)
         {
             traversedPath = new(remainingPath);
+            npc.ReachedDestination = true;
             OnNPCContinuePath?.Invoke(traversedPath);
             remainingPath.Clear();
         }
         else
         {
             traversedPath = new(remainingPath.GetRange(0, remainingMovementPoints));
-
+            npc.ReachedDestination = false;
             OnNPCContinuePath?.Invoke(traversedPath);
 
             remainingPath.RemoveRange(0, remainingMovementPoints);

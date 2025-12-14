@@ -97,9 +97,6 @@ public class PlayerCharacterController : MonoBehaviour
     public int GetMovementPoints()
         => this.movementPoints;
 
-    public int GetUsedMovementPointsForCurrentTurn()
-        => this.usedMovementPointsForCurrentTurn;
-
     public void ResetUsedMovementPoints()
         => this.usedMovementPointsForCurrentTurn = 0;
 
