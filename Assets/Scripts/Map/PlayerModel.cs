@@ -66,7 +66,7 @@ public class PlayerModel : MonoBehaviour
     private void UpdateCameraPosition(Transform transform)
     {
         if (cameraController.isCameraFocusedOnPlayer)
-            cameraController.UpdateCameraPosition(transform);
+            cameraController.SetCameraPosition(transform);
     }
 
     public void PlayerBeginMove()
@@ -138,7 +138,7 @@ public class PlayerModel : MonoBehaviour
         character.SetPlayerPosition(targetPos);
         //character.SetTargetPosition(worldTargetPos);
         //character.SetIsMoving(true);
-        cameraController.UpdateCameraPosition(character.transform);
+        cameraController.SetCameraPosition(character.transform);
 
         playerCharacters = new List<PlayerCharacterController>() { character };
 
@@ -159,7 +159,7 @@ public class PlayerModel : MonoBehaviour
     {
         character = playerCharacters[characterId - 1];
         character.OnPlayerMoveUpdateCameraPosition += UpdateCameraPosition;
-        cameraController.UpdateCameraPosition(character.transform);
+        cameraController.SetCameraPosition(character.transform);
     }
 
     public Vector3Int GetCharacterPosition(int characterIndex = 0)

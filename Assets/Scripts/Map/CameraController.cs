@@ -17,12 +17,12 @@ public class CameraController : MonoBehaviour
 
     private float cameraDistance = 6;
 
-    private float maxCameraDistance = 10;
+    private readonly float maxCameraDistance = 10;
 
-    private float minCameraDistance = 2;
+    private readonly float minCameraDistance = 2;
 
-    private float maxCameraXAngle = 75;
-    private float minCameraXAngle = 55;
+    private readonly float maxCameraXAngle = 75;
+    private readonly float minCameraXAngle = 55;
 
     [SerializeField] private float mouseSensitivity = 10f;
 
@@ -34,44 +34,40 @@ public class CameraController : MonoBehaviour
     {
         BattleDeploymentController.OnBattleStarted += HandleBattleStarted;
         GameOverController.OnBackToMap += HandleBattleEnded;
+        PanelController.OnFocusOnPlayer += FocusCameraOnCharacter;
     }
 
     private void OnDisable()
     {
         BattleDeploymentController.OnBattleStarted -= HandleBattleStarted;
         GameOverController.OnBackToMap -= HandleBattleEnded;
+        PanelController.OnFocusOnPlayer -= FocusCameraOnCharacter;
     }
 
-    
-
-    public void UpdateCameraPosition(Transform transform)
+    public void SetCameraPosition(Transform transform)
     {
-        var characterTransform = transform.position;
-        rotationPivot = characterTransform;
-
-        PositionCameraOnCharacter();
+        rotationPivot = transform.position;
+        UpdateCameraPosition();
     }
 
-    public void PositionCameraOnCharacter()
+    public void UpdateCameraPosition()
     {
         var offset = new Vector3(0, 0, -cameraDistance);
         offset = cam.transform.rotation * offset;
-
-        if (isCameraFocusedOnPlayer)
-        {
-            cam.transform.position = rotationPivot + offset + new Vector3(0, cameraOffset.y, 0);
-        }
+        cam.transform.position = rotationPivot + offset + new Vector3(0, cameraOffset.y, 0);
     }
-
 
     public void InitCamera()
     {
         cam = this.GetComponentInChildren<Camera>();
-        cam.transform.rotation = Quaternion.Euler(60, 0, 0);
-        cam.transform.position = new(0, 10, 0);
+        cam.transform.SetPositionAndRotation(new(0, 10, 0), Quaternion.Euler(60, 0, 0));
     }
 
-
+    public void FocusCameraOnCharacter(Transform transform)
+    {
+        isCameraFocusedOnPlayer = true;
+        SetCameraPosition(transform);
+    }
 
     private void Update()
     {
@@ -91,31 +87,26 @@ public class CameraController : MonoBehaviour
             euler.x = Mathf.Clamp(euler.x, minCameraXAngle, maxCameraXAngle);
             cam.transform.rotation = Quaternion.Euler(euler);
 
-            PositionCameraOnCharacter();
+            if (isCameraFocusedOnPlayer)
+            {
+                UpdateCameraPosition();
+            }
         }
 
         var scroll = Input.GetAxis("Mouse ScrollWheel");
-        if (scroll != 0)
-        {
-            Debug.Log("Scroll: " + scroll);
-        }
         if (scroll > 0.01f || scroll < -0.01f)
         {
             var newCameraDistance = cameraDistance - scroll * mouseSensitivity;
 
             if (newCameraDistance <= maxCameraDistance && newCameraDistance >= minCameraDistance)
             {
-
                 cameraDistance = newCameraDistance;
                 cameraOffset.y -= scroll * mouseSensitivity;
-
-                PositionCameraOnCharacter();
+                UpdateCameraPosition();
             }
         }
 
-
         var rotationForMoving = cam.transform.rotation.eulerAngles.y;
-
 
         var radians = Mathf.Deg2Rad * rotationForMoving;
 
@@ -142,24 +133,6 @@ public class CameraController : MonoBehaviour
             isCameraFocusedOnPlayer = false;
             cam.transform.position = new Vector3(cam.transform.position.x + offsetZ, cam.transform.position.y, cam.transform.position.z - offsetX);
         }
-    }
-
-
-
-    private void OnGUI()
-    {
-        //Event e = Event.current;
-        //if (e.isKey)
-        //{
-        //    switch (e.isKey)
-        //    {
-        //        case KeyCode.A:
-
-        //            break;
-        //        default:
-        //            break;
-        //    }
-        //}
     }
 
     private void HandleBattleStarted(bool r)

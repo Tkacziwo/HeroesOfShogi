@@ -16,6 +16,8 @@ public class PanelController : MonoBehaviour
 
     public static Action<City> CityOpened;
 
+    public static Action<Transform> OnFocusOnPlayer;
+
     private void OnEnable()
     {
         PlayerEvents.OnPlayerEndMove += UpdateMovementPointsString;
@@ -70,6 +72,10 @@ public class PanelController : MonoBehaviour
             OnCityPanelClicked();
         }
     }
+
+
+    public void FocusOnPlayer()
+        => OnFocusOnPlayer?.Invoke(character.transform);
 
     public void OnPlayerPanelClicked()
     {

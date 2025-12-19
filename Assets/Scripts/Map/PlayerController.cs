@@ -116,6 +116,19 @@ public class PlayerController : MonoBehaviour
         return null;
     }
 
+    public bool IsPlayerOverTile(Vector3Int tilePosition)
+    {
+        if(player.GetCurrentPlayerCharacter().characterPosition.Equals(tilePosition)
+            || bots[0].GetComponent<NPCModel>().GetCurrentPlayerCharacter().characterPosition.Equals(tilePosition))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))
@@ -151,7 +164,7 @@ public class PlayerController : MonoBehaviour
     private readonly List<Vector3Int> playerStartingPositions = new()
     {
         new(7,3,0),
-        new(40,15,0),
+        new(36,15,0),
         new(15,40,0),
         new(43,49,0),
         new(53,3,0)

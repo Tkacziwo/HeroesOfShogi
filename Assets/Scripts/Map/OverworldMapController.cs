@@ -144,7 +144,7 @@ public class OverworldMapController : MonoBehaviour
             npcPlayer.UpdateCharacter(winner);
 
             realPlayer.KillCharacter();
-            
+
             foreach (var building in buildings)
             {
                 if (building is City city)
@@ -283,7 +283,6 @@ public class OverworldMapController : MonoBehaviour
     public void FindPathToBuilding(InteractibleBuilding building)
     {
         //finding neighbours of tiles;
-        if (chosenWorldBuilding == building) return;
         if (pathfindingResult.Count > 0) ClearTiles();
 
         List<Vector3Int> traversableTiles = new();
@@ -448,7 +447,7 @@ public class OverworldMapController : MonoBehaviour
                     ClearTiles();
                 }
 
-                if (t.IsTraversable)
+                if (t.IsTraversable || (!playerCharacterStartPoint.Equals(cellPos) && playerController.IsPlayerOverTile(cellPos)))
                 {
                     SetEndPoint(cellPos, t);
                     FindPath();
@@ -461,10 +460,10 @@ public class OverworldMapController : MonoBehaviour
             EndTurn();
         }
 
-        if (Input.GetKeyDown(KeyCode.Tab))
-        {
-            HandleCharacterDefeated(playerController.GetBot().GetComponent<PlayerModel>().GetCurrentPlayerCharacter());
-        }
+        //if (Input.GetKeyDown(KeyCode.Tab))
+        //{
+        //    HandleCharacterDefeated(playerController.GetBot().GetComponent<PlayerModel>().GetCurrentPlayerCharacter());
+        //}
     }
 
 
@@ -504,6 +503,7 @@ public class OverworldMapController : MonoBehaviour
     public void HandleNPCContinuesPath(List<TileInfo> path)
     {
         int currentPlayerId = playerController.currentPlayerId;
+        tilemap.SetTile(playerCharacterStartPoint, StartTile);
 
         List<NPCModel> botModels = new();
         playerController.bots.ForEach(o => botModels.Add(o.GetComponent<NPCModel>()));
@@ -521,7 +521,7 @@ public class OverworldMapController : MonoBehaviour
         tilemap.SetTile(botModel.GetCurrentPlayerCharacter().characterPosition, PathTile);
         SetEndPoint(cellPos, tile);
         DisplayPath(pathfindingResult);
-
+        //tilemap.SetTile(npcCharacterStartPoint, StartTile);
         MovePlayer(botModel.GetCurrentPlayerCharacter());
     }
 
@@ -588,18 +588,23 @@ public class OverworldMapController : MonoBehaviour
         Debug.Log($"Elapsed: {elapsed} seconds");
         watch.Stop();
         chosenWorldBuilding = null;
+        tilemap.SetTile(playerCharacterStartPoint, StartTile);
+        tilemap.SetTile(npcCharacterStartPoint, StartTile);
     }
 
     private void SetEndPoint(Vector3Int cellPos, MapTile t)
     {
-        tilemap.SetTile(previousEndPos, PathTile);
+        if (!previousEndPos.Equals(Vector3Int.zero))
+        {
+            tilemap.SetTile(previousEndPos, PathTile);
+        }
         tilemap.SetTile(cellPos, PathResultTile);
         previousEndPos = cellPos;
     }
 
     private void RemoveEndPoint()
     {
-        if(previousEndPos != Vector3Int.zero)
+        if (previousEndPos != Vector3Int.zero)
         {
             tilemap.SetTile(previousEndPos, PathTile);
         }

@@ -129,6 +129,9 @@ public class LogicBoardManager
         List<Position> possibleMoves = new();
         int row = 1;
         int col = -1;
+
+        if (moveset == null || moveset.Length == 0) return new();
+
         for (int i = 1; i <= 9; i++)
         {
             //Regular pieces

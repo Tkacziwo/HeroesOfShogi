@@ -43,11 +43,13 @@ public class AssignPanelsController : MonoBehaviour
 
     private ProducedUnits cityUnits = new();
 
+    private List<Sprite> unitIcons = new();
 
     private readonly List<Unit> unitTemplates = StaticData.unitTemplates;
 
     public void Setup(PlayerCharacterController currentCharacter, ProducedUnits cityUnits)
     {
+        unitIcons = StaticData.unitIcons;
         this.currentCharacter = currentCharacter;
         this.cityUnits = cityUnits;
         units = this.currentCharacter.GetAssignedUnits();
@@ -65,19 +67,32 @@ public class AssignPanelsController : MonoBehaviour
 
     private void InitPanels()
     {
-        pawnPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.pawns, tempSprite, unitTemplates.Single(o => o.UnitName == UnitEnum.Pawn));
+        pawnPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.pawns, GetSpriteForUnit(UnitEnum.Pawn), unitTemplates.Single(o => o.UnitName == UnitEnum.Pawn));
 
-        lancePanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.lances, tempSprite, unitTemplates.Single(o => o.UnitName == UnitEnum.Lance));
+        lancePanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.lances, GetSpriteForUnit(UnitEnum.Lance), unitTemplates.Single(o => o.UnitName == UnitEnum.Lance));
 
-        horsePanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.horses, tempSprite, unitTemplates.Single(o => o.UnitName == UnitEnum.Horse));
+        horsePanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.horses, GetSpriteForUnit(UnitEnum.Horse), unitTemplates.Single(o => o.UnitName == UnitEnum.Horse));
 
-        silverGeneralPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.silverGenerals, tempSprite, unitTemplates.Single(o => o.UnitName == UnitEnum.SilverGeneral));
+        silverGeneralPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.silverGenerals, GetSpriteForUnit(UnitEnum.SilverGeneral), unitTemplates.Single(o => o.UnitName == UnitEnum.SilverGeneral));
 
-        goldGeneralPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.goldGenerals, tempSprite, unitTemplates.Single(o => o.UnitName == UnitEnum.GoldGeneral));
+        goldGeneralPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.goldGenerals, GetSpriteForUnit(UnitEnum.GoldGeneral), unitTemplates.Single(o => o.UnitName == UnitEnum.GoldGeneral));
 
-        rookPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.rooks, tempSprite, unitTemplates.Single(o => o.UnitName == UnitEnum.Rook));
+        rookPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.rooks, GetSpriteForUnit(UnitEnum.Rook), unitTemplates.Single(o => o.UnitName == UnitEnum.Rook));
 
-        bishopPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.bishops, tempSprite, unitTemplates.Single(o => o.UnitName == UnitEnum.Bishop));
+        bishopPanel.GetComponentInChildren<UnitAssignController>().Setup(cityUnits.bishops, GetSpriteForUnit(UnitEnum.Bishop), unitTemplates.Single(o => o.UnitName == UnitEnum.Bishop));
+    }
+
+    private Sprite GetSpriteForUnit(UnitEnum unitEnum)
+    {
+        Sprite chosenSprite = unitIcons.SingleOrDefault(o => o.name == unitEnum.ToString());
+        if(chosenSprite == null)
+        {
+            return tempSprite;
+        }
+        else
+        {
+            return chosenSprite;
+        }
     }
 
     public void OnClick()

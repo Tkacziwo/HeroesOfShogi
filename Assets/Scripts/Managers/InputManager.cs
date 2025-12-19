@@ -145,7 +145,7 @@ public class InputManager : MonoBehaviour
             if (terrain != null)
             {
                 var instantiated = Instantiate(terrain, active);
-                instantiated.GetComponent<Transform>().transform.position = new Vector3(-110, 10, -150);
+                instantiated.GetComponent<Transform>().transform.position = new Vector3(-30, 10, -25);
             }
         }
 
