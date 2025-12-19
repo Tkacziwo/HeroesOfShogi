@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class PlayerCharacterController : MonoBehaviour
 {
@@ -15,6 +16,8 @@ public class PlayerCharacterController : MonoBehaviour
 
     public Vector3Int characterPosition;
 
+    public int armySizeLimit = 30;
+
     public List<Unit> AssignedUnits { get; set; } = new();
 
     private Vector3 targetPosition;
@@ -26,18 +29,19 @@ public class PlayerCharacterController : MonoBehaviour
 
     private List<Vector3> path = new();
 
-    private List<Vector3Int> tilesPositions = new();
-
     private int pathIterator;
 
     public int playerId;
 
     public Color playerColor;
 
-    public static event Action<Vector3Int> OnPlayerOverTile;
+    public static event Action<Vector3> OnPlayerOverTile;
 
     public event Action<Transform> OnPlayerMoveUpdateCameraPosition;
 
+    public Vector3Int unreachedBotDestination;
+
+    public InteractibleBuilding unreachedBuilding;
     public void SetPlayerTransform(Vector3 newTransform)
         => this.transform.position = newTransform;
 
@@ -64,12 +68,10 @@ public class PlayerCharacterController : MonoBehaviour
         targetPosition = transform.position;
     }
 
-    public void SetPath(List<Vector3> path, List<Vector3Int> tiles)
+    public void SetPath(List<Vector3> path)
     {
-        if (path.Count == 0) { return; }
-
+        if (path.Count == 0) return;
         pathIterator = 0;
-        this.tilesPositions = tiles;
         this.path = new(path);
         isMoving = true;
         SetTargetPosition(path[0]);
@@ -94,9 +96,6 @@ public class PlayerCharacterController : MonoBehaviour
 
     public int GetMovementPoints()
         => this.movementPoints;
-
-    public int GetUsedMovementPointsForCurrentTurn()
-        => this.usedMovementPointsForCurrentTurn;
 
     public void ResetUsedMovementPoints()
         => this.usedMovementPointsForCurrentTurn = 0;
@@ -134,7 +133,7 @@ public class PlayerCharacterController : MonoBehaviour
 
                 if (pathIterator < path.Count)
                 {
-                    OnPlayerOverTile?.Invoke(tilesPositions[pathIterator - 1]);
+                    OnPlayerOverTile?.Invoke(path[pathIterator - 1]);
                     SetPlayerTransform(targetPosition);
                     SetTargetPosition(path[pathIterator]);
                 }

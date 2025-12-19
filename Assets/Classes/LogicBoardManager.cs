@@ -55,6 +55,68 @@ public class LogicBoardManager
         return possibleMoves;
     }
 
+
+    public List<Position> NewCalculatePossibleMoves(Unit unit, LogicCell[,] cells, bool unrestricted = false)
+    {
+        var moveset = unit.GetMoveset();
+        var pos = unit.GetPosition();
+        var isBlack = unit.GetIsBlack();
+
+        // [ToDo] review suggestion
+        //int[,] newMoveset = new int[3, 3];
+        //for (int i = 0; i < 3; i++)
+        //{
+        //    for (int j = 0; j < 3; j++)
+        //    {
+        //        newMoveset[i,j] = moveset[i * 3 + j];
+        //    }
+        //}
+
+        int row = 1;
+        int col = -1;
+        List<Position> possibleMoves = new();
+        for (int i = 1; i <= 9; i++)
+        {
+            //Regular pieces
+            if (moveset[i - 1] == 1)
+            {
+                int destX = col + pos.x;
+                int destY = row + pos.y;
+
+                if (!IsInBoard(destY, destX)) continue;
+                else if (IsCellFree(destX, destY, cells) || IsEnemy(destX, destY, isBlack, cells))
+                {
+                    possibleMoves.Add(new(destX, destY));
+                }
+            }
+            //Horse
+            else if (moveset[i - 1] == 3)
+            {
+                int destY = isBlack ? row - 1 + pos.y : row + 1 + pos.y;
+                int destX = col + pos.x;
+
+                if (IsInBoard(destX, destY)
+                    && (IsCellFree(destX, destY, cells) || IsEnemy(destX, destY, isBlack, cells)))
+                {
+                    possibleMoves.Add(new(destX, destY));
+                }
+            }
+            //Special pieces: Rook, Bishop
+            else if (moveset[i - 1] == 2)
+            {
+                ExtendSpecialPiecePossibleMoves(row, col, pos, unrestricted, ref possibleMoves, cells, isBlack);
+            }
+            col++;
+            if (i % 3 == 0 && i != 0)
+            {
+                row--;
+                col = -1;
+            }
+        }
+
+        return possibleMoves;
+    }
+
     public List<Position> CalculatePossibleMoves(
         LogicPiece piece,
         LogicCell[,] cells,
@@ -67,6 +129,9 @@ public class LogicBoardManager
         List<Position> possibleMoves = new();
         int row = 1;
         int col = -1;
+
+        if (moveset == null || moveset.Length == 0) return new();
+
         for (int i = 1; i <= 9; i++)
         {
             //Regular pieces
@@ -117,6 +182,7 @@ public class LogicBoardManager
         bool isBlack = false)
     {
         Position destPos = new(col + pos.x, row + pos.y);
+
         if (unrestricted)
         {
             while (true)
@@ -158,6 +224,39 @@ public class LogicBoardManager
                 }
             }
         }
+
+    }
+
+    public Position FindPositionBeforeEnemy(int row, int col, Position pos, LogicCell[,] cells, Position target)
+    {
+        Position found = null;
+        int destX = col + pos.x;
+        int destY = row + pos.y;
+
+        if (row == 0 && col == 0) return found;
+
+        Position previous = new(destX, destY);
+        while (true)
+        {
+            if (IsInBoard(destX, destY))
+            {
+                if (target.Equals(new(destX, destY)))
+                {
+                    found = new(previous);
+
+                    break;
+                }
+
+                previous = new(destX, destY);
+                destX += col;
+                destY += row;
+            }
+            else
+            {
+                break;
+            }
+        }
+        return found;
     }
 
     public void ExtendSpecialPiecePossibleMovesInverted(
@@ -196,11 +295,11 @@ public class LogicBoardManager
         }
     }
 
-    public void CheckIfMovesAreLegal(ref List<Position> pMoves, LogicPiece piece, List<LogicPiece> allPieces, LogicCell[,] cells)
+    public void CheckIfMovesAreLegal(ref List<Position> pMoves, Unit piece, List<Unit> allPieces, LogicCell[,] cells)
     {
-        LogicPiece king = new();
+        Unit king = new();
 
-        List<LogicPiece> enemyPieces = new();
+        List<Unit> enemyPieces = new();
         foreach (var p in allPieces)
         {
             if (!p.GetIsBlack())
@@ -215,7 +314,7 @@ public class LogicBoardManager
         }
 
 
-        List<LogicPiece> specialEnemyPieces = new();
+        List<Unit> specialEnemyPieces = new();
         foreach (var p in enemyPieces)
         {
             if (p.GetName() == "Lance" || p.GetName() == "Bishop" || p.GetName() == "Rook")
@@ -289,7 +388,7 @@ public class LogicBoardManager
         {
             if (!IsCellFree(movesLine[i].x, movesLine[i].y, cells))
             {
-                var pieceInCell = cells[movesLine[i].x, movesLine[i].y].piece;
+                var pieceInCell = cells[movesLine[i].x, movesLine[i].y].unit;
 
                 if (!pieceInCell.isKing && pieceInCell.GetIsBlack() == isBlack)
                 {
@@ -300,7 +399,7 @@ public class LogicBoardManager
         return sum;
     }
 
-    public DirectionPossibleMoves CalculatePossibleMovesWithDirection(LogicPiece piece, LogicCell[,] cells, bool unrestricted = false)
+    public DirectionPossibleMoves CalculatePossibleMovesWithDirection(Unit piece, LogicCell[,] cells, bool unrestricted = false)
     {
         DirectionPossibleMoves directionPossibleMoves = new();
         var moveset = piece.GetMoveset();
@@ -507,7 +606,7 @@ public class LogicBoardManager
         return betterDrops;
     }
 
-    public List<Position> CalculatePossibleDrops(LogicCell[,] cells, LogicPiece piece)
+    public List<Position> CalculatePossibleDrops(LogicCell[,] cells, Unit piece)
     {
         List<Position> moves = new();
 
@@ -520,7 +619,7 @@ public class LogicBoardManager
                 {
                     if (!IsCellFree(x, y, cells))
                     {
-                        var gridPiece = cells[x, y].piece;
+                        var gridPiece = cells[x, y].unit;
                         if (gridPiece.GetName() == "Pawn" && gridPiece.GetIsBlack() != piece.GetIsBlack())
                         {
                             badX.Add(x);
@@ -560,8 +659,8 @@ public class LogicBoardManager
     {
         var cell = cells[destX, destY];
 
-        if (cell.piece != null
-            && cell.piece.GetIsBlack() == isBlack)
+        if (cell.unit != null
+            && cell.unit.GetIsBlack() == isBlack)
         {
             return false;
         }
@@ -574,15 +673,15 @@ public class LogicBoardManager
     public bool IsCellFree(int destX, int destY, LogicCell[,] cells)
     {
         var cell = cells[destX, destY];
-        return cell.piece == null;
+        return cell.unit == null;
     }
 
     public bool IsEnemy(int destX, int destY, bool isBlack, LogicCell[,] cells)
     {
         var cell = cells[destX, destY];
-        if (cell.piece != null)
+        if (cell.unit != null)
         {
-            var pieceColorInDestination = cell.piece.GetIsBlack();
+            var pieceColorInDestination = cell.unit.GetIsBlack();
             return pieceColorInDestination != isBlack;
         }
         else
@@ -593,13 +692,13 @@ public class LogicBoardManager
 
     public bool IsInBoard(int row, int col)
     {
-        if (row > -1 && row < 9 && col > -1 && col < 9)
+        if (row > -1 && row < StaticData.battleMapHeight && col > -1 && col < StaticData.battleMapWidth)
             return true;
         else
             return false;
     }
 
-    public void ApplyPromotion(LogicPiece piece)
+    public void PromoteUnit(LogicPiece piece)
     {
         if (!piece.isKing)
         {
@@ -628,6 +727,37 @@ public class LogicBoardManager
                 }
                 piece.Promote(moveset);
             }
+        }
+    }
+
+    public int[] GetPromotedUnitMoveset(Unit unit)
+    {
+        if (unit.UnitName == UnitEnum.King) return null;
+
+        if (unit.UnitName == UnitEnum.Bishop || unit.UnitName == UnitEnum.Rook)
+        {
+            //piece.BackupOriginalMoveset(piece.GetMoveset());
+            int[] moveset = unit.GetMoveset();
+            int[] originalMoveset = unit.GetOriginalMoveset();
+
+            for (int i = 0; i < moveset.Length; i++)
+            {
+                moveset[i] = originalMoveset[i];
+            }
+
+            for (int i = 0; i < 9; i++)
+            {
+                if (moveset[i] != 2 && i != 4)
+                {
+                    moveset[i]++;
+                }
+            }
+            return moveset;
+        }
+        else
+        {
+            int[] gg = { 1, 1, 1, 1, 0, 1, 0, 1, 0 };
+            return gg;
         }
     }
 }

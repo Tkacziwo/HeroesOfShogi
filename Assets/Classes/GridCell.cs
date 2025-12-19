@@ -13,8 +13,9 @@ public class GridCell : MonoBehaviour
 
     public GameObject objectInThisGridSpace = null;
 
-    private bool isPossibleMove;
+    public UnitModel unitInGridCell;
 
+    private bool isPossibleMove;
 
     /// <summary>
     /// Initializes grid cell with values.
@@ -42,15 +43,24 @@ public class GridCell : MonoBehaviour
         objectInThisGridSpace = Instantiate(piece, new Vector4(pos.x, 0.2F, pos.z), Quaternion.identity);
     }
 
-    /// <summary>
-    /// Using quadratic transformation change position of piece to destination.
-    /// </summary>
-    /// <param name="piece">piece to move</param>
-    /// <param name="position">destination position</param>
-    public void SetAndMovePiece(GameObject piece, Vector3 position)
+    public void SetUnit(UnitModel unit)
     {
-        objectInThisGridSpace = piece;
-        objectInThisGridSpace.GetComponent<Piece>().QuadraticTransformation(new Vector3(position.x, 0.2F, position.z));
+        var pos = GetWorldPosition();
+        unitInGridCell = Instantiate(unit, new Vector4(pos.x, 11.2f, pos.z), Quaternion.identity);
+    }
+
+    /// <summary>
+    /// Calculates path from Model position to target position using Bezier curves and applies it to unit.
+    /// </summary>
+    /// <param name="unit">Unit to move</param>
+    /// <param name="position">Destination position</param>
+    public void SetAndMovePiece(UnitModel unit, Vector3 position)
+    {
+        unitInGridCell = unit;
+        var path = TransformationCalculator.QuadraticTransformation(unitInGridCell.Model.transform.position, new Vector3(position.x, 11.2f, position.z));
+
+        unitInGridCell.SetPath(path);
+        
     }
 
     /// <summary>
@@ -61,7 +71,7 @@ public class GridCell : MonoBehaviour
     public void SetAndMovePieceLinear(GameObject piece, Vector3 position)
     {
         objectInThisGridSpace = piece;
-        objectInThisGridSpace.GetComponent<Piece>().LinearTransformation(new Vector3(position.x, 0.2F, position.z));
+        objectInThisGridSpace.GetComponent<Piece>().LinearTransformation(new Vector3(position.x, 11.2f, position.z));
     }
 
     public Position GetPosition()

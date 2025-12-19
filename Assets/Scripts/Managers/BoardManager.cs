@@ -130,73 +130,73 @@ public class BoardManager : MonoBehaviour
     /// <param name="piece">Piece</param>
     public void CheckIfMovesAreLegal(ref List<Position> pMoves, Piece piece)
     {
-        var king = piece.GetIsBlack() ? gameGrid.GetBotKing() : gameGrid.GetPlayerKing();
-        var enemyPieces = piece.GetIsBlack() ? gameGrid.GetPlayerPieces() : gameGrid.GetBotPieces();
-        List<Piece> specialEnemyPieces = new();
-        foreach (var p in enemyPieces)
-        {
-            if (p.GetName() == "Lance" || p.GetName() == "Bishop" || p.GetName() == "Rook")
-            {
-                specialEnemyPieces.Add(p);
-            }
-        }
+        //var king = piece.GetIsBlack() ? gameGrid.GetBotKing() : gameGrid.GetPlayerKing();
+        //var enemyPieces = piece.GetIsBlack() ? gameGrid.GetPlayerPieces() : gameGrid.GetBotPieces();
+        //List<Piece> specialEnemyPieces = new();
+        //foreach (var p in enemyPieces)
+        //{
+        //    if (p.GetName() == "Lance" || p.GetName() == "Bishop" || p.GetName() == "Rook")
+        //    {
+        //        specialEnemyPieces.Add(p);
+        //    }
+        //}
 
-        var piecePosition = piece.GetPosition();
-        var kingPosition = king.GetPosition();
-        foreach (var enemy in specialEnemyPieces)
-        {
-            var enemyPosition = enemy.GetPosition();
-            var enemyPMoves = CalculatePossibleMovesWithDirection(enemy);
-            var enemyPMovesUnrestricted = CalculatePossibleMovesWithDirection(enemy, true);
+        //var piecePosition = piece.GetPosition();
+        //var kingPosition = king.GetPosition();
+        //foreach (var enemy in specialEnemyPieces)
+        //{
+        //    var enemyPosition = enemy.GetPosition();
+        //    var enemyPMoves = CalculatePossibleMovesWithDirection(enemy);
+        //    var enemyPMovesUnrestricted = CalculatePossibleMovesWithDirection(enemy, true);
 
-            bool canKill = pMoves.Contains(enemyPosition);
+        //    bool canKill = pMoves.Contains(enemyPosition);
 
-            if (enemyPMoves.North.Contains(piecePosition) && enemyPMovesUnrestricted.North.Contains(kingPosition))
-            {
-                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.North, piece.GetIsBlack()) == 1)
-                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.North, true);
-            }
-            else if (enemyPMoves.East.Contains(piecePosition) && enemyPMovesUnrestricted.East.Contains(kingPosition))
-            {
-                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.East, piece.GetIsBlack()) == 1)
-                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.East, true);
-            }
-            else if (enemyPMoves.South.Contains(piecePosition) && enemyPMovesUnrestricted.South.Contains(kingPosition))
-            {
-                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.South, piece.GetIsBlack()) == 1)
-                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.South, true);
-            }
-            else if (enemyPMoves.West.Contains(piecePosition) && enemyPMovesUnrestricted.West.Contains(kingPosition))
-            {
-                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.West, piece.GetIsBlack()) == 1)
-                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.West, true);
-            }
-            else if (enemyPMoves.North_West.Contains(piecePosition) && enemyPMovesUnrestricted.North_West.Contains(kingPosition))
-            {
-                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.North_West, piece.GetIsBlack()) == 1)
-                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.North_West, true);
-            }
-            else if (enemyPMoves.North_East.Contains(piecePosition) && enemyPMovesUnrestricted.North_East.Contains(kingPosition))
-            {
-                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.North_East, piece.GetIsBlack()) == 1)
-                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.North_East, true);
-            }
-            else if (enemyPMoves.South_West.Contains(piecePosition) && enemyPMovesUnrestricted.South_West.Contains(kingPosition))
-            {
-                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.South_West, piece.GetIsBlack()) == 1)
-                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.South_West, true);
-            }
-            else if (enemyPMoves.South_East.Contains(piecePosition) && enemyPMovesUnrestricted.South_East.Contains(kingPosition))
-            {
-                if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.South_East, piece.GetIsBlack()) == 1)
-                    pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.South_East, true);
-            }
+        //    if (enemyPMoves.North.Contains(piecePosition) && enemyPMovesUnrestricted.North.Contains(kingPosition))
+        //    {
+        //        if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.North, piece.GetIsBlack()) == 1)
+        //            pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.North, true);
+        //    }
+        //    else if (enemyPMoves.East.Contains(piecePosition) && enemyPMovesUnrestricted.East.Contains(kingPosition))
+        //    {
+        //        if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.East, piece.GetIsBlack()) == 1)
+        //            pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.East, true);
+        //    }
+        //    else if (enemyPMoves.South.Contains(piecePosition) && enemyPMovesUnrestricted.South.Contains(kingPosition))
+        //    {
+        //        if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.South, piece.GetIsBlack()) == 1)
+        //            pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.South, true);
+        //    }
+        //    else if (enemyPMoves.West.Contains(piecePosition) && enemyPMovesUnrestricted.West.Contains(kingPosition))
+        //    {
+        //        if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.West, piece.GetIsBlack()) == 1)
+        //            pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.West, true);
+        //    }
+        //    else if (enemyPMoves.North_West.Contains(piecePosition) && enemyPMovesUnrestricted.North_West.Contains(kingPosition))
+        //    {
+        //        if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.North_West, piece.GetIsBlack()) == 1)
+        //            pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.North_West, true);
+        //    }
+        //    else if (enemyPMoves.North_East.Contains(piecePosition) && enemyPMovesUnrestricted.North_East.Contains(kingPosition))
+        //    {
+        //        if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.North_East, piece.GetIsBlack()) == 1)
+        //            pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.North_East, true);
+        //    }
+        //    else if (enemyPMoves.South_West.Contains(piecePosition) && enemyPMovesUnrestricted.South_West.Contains(kingPosition))
+        //    {
+        //        if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.South_West, piece.GetIsBlack()) == 1)
+        //            pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.South_West, true);
+        //    }
+        //    else if (enemyPMoves.South_East.Contains(piecePosition) && enemyPMovesUnrestricted.South_East.Contains(kingPosition))
+        //    {
+        //        if (CalculateSameColorPiecesInDirection(enemyPMovesUnrestricted.South_East, piece.GetIsBlack()) == 1)
+        //            pMoves = CalculateOverlappingMoves(pMoves, enemyPMovesUnrestricted.South_East, true);
+        //    }
 
-            if (canKill)
-            {
-                pMoves.Add(enemy.GetPosition());
-            }
-        }
+        //    if (canKill)
+        //    {
+        //        pMoves.Add(enemy.GetPosition());
+        //    }
+        //}
     }
 
     /// <summary>
@@ -614,6 +614,29 @@ public class BoardManager : MonoBehaviour
                 }
                 piece.Promote(moveset);
             }
+        }
+    }
+
+    public void PromoteUnit(Unit unit)
+    {
+        if (unit.isKing) return;
+
+        if(unit.GetIsSpecial())
+        {
+            unit.BackupOriginalMoveset(unit.GetMoveset());
+            int[] moveset = unit.GetMoveset();
+            for (int i = 0; i < 9; i++)
+            {
+                if (moveset[i] != 2 && i != 4)
+                {
+                    moveset[i]++;
+                }
+            }
+            unit.Promote(moveset);
+        }
+        else
+        {
+            unit.Promote(fileManager.GetMovesetByPieceName("GoldGeneral"));
         }
     }
 }

@@ -19,7 +19,11 @@ public class ShogiBot : MonoBehaviour
 
     private LogicBoard logicBoard = new();
 
+    private int MovesRemaining { get; set; } = 3;
+
     private int botDifficulty;
+
+    //[ToDo] add many moves per bot
 
     /// <summary>
     /// Clones board state from real board into logic representation - LogicBoard.
@@ -50,11 +54,6 @@ public class ShogiBot : MonoBehaviour
         return move;
     }
 
-    public void Display()
-    {
-        Debug.Log("logic board state");
-        logicBoard.DisplayBoardState();
-    }
 
     /// <summary>
     /// Executes Minimax algorithm.

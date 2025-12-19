@@ -21,4 +21,10 @@ public static class StaticData
     public static List<BuildingUpgradeInfo> cityBuildingUpgrades = new();
 
     public static List<Sprite> unitIcons = new();
+
+    public static readonly int battleMapHeight = 9;
+
+    public static readonly int battleMapWidth = 9;
+
+    public static List<Unit> unitTemplates = new();
 }

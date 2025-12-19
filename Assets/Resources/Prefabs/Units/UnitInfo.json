@@ -1,0 +1,50 @@
+[
+  {
+    "UnitName": "King",
+    "HealthPoints": 3,
+    "AttackPower": 1,
+    "SizeInArmy": 0
+  },
+  {
+    "UnitName": "Pawn",
+    "HealthPoints": 1,
+    "AttackPower": 1,
+    "SizeInArmy": 1
+  },
+  {
+    "UnitName": "Lance",
+    "HealthPoints": 1,
+    "AttackPower": 2,
+    "SizeInArmy": 1
+  },
+  {
+    "UnitName": "Horse",
+    "HealthPoints": 3,
+    "AttackPower": 2,
+    "SizeInArmy": 3
+  },
+  {
+    "UnitName": "SilverGeneral",
+    "HealthPoints": 3,
+    "AttackPower": 2,
+    "SizeInArmy": 3
+  },
+  {
+    "UnitName": "GoldGeneral",
+    "HealthPoints": 5,
+    "AttackPower": 3,
+    "SizeInArmy": 4
+  },
+  {
+    "UnitName": "Rook",
+    "HealthPoints": 7,
+    "AttackPower": 4,
+    "SizeInArmy": 6
+  },
+  {
+    "UnitName": "Bishop",
+    "HealthPoints": 6,
+    "AttackPower": 4,
+    "SizeInArmy": 6
+  }
+]

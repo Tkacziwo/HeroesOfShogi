@@ -51,8 +51,6 @@ public class CityViewController : MonoBehaviour
 
     public static Action<string, string, BuildingUpgradeInfo> OnBuildingUpgrade;
 
-    public static Action OnCityViewClose;
-
     public void Setup(City city, PlayerResources playerResources, Canvas canvasRef, PlayerCharacterController character = null)
     {
         if (character != null)
@@ -79,7 +77,6 @@ public class CityViewController : MonoBehaviour
             neededWood.text = $"Wood: \u221E";
             neededStone.text = $"Stone: \u221E";
             neededGold.text = $"Gold: \u221E";
-            //neededLifeResin.text = $"Life Resin: \u221E";
         }
         else
         {
@@ -116,7 +113,6 @@ public class CityViewController : MonoBehaviour
         if (playerResources.Wood < requiredResources.wood) return false;
         if (playerResources.Stone < requiredResources.stone) return false;
         if (playerResources.Gold < requiredResources.gold) return false;
-        //if (playerResources.LifeResin < requiredResources.goldResin) return false;
         return true;
     }
 
@@ -137,8 +133,7 @@ public class CityViewController : MonoBehaviour
 
     public void CloseCityView()
     {
-        OnCityViewClose?.Invoke();
-        this.gameObject.SetActive(false);
+        CityEvents.OnPlayerInCity?.Invoke(false);
         Destroy(this.gameObject);
     }
 
@@ -150,8 +145,10 @@ public class CityViewController : MonoBehaviour
         recruitPanel.transform.SetParent(canvasRef.transform);
         recruitPanel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
 
+        ProducedUnits availableUnits = currentCity.GetAvailableUnits();
+
         var panelScript = recruitPanel.GetComponent<AssignPanelsController>();
 
-        panelScript.Setup(currentCharacter, currentCity.producedUnits);
+        panelScript.Setup(currentCharacter, availableUnits);
     }
 }

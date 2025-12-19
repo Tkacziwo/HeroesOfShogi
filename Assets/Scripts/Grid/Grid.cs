@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Symbolizes playing board. Consists of GridCells.
@@ -8,8 +10,6 @@ using UnityEngine;
 [Serializable]
 public class Grid : MonoBehaviour
 {
-    [SerializeField] public int width, height;
-
     [SerializeField] private GameObject gridCell;
 
     [SerializeField] private Transform cameraPosition;
@@ -20,53 +20,100 @@ public class Grid : MonoBehaviour
 
     public Camp eCamp;
 
-    private Piece playerKing;
+    private UnitModel playerKing;
 
-    private Piece botKing;
+    private UnitModel botKing;
 
     private GameObject[,] gameGrid;
 
     private readonly float gridCellSize = 2;
 
-    private readonly List<Piece> playerPieces = new();
+    private readonly List<UnitModel> playerPieces = new();
 
-    private readonly List<Piece> botPieces = new();
+    private readonly List<UnitModel> botPieces = new();
+
+    private LogicCell[,] logicCells = new LogicCell[9, 9];
+
+    public static Action<LogicCell[,]> OnGridFinishRender;
+
+    [SerializeField] private float movementSpeed = 20f;
+
+    private readonly int width = StaticData.battleMapWidth;
+
+    private readonly int height = StaticData.battleMapHeight;
+
+    private void OnEnable()
+    {
+        InputManager.RequestLogicCellsUpdate += UpdateLogicCells;
+        InputManager.ResetUnitMoved += ResetMovedInTurn;
+    }
+
+    private void OnDisable()
+    {
+        InputManager.RequestLogicCellsUpdate -= UpdateLogicCells;
+        InputManager.ResetUnitMoved -= ResetMovedInTurn;
+
+    }
+
+    private void ResetMovedInTurn()
+    {
+        foreach (var unit in playerPieces)
+        {
+            unit.Unit.MovedInTurn = false;
+        }
+
+        foreach (var unit in botPieces)
+        {
+            unit.Unit.MovedInTurn = false;
+        }
+
+        if (playerKing != null)
+        {
+            playerKing.Unit.MovedInTurn = false;
+        }
+
+        if (botKing != null)
+        {
+            botKing.Unit.MovedInTurn = false;
+        }
+    }
+
+    private void UpdateLogicCells()
+    {
+        logicCells = new LogicCell[width, height];
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                var cell = this.GetGridCell(x, y);
+                logicCells[x, y] = new LogicCell(cell);
+                if (cell.unitInGridCell != null)
+                {
+                    Unit p = new(cell.unitInGridCell.Unit);
+                    logicCells[x, y].unit = p;
+                }
+            }
+        }
+
+        OnGridFinishRender?.Invoke(logicCells);
+    }
 
     public void Start()
     {
         pCamp.InitializePosY(2);
         eCamp.InitializePosY(0);
         GenerateField();
-        InitializePieces();
-    }
 
-    /// <summary>
-    /// Returns true when all pieces finish their move. False otherwise.
-    /// </summary>
-    /// <returns>bool</returns>
-    public bool PiecesFinishedMoving()
-    {
-        foreach (var piece in playerPieces)
+        var units = BattleDeploymentStaticData.playerFormation;
+
+        InitializePieces(units);
+        if (BattleDeploymentStaticData.enemyCharacter != null)
         {
-            if (!piece.finishedMoving)
-            {
-                return false;
-            }
-        }
-        foreach (var piece in botPieces)
-        {
-            if (!piece.finishedMoving)
-            {
-                return false;
-            }
+            var enemyUnits = BattleDeploymentStaticData.enemyCharacter.AssignedUnits;
+            InitializeEnemyUnits(enemyUnits);
         }
 
-        if (!playerKing.finishedMoving || !botKing.finishedMoving)
-        {
-            return false;
-        }
-
-        return true;
+        UpdateLogicCells();
     }
 
     /// <summary>
@@ -74,15 +121,17 @@ public class Grid : MonoBehaviour
     /// </summary>
     public void GenerateField()
     {
-        pCamp.GenerateCamp();
+        //pCamp.GenerateCamp();
 
         float campSpacing = 1.0F + gridCellSize * 3;
+        Scene activeScene = SceneManager.GetSceneByName("Game");
         gameGrid = new GameObject[width, height];
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                gameGrid[x, y] = Instantiate(gridCell, new Vector4(x * gridCellSize, 0, y * gridCellSize + campSpacing), Quaternion.identity);
+                gameGrid[x, y] = Instantiate(gridCell, new Vector4(x * gridCellSize, 11.2f, y * gridCellSize + campSpacing), Quaternion.identity);
+
                 GridCell cell = gameGrid[x, y].GetComponent<GridCell>();
                 cell.InitializeGridCell(x, y, gridCellSize);
                 cell.SetPosition(x, y);
@@ -92,45 +141,263 @@ public class Grid : MonoBehaviour
         }
         campSpacing += 9 * gridCellSize + 1.0F;
 
-        eCamp.GenerateCamp(campSpacing);
+        //eCamp.GenerateCamp(campSpacing);
     }
 
     /// <summary>
     /// Loads pieces from resource files and initializes them as Piece objects.
     /// </summary>
-    public void InitializePieces()
+    public void InitializePieces(Unit[,] units = null)
     {
-        var piecesPositions = fileManager.PiecesPositions.boardPositions;
-
-        foreach (var p in piecesPositions)
+        var unitTemplates = StaticData.unitTemplates;
+        if (units != null)
         {
-            var name = p.piece;
-            var resource = Resources.Load("Prefabs/Piece/" + name + "Piece") as GameObject;
-            if (resource != null)
+            for (int y = 0; y < 3; y++)
             {
-                var cell = gameGrid[p.posX, p.posY].GetComponent<GridCell>();
-                var moveset = fileManager.GetMovesetByPieceName(p.piece);
-                bool isSpecialPiece = SpecialPieceCheck(p.piece);
-                cell.SetPiece(resource);
-                var pieceScript = cell.objectInThisGridSpace.GetComponent<Piece>();
-                Position piecePos = cell.GetPosition();
-                pieceScript.InitializePiece(p.piece, moveset, piecePos.x, piecePos.y, isSpecialPiece);
+                for (int x = 0; x < width; x++)
+                {
+                    var unit = units[y, x];
 
-                if (pieceScript.GetIsBlack())
-                {
-                    if (pieceScript.isKing) { botKing = pieceScript; }
-                    else { botPieces.Add(pieceScript); }
-                    cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
-                }
-                else
-                {
-                    if (pieceScript.isKing) { playerKing = pieceScript; }
-                    else { playerPieces.Add(pieceScript); }
-                    cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
-                    cell.objectInThisGridSpace.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 180, 0);
+                    if (unit != null)
+                    {
+                        UnitModel resource = Resources.Load<UnitModel>($"Prefabs/Units/{unit.UnitName.ToString()}Unit");
+
+                        var cell = gameGrid[x, y].GetComponent<GridCell>();
+
+
+                        var moveset = fileManager.GetMovesetByPieceName(unit.UnitName.ToString());
+
+                        cell.SetUnit(resource);
+
+                        Position unitPos = cell.GetPosition();
+                        var template = unitTemplates.Single(o => o.UnitName == unit.UnitName);
+                        cell.unitInGridCell.InitUnit(unit.UnitName.ToString(), moveset, unitPos.x, unitPos.y, false, movementSpeed, template);
+
+                        var unitModel = cell.unitInGridCell;
+
+                        //if (unit.GetIsBlack())
+                        //{
+                        //    if (unit.isKing) { botKing = unitModel; }
+                        //    else { botPieces.Add(unitModel); }
+                        //    //cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+                        //}
+                        //else
+                        //{
+                        if (unit.isKing) { playerKing = unitModel; }
+                        else { playerPieces.Add(unitModel); }
+                        unitModel.Model.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
+                        unitModel.Model.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(-90, 180, 0);
+                        //}
+                    }
                 }
             }
         }
+        else
+        {
+            var piecesPositions = fileManager.PiecesPositions.boardPositions;
+
+
+
+            foreach (var p in piecesPositions)
+            {
+                var name = p.piece;
+
+                UnitModel resource = Resources.Load<UnitModel>($"Prefabs/Units/{name}Unit");
+
+                if (resource != null)
+                {
+
+
+                    var cell = gameGrid[p.posX, p.posY].GetComponent<GridCell>();
+
+                    var moveset = fileManager.GetMovesetByPieceName(p.piece);
+
+                    cell.SetUnit(resource);
+
+                    Position unitPos = cell.GetPosition();
+                    Unit template = null;
+
+                    for (int i = 0; i < unitTemplates.Count; i++)
+                    {
+                        var unitname = unitTemplates[i].UnitName.ToString();
+
+                        if (unitname == p.piece)
+                        {
+                            template = unitTemplates[i];
+                            break;
+                        }
+                    }
+
+                    cell.unitInGridCell.InitUnit(p.piece, moveset, unitPos.x, unitPos.y, false, movementSpeed, template);
+
+
+
+                    var unitModel = cell.unitInGridCell;
+
+                    if (unitModel.Unit.GetIsBlack())
+                    {
+                        if (unitModel.Unit.isKing) { botKing = unitModel; }
+                        else { botPieces.Add(unitModel); }
+
+                        unitModel.Model.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+                    }
+                    else
+                    {
+                        if (unitModel.Unit.isKing) { playerKing = unitModel; }
+                        else { playerPieces.Add(unitModel); }
+                        unitModel.Model.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
+                        unitModel.Model.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(-90, 180, 0);
+                    }
+                }
+            }
+
+        }
+    }
+
+
+    public void InitializeEnemyUnits(List<Unit> enemyUnits)
+    {
+        var dict = GetUnitsDictionary(enemyUnits);
+        var unitTemplates = StaticData.unitTemplates;
+
+        Position kingPos = new(4, height - 1);
+        SpawnUnitOnGrid("King", unitTemplates.Single(o => o.UnitName == UnitEnum.King), kingPos.x, kingPos.y);
+
+        if (dict.ContainsKey(UnitEnum.Pawn))
+        {
+            int pawnRow = height - 3;
+
+            int pawnCount = dict[UnitEnum.Pawn];
+
+            int pawnCol = 0;
+
+
+
+
+            if (pawnCount != 0)
+            {
+                for (int i = 0; i < pawnCount; i++)
+                {
+                    SpawnUnitOnGrid("Pawn", unitTemplates.Single(o => o.UnitName == UnitEnum.Pawn), pawnCol + i, pawnRow);
+                }
+            }
+        }
+
+        List<Position> goldGeneralPositions = new()
+        {
+            new(){x= kingPos.x - 1, y = kingPos.y},
+            new(){x= kingPos.x + 1, y = kingPos.y},
+        };
+
+        List<Position> silverGeneralPositions = new()
+        {
+            new(){x= kingPos.x - 2, y = kingPos.y},
+            new(){x= kingPos.x + 2, y = kingPos.y},
+        };
+
+        List<Position> horsePositions = new()
+        {
+            new(){x= kingPos.x - 3, y = kingPos.y},
+            new(){x= kingPos.x + 3, y = kingPos.y},
+        };
+
+        List<Position> LancePositions = new()
+        { new(){x= kingPos.x - 4, y = kingPos.y},
+            new(){x= kingPos.x + 4, y = kingPos.y},
+        };
+
+        Position rookPos = new(kingPos.x - 3, kingPos.y - 1);
+        Position bishop = new(kingPos.x + 3, kingPos.y - 1);
+
+        if (dict.ContainsKey(UnitEnum.GoldGeneral))
+        {
+
+            int goldGenCount = Math.Min(dict[UnitEnum.GoldGeneral], goldGeneralPositions.Count());
+
+            for (int i = 0; i < goldGenCount; i++)
+            {
+                SpawnUnitOnGrid("GoldGeneral", unitTemplates.Single(o => o.UnitName == UnitEnum.GoldGeneral), goldGeneralPositions[i].x, goldGeneralPositions[i].y);
+            }
+        }
+        // Spawn Silver Generals
+        if (dict.ContainsKey(UnitEnum.SilverGeneral))
+        {
+            int silverGenCount = Math.Min(dict[UnitEnum.SilverGeneral], silverGeneralPositions.Count());
+            for (int i = 0; i < silverGenCount; i++)
+            {
+                SpawnUnitOnGrid("SilverGeneral", unitTemplates.Single(o => o.UnitName == UnitEnum.SilverGeneral), silverGeneralPositions[i].x, silverGeneralPositions[i].y);
+            }
+        }
+
+        // Spawn Horses (knights)
+        if (dict.ContainsKey(UnitEnum.Horse))
+        {
+            int horseCount = Math.Min(dict[UnitEnum.Horse], horsePositions.Count());
+            for (int i = 0; i < horseCount; i++)
+            {
+                SpawnUnitOnGrid("Horse", unitTemplates.Single(o => o.UnitName == UnitEnum.Horse), horsePositions[i].x, horsePositions[i].y);
+            }
+        }
+
+        // Spawn Lances
+        if (dict.ContainsKey(UnitEnum.Lance))
+        {
+            int lanceCount = Math.Min(dict[UnitEnum.Lance], LancePositions.Count());
+            for (int i = 0; i < lanceCount; i++)
+            {
+                SpawnUnitOnGrid("Lance", unitTemplates.Single(o => o.UnitName == UnitEnum.Lance), LancePositions[i].x, LancePositions[i].y);
+            }
+        }
+
+        // Spawn Rook
+        if (dict.ContainsKey(UnitEnum.Rook) && dict[UnitEnum.Rook] > 0)
+        {
+            SpawnUnitOnGrid("Rook", unitTemplates.Single(o => o.UnitName == UnitEnum.Rook), rookPos.x, rookPos.y);
+        }
+
+        // Spawn Bishop
+        if (dict.ContainsKey(UnitEnum.Bishop) && dict[UnitEnum.Bishop] > 0)
+        {
+            SpawnUnitOnGrid("Bishop", unitTemplates.Single(o => o.UnitName == UnitEnum.Bishop), bishop.x, bishop.y);
+        }
+    }
+
+    private void SpawnUnitOnGrid(string unitName, Unit template, int posX, int posY)
+    {
+        UnitModel resource = Resources.Load<UnitModel>($"Prefabs/Units/{unitName}Unit");
+
+        var cell = gameGrid[posX, posY].GetComponent<GridCell>();
+
+        var moveset = fileManager.GetMovesetByPieceName(unitName);
+
+        cell.SetUnit(resource);
+
+        Position unitPos = cell.GetPosition();
+        cell.unitInGridCell.InitUnit(unitName, moveset, unitPos.x, unitPos.y, false, movementSpeed, template);
+        var unitModel = cell.unitInGridCell;
+
+        if (unitModel.Unit.isKing) { botKing = unitModel; }
+        else { botPieces.Add(unitModel); }
+
+        unitModel.Model.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+    }
+
+
+    private Dictionary<UnitEnum, int> GetUnitsDictionary(List<Unit> assignedUnits)
+    {
+        Dictionary<UnitEnum, int> dict = new();
+        foreach (var unit in assignedUnits)
+        {
+            if (dict.ContainsKey(unit.UnitName))
+            {
+                dict[unit.UnitName] += 1;
+            }
+            else
+            {
+                dict.Add(unit.UnitName, 1);
+            }
+        }
+        return dict;
     }
 
     /// <summary>
@@ -204,52 +471,85 @@ public class Grid : MonoBehaviour
     /// <param name="piece">killed piece GameObject</param>
     public void AddToCamp(GameObject piece)
     {
-        Piece p = piece.GetComponent<Piece>();
-        if (p.GetIsBlack())
-        {
-            p.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 180, 0);
-            p.MovePiece(new(100, 100));
-            playerPieces.Add(p);
-            botPieces.Remove(p);
-            pCamp.AddToCamp(piece);
-        }
-        else
-        {
-            p.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 0, 0);
-            p.MovePiece(new(200, 200));
-            botPieces.Add(p);
-            playerPieces.Remove(p);
-            eCamp.AddToCamp(piece);
-        }
+        throw new NotImplementedException();
+        //Piece p = piece.GetComponent<Piece>();
+        //if (p.GetIsBlack())
+        //{
+        //    p.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 180, 0);
+        //    p.MovePiece(new(100, 100));
+        //    playerPieces.Add(p);
+        //    botPieces.Remove(p);
+        //    pCamp.AddToCamp(piece);
+        //}
+        //else
+        //{
+        //    p.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 0, 0);
+        //    p.MovePiece(new(200, 200));
+        //    botPieces.Add(p);
+        //    playerPieces.Remove(p);
+        //    eCamp.AddToCamp(piece);
+        //}
     }
 
     /// <summary>
     /// Gets player (white) pieces.
     /// </summary>
-    public List<Piece> GetPlayerPieces()
+    public List<UnitModel> GetPlayerPieces()
         => playerPieces;
 
     /// <summary>
     /// Gets bot (black) pieces.
     /// </summary>
-    public List<Piece> GetBotPieces()
+    public List<UnitModel> GetBotPieces()
         => botPieces;
 
     /// <summary>
     /// Gets player (white) king.
     /// </summary>
-    public Piece GetPlayerKing()
+    public UnitModel GetPlayerKing()
         => playerKing;
 
     /// <summary>
     /// Gets bot (black) king.
     /// </summary>
-    public Piece GetBotKing()
+    public UnitModel GetBotKing()
         => botKing;
 
     /// <summary>
     /// Restores default color of GridCell on mouse hover exit.
     /// </summary>
+    ///
+
+    public void SetWinner(bool isBlack)
+    {
+        if(isBlack)
+        {
+            var units = new List<Unit>();
+
+            foreach (var unit in botPieces.Select(o => o.Unit))
+            {
+                units.Add(unit);
+            }
+
+            units.Add(botKing.Unit);
+            BattleDeploymentStaticData.enemyCharacter.AssignedUnits = new(units);
+            BattleDeploymentStaticData.winner = BattleDeploymentStaticData.enemyCharacter;
+        }
+        else
+        {
+            var units = new List<Unit>();
+
+            foreach (var unit in playerPieces.Select(o => o.Unit))
+            {
+                units.Add(unit);
+            }
+
+            units.Add(playerKing.Unit);
+            BattleDeploymentStaticData.playerCharacter.AssignedUnits = new(units);
+            BattleDeploymentStaticData.winner = BattleDeploymentStaticData.playerCharacter;
+        }
+    }
+
     public void OnHoverExitRestoreDefaultColor()
     {
         Color defaultColor = new(0.04f, 0.43f, 0.96f);
@@ -263,11 +563,11 @@ public class Grid : MonoBehaviour
         }
         for (int y = 0; y < 3; y++)
         {
-            for (int x = 0; x < width; x++)
-            {
-                pCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = defaultColor;
-                eCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = defaultColor;
-            }
+            //for (int x = 0; x < width; x++)
+            //{
+            //    pCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = defaultColor;
+            //    eCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = defaultColor;
+            //}
         }
     }
 
@@ -283,6 +583,29 @@ public class Grid : MonoBehaviour
             {
                 gameGrid[item.x, item.y].GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
             }
+        }
+    }
+
+    private void OnDestroy()
+    {
+        foreach (var piece in playerPieces)
+        {
+            Destroy(piece);
+        }
+
+        foreach (var piece in botPieces)
+        {
+            Destroy(piece);
+        }
+
+        if (playerKing != null)
+        {
+            Destroy(playerKing);
+        }
+
+        if (botKing != null)
+        {
+            Destroy(botKing);
         }
     }
 }

@@ -43,7 +43,7 @@ public class Camp : MonoBehaviour
         {
             for (int y = 0; y < 3; y++)
             {
-                campGrid[x, y] = Instantiate(gridCell, new Vector4(x * gridCellSize, 0, y * gridCellSize + spacing), Quaternion.identity);
+                campGrid[x, y] = Instantiate(gridCell, new Vector4(x * gridCellSize, 11.2f, y * gridCellSize + spacing), Quaternion.identity);
                 GridCell cell = campGrid[x, y].GetComponent<GridCell>();
                 cell.InitializeGridCell(x, y, gridCellSize);
                 cell.SetPosition(x, y);

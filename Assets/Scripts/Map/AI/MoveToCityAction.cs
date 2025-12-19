@@ -1,0 +1,128 @@
+using System;
+using System.Collections.Generic;
+using Unity.Behavior;
+using Unity.Properties;
+using UnityEngine;
+using UnityEngine.Tilemaps;
+using Action = Unity.Behavior.Action;
+
+[Serializable, GeneratePropertyBag]
+[NodeDescription(name: "MoveToCity", story: "[Self] finds city", category: "Action", id: "a9cc5b9cd1d449f60b95bccdd526716c")]
+public partial class MoveToCityAction : Action
+{
+    [SerializeReference] public BlackboardVariable<GameObject> Self;
+    [SerializeReference] public BlackboardVariable<Tilemap> tilemap;
+
+    [SerializeReference] public BlackboardVariable<int> result;
+
+    [SerializeReference] public BlackboardVariable<bool> cityHasUnits;
+    [SerializeReference] public BlackboardVariable<City> Chosencity;
+    [SerializeReference] public BlackboardVariable<PlayerCharacterController> characterInCity;
+
+    private PathingController Pathing { get; set; } = new();
+
+    private Vector3Int bestEndPos;
+
+    protected override Status OnStart()
+    {
+        var npc = Self.Value.GetComponent<NPCModel>();
+        var character = Self.Value.GetComponent<NPCModel>().GetCurrentPlayerCharacter();
+        result.Value = 1;
+        cityHasUnits.Value = false;
+        var city = FindCity(character.characterPosition, character.playerId);
+
+        if (city == null)
+        {
+            result.Value = 0;
+        }
+        else
+        {
+            var path = FindPathToBuilding(city, character);
+            TileInfo end = new() { position = bestEndPos };
+            path.Add(end);
+            npc.RemainingPath = new(path);
+            npc.ChosenBuilding = city;
+            npc.ReachedDestination = false;
+
+            if (!city.HasAvailableUnits()) result.Value = 0;
+        }
+
+        return Status.Success;
+    }
+
+    private City FindCity(Vector3Int startPos, int playerId)
+    {
+        var buildings = BuildingRegistry.Instance.GetAllBuildings();
+
+        City chosenCity = null;
+        float bestDist = float.MaxValue;
+        foreach (var building in buildings)
+        {
+            if (building is City city && city.capturerId == playerId)
+            {
+                var pos = tilemap.Value.WorldToCell(city.transform.position);
+                float dist = Vector3Int.Distance(startPos, pos);
+                if (bestDist > dist)
+                {
+                    bestDist = dist;
+                    chosenCity = city;
+                }
+            }
+        }
+
+        return chosenCity;
+    }
+
+    public List<TileInfo> FindPathToBuilding(InteractibleBuilding building, PlayerCharacterController currentCharacter)
+    {
+        List<Vector3Int> traversableTiles = new();
+
+        var colliderBounds = building.GetComponent<BoxCollider>().bounds;
+
+        for (int y = (int)colliderBounds.min.z; y < colliderBounds.max.z; y++)
+        {
+            for (int x = (int)colliderBounds.min.x; x < colliderBounds.max.x; x++)
+            {
+                for (int cellY = -1; cellY <= 1; cellY++)
+                {
+                    for (int cellX = -1; cellX <= 1; cellX++)
+                    {
+                        int destX = cellX + x;
+                        int destY = cellY + y;
+
+                        Vector3Int destPos = new(destX, destY, 0);
+
+                        var tile = tilemap.Value.GetTile<MapTile>(destPos);
+
+                        if (tile != null)
+                        {
+                            if (!traversableTiles.Contains(destPos) && tile.IsTraversable)
+                            {
+                                traversableTiles.Add(destPos);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        List<TileInfo> bestPath = new();
+        Vector3Int bestEndPosition = new(0, 0, 0);
+
+        foreach (var item in traversableTiles)
+        {
+            Pathing.SetParameters(tilemap, currentCharacter.characterPosition, item);
+            var path = Pathing.FindPath();
+
+            if (bestPath.Count == 0 || bestPath.Count > path.Count)
+            {
+                bestEndPosition = item;
+                bestPath = new(path);
+            }
+        }
+
+        bestEndPos = bestEndPosition;
+        return bestPath;
+    }
+}

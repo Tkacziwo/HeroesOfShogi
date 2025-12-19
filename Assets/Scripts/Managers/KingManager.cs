@@ -264,8 +264,8 @@ public class KingManager : MonoBehaviour
 
         foreach (var piece in enemyPieces)
         {
-            List<Position> enemyPiecePMoves = boardManager.CalculatePossibleMoves(piece);
-            kingPMoves = boardManager.CalculateOverlappingMoves(kingPMoves, enemyPiecePMoves, false);
+           // List<Position> enemyPiecePMoves = boardManager.CalculatePossibleMoves(piece);
+          //  kingPMoves = boardManager.CalculateOverlappingMoves(kingPMoves, enemyPiecePMoves, false);
         }
 
         return kingPMoves;
@@ -282,15 +282,15 @@ public class KingManager : MonoBehaviour
         var attackerPosition = attacker.GetPosition();
         foreach (var piece in friendlyPieces)
         {
-            if (!piece.GetIsDrop())
-            {
-                List<Position> friendlyPiecePMovesInverted = boardManager.CalculatePossibleMovesInverted(piece);
+            //if (!piece.GetIsDrop())
+            //{
+            //    List<Position> friendlyPiecePMovesInverted = boardManager.CalculatePossibleMovesInverted(piece);
 
-                if (friendlyPiecePMovesInverted.Contains(attackerPosition))
-                {
-                    return true;
-                }
-            }
+            //    if (friendlyPiecePMovesInverted.Contains(attackerPosition))
+            //    {
+            //        return true;
+            //    }
+            //}
         }
 
         return false;

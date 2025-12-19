@@ -1,8 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class BattleDeploymentController : MonoBehaviour
 {
@@ -25,6 +26,8 @@ public class BattleDeploymentController : MonoBehaviour
     private Dictionary<UnitEnum, int> unitDict;
 
     private List<Sprite> unitIcons;
+
+    public static Action<bool> OnBattleStarted;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -132,6 +135,27 @@ public class BattleDeploymentController : MonoBehaviour
 
     public void OnBattleStart()
     {
+        Unit[,] units = new Unit[3, 9];
 
+        for (int y = 0; y < 3; y++)
+        {
+            for (int x = 0; x < 9; x++)
+            {
+                var slot = unitSlots[y, x];
+                if (slot.droppedUnit != null)
+                {
+                    units[y, x] = slot.droppedUnit.assignedUnit;
+                }
+            }
+        }
+
+        BattleDeploymentStaticData.playerFormation = units;
+
+
+        OnBattleStarted?.Invoke(false);
+
+        SceneManager.UnloadSceneAsync("BattleDeployment");
+
+        SceneManager.LoadScene("Game", LoadSceneMode.Additive);
     }
 }

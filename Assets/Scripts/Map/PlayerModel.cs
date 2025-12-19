@@ -15,7 +15,7 @@ public class PlayerModel : MonoBehaviour
 
     private PlayerCharacterController character;
 
-    [SerializeField] private GameObject playerModel;
+    [SerializeField] private GameObject characterPrefab;
 
     public PlayerResources playerResources;
 
@@ -24,6 +24,11 @@ public class PlayerModel : MonoBehaviour
     [SerializeField] uint maxCharacters = 3;
 
     public static Action<PlayerResources> UpdateResourceUI;
+
+    private void Start()
+    {
+        PlayerRegistry.Instance.Register(this);
+    }
 
     private void OnEnable()
     {
@@ -34,7 +39,10 @@ public class PlayerModel : MonoBehaviour
     {
         if (character != null) character.OnPlayerMoveUpdateCameraPosition -= UpdateCameraPosition;
         CityViewController.OnTakePlayerResources -= HandleBuildingUpgraded;
-
+        if (PlayerRegistry.Instance != null)
+        {
+            PlayerRegistry.Instance.Unregister(this);
+        }
     }
 
     private void HandleBuildingUpgraded(int id, RequiredResources resources)
@@ -45,7 +53,6 @@ public class PlayerModel : MonoBehaviour
         playerResources.Stone -= (int)resources.stone;
         playerResources.Gold -= (int)resources.gold;
         UpdateResourceUI?.Invoke(this.playerResources);
-        //playerResources.LifeResin -= (int)resources.goldResin;
     }
 
     public CameraController GetCameraController()
@@ -59,11 +66,11 @@ public class PlayerModel : MonoBehaviour
     private void UpdateCameraPosition(Transform transform)
     {
         if (cameraController.isCameraFocusedOnPlayer)
-            cameraController.UpdateCameraPosition(transform);
+            cameraController.SetCameraPosition(transform);
     }
 
     public void PlayerBeginMove()
-        => PlayerEvents.OnPlayerBeginMove?.Invoke(this);
+        => PlayerEvents.OnPlayerBeginMove?.Invoke(character);
 
     public void InitPlayer(int playerId)
     {
@@ -75,10 +82,16 @@ public class PlayerModel : MonoBehaviour
         cameraController.isCameraFocusedOnPlayer = true;
     }
 
-    public void SpawnPlayer()
+    public void InitBot(int botId)
     {
-        var p = Instantiate(playerModel);
+        this.playerId = botId;
+        playerResources = new();
+    }
 
+    public void SpawnBotPlayer(Vector3Int targetPos, Vector3 worldTargetPos, Unit template)
+    {
+        var p = Instantiate(characterPrefab);
+        p.GetComponent<Transform>().position = worldTargetPos;
         character = p.GetComponent<PlayerCharacterController>();
         character.playerId = this.playerId;
         character.playerColor = playerColor;
@@ -87,52 +100,66 @@ public class PlayerModel : MonoBehaviour
 
         character.AssignedUnits.Add(new Unit()
         {
-            UnitName = UnitEnum.King,
-            HealthPoints = 3,
-            AttackPower = 2,
-            SizeInArmy = 0,
+            UnitName = template.UnitName,
+            HealthPoints = template.HealthPoints,
+            AttackPower = template.AttackPower,
+            SizeInArmy = template.SizeInArmy,
             isKing = true,
             UnitSprite = StaticData.unitIcons.SingleOrDefault(o => o.name == UnitEnum.King.ToString())
         });
 
-        var vec = new Vector3Int(12, 1, 0);
-        character.SetPlayerPosition(vec);
-        character.SetTargetPosition(vec);
-        cameraController.UpdateCameraPosition(character.transform);
+        character.SetPlayerPosition(targetPos);
+        //character.SetTargetPosition(worldTargetPos);
+        //character.SetIsMoving(true);
 
-        var p2 = Instantiate(playerModel);
-        var character2 = p2.GetComponent<PlayerCharacterController>();
-        var vec2 = new Vector3Int(1, 8, 0);
-        character2.playerId = this.playerId;
-        character2.playerColor = playerColor;
-        character2.characterId = 2;
-        character2.movementPoints = 20;
-        character2.SetPlayerPosition(vec2);
-        character2.SetTargetPosition(vec2);
-        character2.AssignedUnits.Add(new Unit()
+        playerCharacters = new List<PlayerCharacterController>() { character };
+    }
+
+    public void SpawnPlayer(Vector3Int targetPos, Vector3 worldTargetPos, Unit template)
+    {
+        var p = Instantiate(characterPrefab);
+        p.GetComponent<Transform>().position = worldTargetPos;
+        character = p.GetComponent<PlayerCharacterController>();
+        character.playerId = this.playerId;
+        character.playerColor = playerColor;
+        character.characterId = 1;
+        character.movementPoints = 20;
+
+        character.AssignedUnits.Add(new Unit()
         {
-            UnitName = UnitEnum.King,
-            HealthPoints = 3,
-            AttackPower = 2,
-            SizeInArmy = 0,
+            UnitName = template.UnitName,
+            HealthPoints = template.HealthPoints,
+            AttackPower = template.AttackPower,
+            SizeInArmy = template.SizeInArmy,
             isKing = true,
             UnitSprite = StaticData.unitIcons.SingleOrDefault(o => o.name == UnitEnum.King.ToString())
         });
 
-        playerCharacters = new List<PlayerCharacterController>()
-        {
-            character,
-            character2
-        };
+        character.SetPlayerPosition(targetPos);
+        //character.SetTargetPosition(worldTargetPos);
+        //character.SetIsMoving(true);
+        cameraController.SetCameraPosition(character.transform);
+
+        playerCharacters = new List<PlayerCharacterController>() { character };
 
         SubscribeToCharacterEvents();
+    }
+
+    public void UpdateCharacter(PlayerCharacterController character)
+    {
+        this.character = character;
+    }
+
+    public void KillCharacter()
+    {
+        Destroy(character.gameObject);
     }
 
     public void ChangeCharacters(int characterId)
     {
         character = playerCharacters[characterId - 1];
         character.OnPlayerMoveUpdateCameraPosition += UpdateCameraPosition;
-        cameraController.UpdateCameraPosition(character.transform);
+        cameraController.SetCameraPosition(character.transform);
     }
 
     public Vector3Int GetCharacterPosition(int characterIndex = 0)
@@ -151,11 +178,13 @@ public class PlayerModel : MonoBehaviour
     public List<PlayerCharacterController> GetPlayerCharacters()
         => playerCharacters;
 
-    public void SetCharacterPath(List<Vector3> positions, List<Vector3Int> tilesPositions, int characterIndex = 0)
-        => character.SetPath(positions, tilesPositions);
+    public void SetCharacterPath(List<Vector3> positions)
+        => character.SetPath(positions);
 
-    public Vector3 GetPlayerPosition()
-        => character.characterPosition;
+    public PlayerCharacterController GetCharacterById(int id)
+    {
+        return playerCharacters.Single(o => o.characterId == id);
+    }
 
     public Vector3 GetPlayerPositionById(int characterId)
         => playerCharacters[characterId - 1].characterPosition;
@@ -231,7 +260,7 @@ public class PlayerModel : MonoBehaviour
 
 public static class PlayerEvents
 {
-    public static Action<PlayerModel> OnPlayerBeginMove;
+    public static Action<PlayerCharacterController> OnPlayerBeginMove;
 
     public static Action<PlayerCharacterController> OnPlayerEndMove;
 }

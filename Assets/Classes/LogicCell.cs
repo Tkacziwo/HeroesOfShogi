@@ -1,13 +1,11 @@
 /// <summary>
-/// Same as GridCell but operates on LogicPiece
+/// Cloneable cell used in minimax;
 /// </summary>
 public class LogicCell
 {
     private Position pos;
 
-    private bool isPossibleMove = false;
-
-    public LogicPiece piece = null;
+    public Unit unit = null;
 
     public LogicCell(GridCell cell)
     {
@@ -19,36 +17,7 @@ public class LogicCell
         pos = new(cell.GetPosition());
     }
 
-    public void InitializeGridCell(int x, int y, float cellSize)
-    {
-        pos = new Position(x, y);
-        isPossibleMove = false;
-    }
-
-    public void SetPosition(int x, int y)
-    {
-        pos.SetPosition(x, y);
-    }
-
-    public void SetPiece(LogicPiece piece)
-    {
-        this.piece = piece;
-    }
-
-    public void SetAndMovePiece(LogicPiece piece)
-    {
-        this.piece = piece;
-    }
-
+   
     public Position GetPosition()
         => pos;
-
-    public bool GetIsPossibleMove()
-        => isPossibleMove;
-
-    public bool SetIsPossibleMove()
-        => isPossibleMove = true;
-
-    public bool ResetIsPossibleMove()
-        => isPossibleMove = false;
 }

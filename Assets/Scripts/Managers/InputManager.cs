@@ -1,9 +1,12 @@
 using NUnit.Framework.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -50,9 +53,7 @@ public class InputManager : MonoBehaviour
 
     [SerializeField] private Canvas canvas;
 
-    [SerializeField] private Canvas gameOver;
-
-    [SerializeField] private TextMeshProUGUI gameOverText;
+    [SerializeField] private GameObject gameOver;
 
     [SerializeField] private AbilitiesManager abilitiesManager;
 
@@ -61,6 +62,8 @@ public class InputManager : MonoBehaviour
     [SerializeField] private Material grayMaterial;
 
     [SerializeField] private Canvas tutorialCanvas;
+
+    [SerializeField] private Canvas mainCanvas;
 
     private bool specialAbilityInUse;
 
@@ -92,6 +95,22 @@ public class InputManager : MonoBehaviour
 
     private Terrain currentTerrain;
 
+    private LogicBoardManager newBestBoardManager = new();
+
+    private LogicKingManager newBestKingManager = new();
+
+    private LogicCell[,] logicCells = new LogicCell[9, 9];
+
+    public static Action RequestLogicCellsUpdate;
+
+    public static Action ResetUnitMoved;
+
+    [SerializeField] private int movesPerPlayer = 3;
+
+    private int doneMoves = 0;
+
+    private bool isUnitMoving = false;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -104,32 +123,63 @@ public class InputManager : MonoBehaviour
         botFinishedCalculating = false;
         botEnabled = StaticData.botEnabled;
         bot.InitializeBot(StaticData.botDifficulty);
-        if (!StaticData.tutorial)
-        {
-            tutorialGrid.gameObject.SetActive(false);
-            tutorialCanvas.gameObject.SetActive(false);
-            if (StaticData.map == "GrasslandsImage")
-            {
-                currentTerrain = Instantiate(Resources.Load<Terrain>("Terrains/Grasslands"));
-                currentTerrain.transform.position = new Vector3(-110, -1, -150);
-            }
-            else
-            {
-                currentTerrain = Instantiate(Resources.Load<Terrain>("Terrains/Desert"));
-                currentTerrain.transform.position = new Vector3(-110, -1, -150);
-            }
-        }
-        else
+
+        Scene active = SceneManager.GetSceneByName("Game");
+        SceneManager.SetActiveScene(active);
+
+        if (StaticData.tutorial)
         {
             tutorialGrid.gameObject.SetActive(true);
             tutorialCanvas.gameObject.SetActive(true);
             currentTerrain = Instantiate(Resources.Load<Terrain>("Terrains/TutorialPlayground"));
         }
+        else
+        {
+            tutorialGrid.gameObject.SetActive(false);
+            tutorialCanvas.gameObject.SetActive(false);
+
+            string mapName = StaticData.map == "GrasslandsImage" ? "Grasslands" : "Desert";
+
+            GameObject terrain = Resources.Load($"Terrains/{mapName}") as GameObject;
+
+            if (terrain != null)
+            {
+                var instantiated = Instantiate(terrain, active);
+                instantiated.GetComponent<Transform>().transform.position = new Vector3(-30, 10, -25);
+            }
+        }
 
         attackerPos = new();
+    }
 
-        gameOverText.text = "GAME OVER";
-        gameOverText.fontMaterial.color = Color.red;
+    private void OnEnable()
+    {
+        Grid.OnGridFinishRender += HandleGridFinishedRendering;
+        UnitModel.UnitFinishedMoving += HandleUnitFinishedMoving;
+        GameOverController.OnBackToMap += HandleBackToMap;
+    }
+    private void OnDisable()
+    {
+        Grid.OnGridFinishRender -= HandleGridFinishedRendering;
+        UnitModel.UnitFinishedMoving -= HandleUnitFinishedMoving;
+        GameOverController.OnBackToMap -= HandleBackToMap;
+    }
+
+    private void HandleUnitFinishedMoving()
+    {
+        isUnitMoving = false;
+    }
+
+    private async void HandleBackToMap()
+    {
+        Destroy(gameOver);
+        SceneManager.SetActiveScene(SceneManager.GetSceneByName("TestMap"));
+        await SceneManager.UnloadSceneAsync("Game");
+    }
+
+    private void HandleGridFinishedRendering(LogicCell[,] logicCells)
+    {
+        this.logicCells = logicCells;
     }
 
     public void PauseGame()
@@ -138,8 +188,9 @@ public class InputManager : MonoBehaviour
         paused = true;
     }
 
-    public void Restart()
+    public async void Restart()
     {
+        await SceneManager.UnloadSceneAsync(SceneManager.GetActiveScene().buildIndex);
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
@@ -162,6 +213,9 @@ public class InputManager : MonoBehaviour
 
         botThread.Start();
     }
+
+
+    private int botMoves = 3;
 
     /// <summary>
     /// Prepares bot for Minimax algorithm by setting adequate fields.
@@ -192,80 +246,100 @@ public class InputManager : MonoBehaviour
             CellWhichHoldsPiece = grid.GetGridCell(botResult.Item1.x, botResult.Item1.y);
         }
         var cell = grid.GetGridCell(botResult.Item2.x, botResult.Item2.y);
-        ExecutePieceMove(cell);
-        playerTurn = true;
+        //playerTurn = true;
         botFinishedCalculating = false;
         duringBotMove = false;
         duringBotText.gameObject.SetActive(false);
+        botMoves--;
+        //doneMoves = 0; 
+        ExecutePieceMove(cell);
+
+
+        botResult = null;
     }
+
+    int maxPossibleMovesForBot = 0;
 
     // Update is called once per frame
     void Update()
     {
-        if (mainCamera != null)
+        if (paused) return;
+
+        if (mainCamera == null) return;
+
+        grid.ClearPossibleMoves(possibleMoves);
+        if (StaticData.tutorial)
         {
-            if (!paused)
+            tutorialGrid.ClearPossibleMoves();
+        }
+
+        if (botFinishedCalculating)
+        {
+            if (botResult == null)
             {
-                grid.ClearPossibleMoves(possibleMoves);
-                if (StaticData.tutorial)
-                {
-                    tutorialGrid.ClearPossibleMoves();
-                }
-                var hoveredCell = MouseOverCell();
+                ShowGameOverScreen("YOU WIN", Color.green);
+                botFinishedCalculating = false;
+                EndTurn();
+            }
+            else
+            {
+                ApplyBotMinimaxResult();
 
-                if (botFinishedCalculating)
-                {
-                    if (botResult == null)
-                    {
-                        var text = gameOverText;
-                        text.text = "YOU WIN";
-                        gameOver.gameObject.SetActive(true);
-                        GameEnd();
-                    }
-                    else
-                    {
-                        ApplyBotMinimaxResult();
-                    }
-                }
-                else if (!playerTurn && botEnabled && !duringBotMove && grid.PiecesFinishedMoving())
-                {
-                    PrepareBotForMinimax();
-                }
-                else if (hoveredCell != null)
-                {
 
-                    if (possibleMoves != null)
-                    {
-                        if (possibleMoves.Contains(hoveredCell.GetPosition()))
-                        {
-                            hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
-                        }
-                        else
-                        {
-                            hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = new(1.0f, 86 / 255, 83 / 255);
-                        }
-                    }
-                    else
-                    {
-                        hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.magenta;
-                    }
+            }
+        }
+        else if (!playerTurn && botEnabled && !duringBotMove && !isUnitMoving)
+        {
+            var botUnits = grid.GetBotPieces();
 
-                    if (Input.GetMouseButtonDown(0) && !duringBotMove && grid.PiecesFinishedMoving())
-                    {
-                        if (duringKingAbility)
-                        {
-                            HandleKingAbility(hoveredCell);
-                        }
-                        else if (cantChangePiece)
-                        {
-                            HandleExtraMove(hoveredCell);
-                        }
-                        else
-                        {
-                            HandleBoardClick(hoveredCell);
-                        }
-                    }
-                }
+            //incude king thats why is + 1
+            maxPossibleMovesForBot = Math.Min(botUnits.Count, movesPerPlayer) + 1;
+
+            if (doneMoves == maxPossibleMovesForBot)
+            {
+                maxPossibleMovesForBot = 0;
+                EndTurn();
+            }
+            else
+            {
+                PrepareBotForMinimax();
+            }
+        }
+
+
+        var hoveredCell = MouseOverCell();
+
+        if (hoveredCell == null) return;
+
+        if (possibleMoves == null)
+        {
+            hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.magenta;
+        }
+        else
+        {
+            if (possibleMoves.Contains(hoveredCell.GetPosition()))
+            {
+                hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = Color.green;
+            }
+            else
+            {
+                hoveredCell.GetComponentInChildren<SpriteRenderer>().material.color = new(1.0f, 86 / 255, 83 / 255);
+            }
+        }
+
+        if (Input.GetMouseButtonDown(0) && !duringBotMove && !isUnitMoving)
+        {
+            if (duringKingAbility)
+            {
+                HandleKingAbility(hoveredCell);
+            }
+            else if (cantChangePiece)
+            {
+                HandleExtraMove(hoveredCell);
+            }
+            else
+            {
+                HandleBoardClick(hoveredCell);
             }
         }
     }
@@ -321,97 +395,6 @@ public class InputManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Handler activated when player clicks special ability window.
-    /// </summary>
-    public void HandleSpecialAbilityUsage()
-    {
-        if (chosenPiece)
-        {
-            var piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
-            if (piece.abilityCooldown == 0)
-            {
-                switch (piece.GetName())
-                {
-                    case "King":
-                        {
-                            var pieceList = piece.GetIsBlack() ? grid.GetBotPieces() : grid.GetPlayerPieces();
-                            bool promoted = false;
-                            foreach (var p in pieceList)
-                            {
-                                if (p.GetIsPromoted())
-                                {
-                                    promoted = true;
-                                    break;
-                                }
-                            }
-                            if (promoted)
-                            {
-                                foreach (var p in pieceList)
-                                {
-                                    if (p.GetIsPromoted())
-                                    {
-                                        promotedPieces.Add(p);
-                                        p.GetComponentInChildren<MeshRenderer>().material.color = Color.yellow;
-                                    }
-                                    else
-                                    {
-                                        p.GetComponentInChildren<MeshRenderer>().material.color = Color.blue;
-                                        nonPromotedPieces.Add(p);
-                                    }
-                                }
-                                abilityImage.material = grayMaterial;
-                                duringKingAbility = true;
-                                piece.abilityCooldown = -1;
-                            }
-                            break;
-                        }
-                    case "GoldGeneral":
-                        {
-                            bool turn = playerTurn;
-                            var positions = abilitiesManager.Onward(piece.GetPosition(), piece.GetIsBlack());
-                            foreach (var p in positions)
-                            {
-                                CellWhichHoldsPiece = grid.GetGridCell(p.Item1.x, p.Item1.y);
-                                ExecutePieceMove(grid.GetGridCell(p.Item2.x, p.Item2.y));
-                            }
-                            int destY;
-                            var piecePos = piece.GetPosition();
-                            if (piece.GetIsBlack())
-                            {
-                                destY = piecePos.y - 1;
-                            }
-                            else
-                            {
-                                destY = piecePos.y + 1;
-                            }
-                            if (boardManager.IsInBoard(destY, piecePos.x) && boardManager.IsCellFree(piecePos.x, destY))
-                            {
-                                CellWhichHoldsPiece = grid.GetGridCell(piece.GetPosition());
-                                ExecutePieceMove(grid.GetGridCell(piecePos.x, destY));
-                            }
-                            abilityImage.material = grayMaterial;
-                            specialAbilityInUse = false;
-                            piece.abilityCooldown = 2;
-                            playerTurn = !turn;
-                            break;
-                        }
-                    case "SilverGeneral":
-                    case "Rook":
-                        specialAbilityInUse = true;
-                        abilityImage.material = grayMaterial;
-                        break;
-                    default:
-                        break;
-                }
-                if (StaticData.tutorial)
-                {
-                    tutorialGrid.SetAbilityUsageMessage(piece.GetName());
-                }
-            }
-        }
-    }
-
-    /// <summary>
     /// Handler for clicking cell on the board.
     /// </summary>
     private void HandleBoardClick(GridCell hoveredCell)
@@ -419,13 +402,13 @@ public class InputManager : MonoBehaviour
         if (hoveredCell.GetIsPossibleMove())
         {
             ExecutePieceMove(hoveredCell);
-            playerTurn = !playerTurn;
+            //playerTurn = !playerTurn;
         }
         else if (CellWhichHoldsPiece != null && CellWhichHoldsPiece.GetPosition().Equals(hoveredCell.GetPosition()))
         {
             HandleUnclickPiece();
         }
-        else if ((hoveredCell.objectInThisGridSpace != null))
+        else if (hoveredCell.unitInGridCell != null)
         {
             HandlePieceClicked(hoveredCell);
         }
@@ -437,179 +420,75 @@ public class InputManager : MonoBehaviour
 
     public void HandlePieceClicked(GridCell hoveredCell)
     {
-        var piece = hoveredCell.objectInThisGridSpace.GetComponent<Piece>();
-        if (StaticData.tutorial)
+        var unit = hoveredCell.unitInGridCell.Unit;
+
+        if (unit.MovedInTurn) { Debug.Log("Already made move"); return; }
+
+
+        //if (StaticData.tutorial)
+        //{
+        //    tutorialGrid.InitializePieces(piece.GetName(), piece.GetIsDrop(), piece.GetMoveset());
+        //}
+
+        if ((playerTurn && !unit.GetIsBlack()) || (!playerTurn && unit.GetIsBlack()))
         {
-            tutorialGrid.InitializePieces(piece.GetName(), piece.GetIsDrop(), piece.GetMoveset());
+            //HandleAbilityImageColorChange(unit);
+            if (chosenPiece) RemovePossibleMoves();
+
+            if (!kingInDanger) PossibleMovesCalculation(unit, hoveredCell);
+
+            //else
+            //{
+            //    if (piece.isKing)
+            //    {
+            //        HandleKingClickedWhileInDanger(piece, hoveredCell);
+            //    }
+            //    else
+            //    {
+            //        SaveTheKing(piece, hoveredCell);
+            //    }
+            //}
         }
 
-        if ((playerTurn && !piece.GetIsBlack()) || (!playerTurn && piece.GetIsBlack()))
-        {
-            HandleAbilityImageColorChange(piece);
-            if (chosenPiece)
-            {
-                RemovePossibleMoves();
-            }
+        //if ((playerTurn && !piece.GetIsBlack()) || (!playerTurn && piece.GetIsBlack()))
+        //{
+        //    HandleAbilityImageColorChange(piece);
+        //    if (chosenPiece)
+        //    {
+        //        RemovePossibleMoves();
+        //    }
 
-            if (!kingInDanger)
-            {
-                PossibleMovesCalculationHandler(piece, hoveredCell);
-            }
-            else
-            {
-                if (piece.isKing)
-                {
-                    HandleKingClickedWhileInDanger(piece, hoveredCell);
-                }
-                else
-                {
-                    SaveTheKing(piece, hoveredCell);
-                }
-            }
-        }
-    }
-
-    /// <summary>
-    /// Handler for King while King is in danger. Ends game if there are no possible moves for King or his pieces left.
-    /// </summary>
-    public void HandleKingClickedWhileInDanger(Piece piece, GridCell hoveredCell)
-    {
-        // Find valid moves for king
-        possibleMoves = kingManager.ValidMovesScan(piece);
-        var attacker = CellWhichHoldsAttacker.objectInThisGridSpace.GetComponent<Piece>();
-
-        // Attacker protected -> remove attacker pos from possible moves
-        bool attackerProtected = kingManager.IsAttackerProtected(attacker);
-        if (attackerProtected && possibleMoves.Contains(attacker.GetPosition()))
-        {
-            possibleMoves.Remove(attacker.GetPosition());
-        }
-
-        var attackerPossibleMovesUnrestricted = boardManager.CalculatePossibleMoves(attacker, true);
-        if (attackerPossibleMovesUnrestricted != null && attackerPossibleMovesUnrestricted.Count != 0)
-        {
-            possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, attackerPossibleMovesUnrestricted, false);
-        }
-
-        var additionalDangerMoves = kingManager.KingDangerMovesScan(possibleMoves, piece.GetIsBlack());
-        if (additionalDangerMoves != null && additionalDangerMoves.Count != 0)
-        {
-            possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, additionalDangerMoves, false);
-        }
-
-        PossibleMovesDisplayLoop();
-        CellWhichHoldsPiece = hoveredCell;
-        chosenPiece = true;
-
-        if (possibleMoves == null || possibleMoves.Count == 0)
-        {
-            if (GameEndCheck(piece.GetIsBlack()))
-            {
-                GameEnd();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Handler for guards, sacrifices, drop sacrifices while king is in danger.
-    /// </summary>
-    public void SaveTheKing(Piece piece, GridCell hoveredCell)
-    {
-        foreach (var b in bodyguards)
-        {
-            if (hoveredCell.GetPosition().Equals(b.GetPosition()))
-            {
-                possibleMoves = new() { CellWhichHoldsAttacker.objectInThisGridSpace.GetComponent<Piece>().GetPosition() };
-                PossibleMovesDisplayLoop();
-
-                CellWhichHoldsPiece = hoveredCell;
-                chosenPiece = true;
-                break;
-            }
-        }
-        if (piece.GetIsDrop())
-        {
-            possibleMoves = boardManager.CalculatePossibleDrops(piece);
-            possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, endangeredMoves, true);
-            PossibleMovesDisplayLoop();
-            CellWhichHoldsPiece = hoveredCell;
-            chosenPiece = true;
-        }
-        else if (sacrifices != null && endangeredMoves != null)
-        {
-            foreach (var s in sacrifices)
-            {
-                if (hoveredCell.GetPosition().Equals(s.GetPosition()))
-                {
-                    possibleMoves = kingManager.CalculateProtectionMoves(piece, endangeredMoves); ;
-                    PossibleMovesDisplayLoop();
-                    CellWhichHoldsPiece = hoveredCell;
-                    chosenPiece = true;
-                    break;
-                }
-            }
-        }
-
-        if (possibleMoves == null || possibleMoves.Count == 0)
-        {
-            GameEnd();
-        }
-    }
-
-    /// <summary>
-    /// Check for Game End. Returns true when game is lost, false otherwise.
-    /// </summary>
-    public bool GameEndCheck(bool isBlack)
-    {
-        var pieces = isBlack ? grid.GetBotPieces() : grid.GetPlayerPieces();
-        if ((sacrifices != null && sacrifices.Count != 0) ||
-            (bodyguards != null && bodyguards.Count != 0))
-        {
-            return false;
-        }
-
-        foreach (var piece in pieces)
-        {
-            if (piece.GetIsDrop())
-            {
-                possibleMoves = boardManager.CalculatePossibleDrops(piece);
-                possibleMoves = boardManager.CalculateOverlappingMoves(possibleMoves, endangeredMoves, true);
-                if (possibleMoves != null || possibleMoves.Count != 0)
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    /// <summary>
-    /// Ends game.
-    /// </summary>
-    public void GameEnd()
-    {
-        gameOver.gameObject.SetActive(true);
-        paused = true;
+        //    if (!kingInDanger)
+        //    {
+        //        PossibleMovesCalculationHandler(piece, hoveredCell);
+        //    }
+        //    else
+        //    {
+        //        if (piece.isKing)
+        //        {
+        //            HandleKingClickedWhileInDanger(piece, hoveredCell);
+        //        }
+        //        else
+        //        {
+        //            SaveTheKing(piece, hoveredCell);
+        //        }
+        //    }
+        //}
     }
 
     /// <summary>
     /// Handler for activating calculation methods in BoardManager or KingManager.
     /// </summary>
-    public void PossibleMovesCalculationHandler(Piece piece, GridCell hoveredCell)
+    public void PossibleMovesCalculation(Unit unit, GridCell hoveredCell)
     {
-        if (piece.isKing)
+        if (unit.GetIsDrop())
         {
-            possibleMoves = kingManager.ValidMovesScan(piece);
-        }
-        else if (piece.GetIsDrop())
-        {
-            possibleMoves = boardManager.CalculatePossibleDrops(piece);
+            //possibleMoves = newBestBoardManager.CalculatePossibleDrops(unit);
         }
         else
         {
-            possibleMoves = boardManager.CalculatePossibleMoves(piece);
-            boardManager.CheckIfMovesAreLegal(ref possibleMoves, piece);
+            possibleMoves = newBestBoardManager.NewCalculatePossibleMoves(unit, logicCells);
+            //boardManager.CheckIfMovesAreLegal(ref possibleMoves, piece);
         }
 
         PossibleMovesDisplayLoop();
@@ -647,92 +526,164 @@ public class InputManager : MonoBehaviour
     /// </summary>
     public void ExecutePieceMove(GridCell hoveredCell, bool registerMove = true)
     {
-        Piece piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
+        //Piece piece = CellWhichHoldsPiece.objectInThisGridSpace.GetComponent<Piece>();
+        isUnitMoving = true;
+        Unit unit = CellWhichHoldsPiece.unitInGridCell.Unit;
+        //if (kingInDanger)
+        //{
+        //    grid.GetPieceInGrid(kingPos).GetComponentInChildren<MeshRenderer>().material.color =
+        //        piece.GetIsBlack() ? Color.black : Color.white;
+        //    kingInDanger = false;
 
-        if (kingInDanger)
+        //    Piece attacker = grid.GetPieceInGrid(attackerPos).GetComponent<Piece>();
+
+        //    if (piece.GetIsBlack())
+        //    {
+        //        attacker.ResetIsBlack();
+        //    }
+        //    else
+        //    {
+        //        attacker.SetIsBlack();
+        //    }
+        //}
+
+        //check for promotions
+        //if (!piece.GetIsDrop() && !piece.GetIsPromoted() && CheckForPromotion(hoveredCell, piece.GetIsBlack()))
+        //{
+        //    boardManager.ApplyPromotion(piece);
+        //    if (StaticData.tutorial)
+        //    {
+        //        tutorialGrid.SetPromotionTutorialMessage();
+        //    }
+        //}
+
+        if (CheckForPromotion(hoveredCell, unit.GetIsBlack()))
         {
-            grid.GetPieceInGrid(kingPos).GetComponentInChildren<MeshRenderer>().material.color =
-                piece.GetIsBlack() ? Color.black : Color.white;
-            kingInDanger = false;
+            var changedMoveset = newBestBoardManager.GetPromotedUnitMoveset(unit);
+            CellWhichHoldsPiece.unitInGridCell.PromoteUnit(changedMoveset);
+        }
 
-            Piece attacker = grid.GetPieceInGrid(attackerPos).GetComponent<Piece>();
+        if (hoveredCell.unitInGridCell != null)
+        {
+            var enemyUnit = hoveredCell.unitInGridCell.Unit;
 
-            if (piece.GetIsBlack())
+            var isDead = enemyUnit.ReduceHP(unit.AttackPower);
+
+            if (isDead)
             {
-                attacker.ResetIsBlack();
+                Destroy(hoveredCell.unitInGridCell.gameObject);
+                hoveredCell.unitInGridCell = null;
+                Instantiate(dieAnimation, hoveredCell.GetWorldPosition(), Quaternion.identity);
+                unit.MovePiece(hoveredCell.GetPosition());
+                hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, hoveredCell.GetWorldPosition());
+
+                CellWhichHoldsPiece.unitInGridCell = null;
+
+                if (enemyUnit.UnitName == UnitEnum.King)
+                {
+                    grid.SetWinner(unit.GetIsBlack());
+                    if (enemyUnit.GetIsBlack())
+                    {
+                        ShowGameOverScreen("YOU WIN", Color.green);
+                    }
+                    else
+                    {
+                        ShowGameOverScreen("YOU LOSE", Color.red);
+                    }
+                }
             }
             else
             {
-                attacker.SetIsBlack();
+                if (unit.UnitName == UnitEnum.Bishop || unit.UnitName == UnitEnum.Rook || unit.UnitName == UnitEnum.Lance)
+                {
+                    var unitPos = unit.GetPosition();
+
+                    Position destination = null;
+
+                    for (int row = -1; row <= 1; row++)
+                    {
+                        for (int col = -1; col <= 1; col++)
+                        {
+                            destination = newBestBoardManager.FindPositionBeforeEnemy(row, col, unitPos, logicCells, enemyUnit.GetPosition());
+                            if (destination != null)
+                            {
+                                break;
+                            }
+                        }
+
+                        if (destination != null)
+                        {
+                            break;
+                        }
+                    }
+
+
+                    if (destination != null && !destination.Equals(enemyUnit.GetPosition()))
+                    {
+                        unit.MovePiece(destination);
+                        var beforeEnemyCell = grid.GetGridCell(destination);
+                        beforeEnemyCell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, beforeEnemyCell.GetWorldPosition());
+                        CellWhichHoldsPiece.unitInGridCell = null;
+                    }
+                    else
+                    {
+                        var cell = grid.GetGridCell(CellWhichHoldsPiece.GetPosition());
+                        unit.MovePiece(cell.GetPosition());
+                        cell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, cell.GetWorldPosition());
+                    }
+                }
+                else
+                {
+                    var cell = grid.GetGridCell(CellWhichHoldsPiece.GetPosition());
+                    unit.MovePiece(cell.GetPosition());
+                    cell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, cell.GetWorldPosition());
+                }
             }
         }
-
-        //check for promotions
-        if (!piece.GetIsDrop() && !piece.GetIsPromoted() && CheckForPromotion(hoveredCell, piece.GetIsBlack()))
+        else
         {
-            boardManager.ApplyPromotion(piece);
-            if (StaticData.tutorial)
-            {
-                tutorialGrid.SetPromotionTutorialMessage();
-            }
+            unit.MovePiece(hoveredCell.GetPosition());
+            hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, hoveredCell.GetWorldPosition());
+            CellWhichHoldsPiece.unitInGridCell = null;
         }
 
-        var handlePieceKillResult = HandlePieceKill(hoveredCell, piece);
+        RequestLogicCellsUpdate?.Invoke();
+        unit.MovedInTurn = true;
+        doneMoves++;
 
-        piece.MovePiece(hoveredCell.GetPosition());
-        if (piece.abilityCooldown > 0)
-        {
-            piece.abilityCooldown--;
-        }
-
-        hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.objectInThisGridSpace, hoveredCell.GetWorldPosition());
-
-        HandleDropCheck(piece);
+        //HandleDropCheck(piece);
 
         RemovePossibleMoves();
         chosenPiece = false;
 
-        if (specialAbilityInUse)
+        if (doneMoves == movesPerPlayer)
         {
-            switch (piece.GetName())
-            {
-                case "SilverGeneral":
-                    var turn = playerTurn;
-                    playerTurn = !turn;
-                    possibleMoves = abilitiesManager.Rush(piece.GetPosition());
-                    if (possibleMoves != null && possibleMoves.Count != 0)
-                    {
-                        CellWhichHoldsPiece = grid.GetGridCell(piece.GetPosition());
-                        cantChangePiece = true;
-                        cantChangePossibleMoves = new(possibleMoves);
-                    }
-                    specialAbilityInUse = false;
-                    piece.abilityCooldown = 4;
-                    break;
-                case "Rook":
-                    {
-                        if (handlePieceKillResult.Item1)
-                        {
-                            Position p = new(hoveredCell.GetPosition());
-                            var infernoResult = abilitiesManager.Inferno(p, handlePieceKillResult.Item2);
-                            if (infernoResult != null)
-                            {
-                                KillPiece(grid.GetGridCell(infernoResult.x, infernoResult.y));
-                            }
-                            specialAbilityInUse = false;
-                            piece.abilityCooldown = -1;
-                        }
-                        break;
-                    }
-                default:
-                    break;
-            }
+            playerTurn = !playerTurn;
+            doneMoves = 0;
+            ResetUnitMoved?.Invoke();
         }
 
-        if (!piece.isKing)
+        if (!unit.isKing)
         {
-            HandleKingEndangerement(piece);
+            HandleKingEndangerement(unit);
         }
+    }
+
+    private void ShowGameOverScreen(string text, Color color)
+    {
+        gameOver = Instantiate(gameOver);
+        gameOver.transform.SetParent(mainCanvas.transform);
+        this.gameOver.GetComponent<RectTransform>().anchoredPosition = new(0, 0);
+        gameOver.GetComponent<GameOverController>().SetText(text, color);
+    }
+
+    public void EndTurn()
+    {
+        chosenPiece = false;
+
+        playerTurn = !playerTurn;
+        doneMoves = 0;
+        ResetUnitMoved?.Invoke();
     }
 
     /// <summary>
@@ -773,30 +724,24 @@ public class InputManager : MonoBehaviour
     /// <summary>
     /// Handle if King is in danger after executing move.
     /// </summary>
-    /// <param name="piece"></param>
-    public void HandleKingEndangerement(Piece piece)
+    /// <param name="unitModel"></param>
+    public void HandleKingEndangerement(Unit unit)
     {
-        Piece king = piece.GetIsBlack() ? grid.GetPlayerKing() : grid.GetBotKing();
-        var piecesList = piece.GetIsBlack() ? grid.GetPlayerPieces() : grid.GetBotPieces();
+        //[ToDo] adjust
+        //UnitModel king = unit.GetIsBlack() ? grid.GetPlayerKing() : grid.GetBotKing();
+        //var piecesList = !unit.GetIsBlack() ? grid.GetPlayerPieces() : grid.GetBotPieces();
 
-        var attackerRes = kingManager.AttackerScanForKing(king, piece);
-        var closeRes = kingManager.CloseScanForKing(king, piece.GetPosition());
-        var farRes = kingManager.FarScanForKing(king.GetPosition(), king.GetIsBlack(), ref attackerPos);
-        if (closeRes || farRes || attackerRes)
-        {
-            if (closeRes || attackerRes)
-            {
-                attackerPos = piece.GetPosition();
-            }
-            CellWhichHoldsAttacker = grid.GetGridCell(attackerPos);
-            var attacker = grid.GetPieceInGrid(attackerPos).GetComponent<Piece>();
-            kingInDanger = true;
-            kingPos = king.GetPosition();
-            king.GetComponentInChildren<MeshRenderer>().material.color = Color.red;
-            endangeredMoves = kingManager.CalculateEndangeredMoves(attacker, king.GetPosition());
-            bodyguards = kingManager.FindGuards(attackerPos, piecesList);
-            sacrifices = kingManager.FindSacrifices(endangeredMoves, piecesList);
-        }
+        ////var attackerRes = newBestKingManager.AttackerScanForKing(king, unit);
+        //var closeRes = newBestKingManager.CloseScanForKing(king.Unit, logicCells, unit.GetPosition());
+        //var farRes = newBestKingManager.FarScanForKing(king.Unit.GetPosition(), king.Unit.GetIsBlack(),logicCells, piecesList.Select(o =>o.Unit).ToList(), ref attackerPos);
+        //if (closeRes || farRes)
+        //{
+
+        //    CellWhichHoldsAttacker = grid.GetGridCell(attackerPos);
+        //    var attacker = grid.GetPieceInGrid(attackerPos).GetComponent<Piece>();
+        //    kingInDanger = true;
+        //    king.GetComponentInChildren<MeshRenderer>().material.color = Color.red;
+        //}
     }
 
     /// <summary>
