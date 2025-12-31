@@ -22,7 +22,7 @@ public class Camp : MonoBehaviour
 
     public int positionOperator;
 
-    public List<GameObject> capturedPieceObjects;
+    public List<UnitModel> capturedPieceObjects;
 
     void Start()
     {
@@ -54,7 +54,7 @@ public class Camp : MonoBehaviour
     }
 
     /// <summary>
-    /// Reshuffles the camp to remove any empty cells between captured pieces.
+    /// Reshuffles the camp to remove any empty cells between captured units.
     /// </summary>
     public void Reshuffle()
     {
@@ -72,7 +72,7 @@ public class Camp : MonoBehaviour
 
         foreach (var pieceObject in capturedPieceObjects)
         {
-            var pieceScript = pieceObject.GetComponent<Piece>();
+            var pieceScript = pieceObject.Unit;
             pieceScript.SetIsDrop();
 
             var cell = campGrid[posX, posY].GetComponent<GridCell>();
@@ -88,17 +88,17 @@ public class Camp : MonoBehaviour
     }
 
     /// <summary>
-    /// Adds killed piece to camp
+    /// Adds killed unit to enemy camp.
     /// </summary>
-    /// <param name="piece">killed piece</param>
-    public void AddToCamp(GameObject piece)
+    /// <param name="unitModel">Killed unit</param>
+    public void AddToCamp(UnitModel unitModel)
     {
         if (capturedPieceObjects.Count == 27)
         {
-            Destroy(piece);
+            Destroy(unitModel);
         }
 
-        var pieceScript = piece.GetComponent<Piece>();
+        var pieceScript = unitModel.Unit;
 
         if (pieceScript.GetIsPromoted())
         {
@@ -110,20 +110,35 @@ public class Camp : MonoBehaviour
 
         if (pieceScript.GetIsBlack())
         {
-            pieceScript.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
+            unitModel.pieceIcon.GetComponent<MeshRenderer>().material.color = Color.white;
             pieceScript.ResetIsBlack();
         }
         else
         {
-            pieceScript.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+            unitModel.pieceIcon.GetComponent<MeshRenderer>().material.color = Color.black;
             pieceScript.SetIsBlack();
         }
         var cell = campGrid[posX, posY].GetComponent<GridCell>();
         var aboveCellPosition = cell.GetWorldPosition();
-        aboveCellPosition.y += 10;
-        piece.GetComponent<Piece>().SetPiecePositionImmediate(aboveCellPosition);
+        //aboveCellPosition.y += 10;
+        unitModel.Model.transform.position = aboveCellPosition;
+        if(pieceScript.GetIsBlack())
+        {
+            unitModel.Model.transform.SetPositionAndRotation(aboveCellPosition, Quaternion.Euler(0,0,0));
+        }
+        else
+        {
+            unitModel.Model.transform.rotation = Quaternion.Euler(-90,-180,0);
+            //piece.Model.transform.SetPositionAndRotation(aboveCellPosition, Quaternion.Euler(-90, -180, 0));
+        }
+        unitModel.UpdateHealthBarPosition();
+        cell.unitInGridCell = unitModel;
 
-        cell.SetAndMovePieceLinear(piece, cell.GetWorldPosition());
+        unitModel.Unit.RestoreMaxHP();
+        unitModel.healthBar.GetComponent<HealthBarController>().UpdateHealthBar(unitModel.Unit.HealthPoints);
+        //piece.SetPiecePositionImmediate(aboveCellPosition);
+
+        //cell.SetAndMovePieceLinear(piece, cell.GetWorldPosition());
         posX++;
         numberOfPieces++;
         if (posX == 9)
@@ -131,6 +146,6 @@ public class Camp : MonoBehaviour
             posX = 0;
             posY += positionOperator;
         }
-        capturedPieceObjects.Add(piece);
+        capturedPieceObjects.Add(unitModel);
     }
 }

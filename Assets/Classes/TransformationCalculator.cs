@@ -50,4 +50,18 @@ public static class TransformationCalculator
 
         return curvePath;
     }
+
+    public static List<Vector3> LinearAttackTransformation(Vector3 startPosition, Vector3 enemyPosition)
+    {
+        Vector3 centerPosition = new((
+           startPosition.x + enemyPosition.x) * 0.5f,
+           startPosition.y,
+           (startPosition.z + enemyPosition.z) * 0.5f);
+
+        return new()
+        {
+            centerPosition,
+            startPosition,
+        };
+    }
 }

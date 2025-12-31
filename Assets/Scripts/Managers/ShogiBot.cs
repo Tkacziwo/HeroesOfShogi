@@ -29,15 +29,10 @@ public class ShogiBot : MonoBehaviour
     /// Clones board state from real board into logic representation - LogicBoard.
     /// </summary>
     /// <param name="grid">Real GameGrid</param>
-    /// <param name="kingInDanger">bool current state of King</param>
-    /// <param name="attackerPos">Optional attacker position</param>
-    public void GetBoardState(Grid grid, bool kingInDanger, Position attackerPos)
+    public void GetBoardState(Grid grid)
     {
-        logicBoard.CloneFromReal(grid, kingInDanger, attackerPos);
+        logicBoard.CloneFromReal(grid);
     }
-
-    //include in board state captured pieces for drops
-    //calculate all possibleMoves and include drops
 
     public void InitializeBot(int botDifficulty)
     {
@@ -53,7 +48,6 @@ public class ShogiBot : MonoBehaviour
         var move = GetBestMove(logicBoard, depth);
         return move;
     }
-
 
     /// <summary>
     /// Executes Minimax algorithm.
@@ -84,14 +78,7 @@ public class ShogiBot : MonoBehaviour
 
         if (moves.Count == 0)
         {
-            //no more pieces left
-            Debug.Log("koniec gry");
             return new(board.EvaluateBoard(), null);
-        }
-
-        if (board.kingInDanger)
-        {
-            depth = 1;
         }
 
         Tuple<Position, Position> bestMoves = null;
@@ -102,7 +89,7 @@ public class ShogiBot : MonoBehaviour
             foreach (var m in moves)
             {
                 LogicBoard simulatedBoard = new();
-                simulatedBoard.CloneFromLogic(board, board.kingInDanger, board.attackerPos);
+                simulatedBoard.CloneFromLogic(board);
 
                 simulatedBoard.ApplyMove(m.Item1, m.Item2);
 
@@ -129,7 +116,7 @@ public class ShogiBot : MonoBehaviour
             foreach (var m in moves)
             {
                 LogicBoard simulatedBoard = new();
-                simulatedBoard.CloneFromLogic(board, board.kingInDanger, board.attackerPos);
+                simulatedBoard.CloneFromLogic(board);
                 simulatedBoard.ApplyMove(m.Item1, m.Item2);
 
                 var res = Minimax(simulatedBoard, depth - 1, true, alpha, beta);

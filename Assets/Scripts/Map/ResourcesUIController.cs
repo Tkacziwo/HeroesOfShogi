@@ -1,11 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using TMPro;
-using Unity.AppUI.UI;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UIElements;
 
 public class ResourceUIController : MonoBehaviour
 {
@@ -98,9 +92,9 @@ public class ResourceUIController : MonoBehaviour
         if (!player.isRealPlayer) return;
 
         float size = playerCharacterPanel.GetComponent<RectTransform>().rect.width;
-        float posX = 60f;
+        float posX = 180f;
 
-        float posY = -180f;
+        float posY = -60f;
 
         foreach (var city in player.GetPlayerCities())
         {

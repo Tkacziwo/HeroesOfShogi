@@ -32,6 +32,7 @@ public class GameCreationManager : MonoBehaviour
     {
         StaticData.map = mapImage.GetComponent<Image>().sprite.name;
         StaticData.tutorial = false;
+        CityNames.takenCityNames.Clear();
         SceneManager.LoadScene("TestMap");
     }
 

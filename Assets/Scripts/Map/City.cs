@@ -31,9 +31,12 @@ public class City : InteractibleBuilding
         }
     }
 
-    private void HandleUnitsRecruited(ProducedUnits units)
+    private void HandleUnitsRecruited(Tuple<string, ProducedUnits> units)
     {
-        this.producedUnits = units;
+        if (units.Item1 == cityName)
+        {
+            this.producedUnits = units.Item2;
+        }
     }
 
     private void HandleBuldingUpgrade(string cityName, string buildingName, BuildingUpgradeInfo upgradedBuilding)
@@ -66,6 +69,23 @@ public class City : InteractibleBuilding
     {
         InitCity();
         cityName = Guid.NewGuid().ToString();
+
+        Random rand = new();
+
+        var names = CityNames.cityNames;
+        var takenNames = CityNames.takenCityNames;
+
+        while (true)
+        {
+            var chosenIndex = rand.Next(0, names.Count);
+            if (!takenNames.Contains(names[chosenIndex]))
+            {
+                cityName = names[chosenIndex];
+                CityNames.takenCityNames.Add(cityName);
+                break;
+            }
+        }
+
         producedUnits = new()
         {
             pawns = 3,

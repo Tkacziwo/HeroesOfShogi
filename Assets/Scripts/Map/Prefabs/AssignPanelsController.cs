@@ -21,7 +21,7 @@ public class AssignPanelsController : MonoBehaviour
 
     private List<Unit> units = new();
 
-    public static Action<ProducedUnits> OnUnitsRecruit;
+    public static Action<Tuple<string, ProducedUnits>> OnUnitsRecruit;
 
     [SerializeField] private GameObject pawnPanel;
 
@@ -47,8 +47,11 @@ public class AssignPanelsController : MonoBehaviour
 
     private readonly List<Unit> unitTemplates = StaticData.unitTemplates;
 
-    public void Setup(PlayerCharacterController currentCharacter, ProducedUnits cityUnits)
+    private string cityName;
+
+    public void Setup(PlayerCharacterController currentCharacter, ProducedUnits cityUnits, string cityName)
     {
+        this.cityName = cityName;
         unitIcons = StaticData.unitIcons;
         this.currentCharacter = currentCharacter;
         this.cityUnits = cityUnits;
@@ -109,7 +112,7 @@ public class AssignPanelsController : MonoBehaviour
         cityUnits.rooks -= selectedUnits.rooks;
         cityUnits.bishops -= selectedUnits.bishops;
 
-        OnUnitsRecruit?.Invoke(cityUnits);
+        OnUnitsRecruit?.Invoke(new(cityName, cityUnits));
 
         OnCancel();
     }

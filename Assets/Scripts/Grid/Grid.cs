@@ -121,7 +121,7 @@ public class Grid : MonoBehaviour
     /// </summary>
     public void GenerateField()
     {
-        //pCamp.GenerateCamp();
+        pCamp.GenerateCamp();
 
         float campSpacing = 1.0F + gridCellSize * 3;
         Scene activeScene = SceneManager.GetSceneByName("Game");
@@ -141,7 +141,7 @@ public class Grid : MonoBehaviour
         }
         campSpacing += 9 * gridCellSize + 1.0F;
 
-        //eCamp.GenerateCamp(campSpacing);
+        eCamp.GenerateCamp(campSpacing);
     }
 
     /// <summary>
@@ -175,19 +175,20 @@ public class Grid : MonoBehaviour
 
                         var unitModel = cell.unitInGridCell;
 
-                        //if (unit.GetIsBlack())
-                        //{
-                        //    if (unit.isKing) { botKing = unitModel; }
-                        //    else { botPieces.Add(unitModel); }
-                        //    //cell.objectInThisGridSpace.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
-                        //}
-                        //else
-                        //{
-                        if (unit.isKing) { playerKing = unitModel; }
-                        else { playerPieces.Add(unitModel); }
-                        unitModel.Model.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
-                        unitModel.Model.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(-90, 180, 0);
-                        //}
+                        if (unit.GetIsBlack())
+                        {
+                            if (unit.isKing) { botKing = unitModel; }
+                            else { botPieces.Add(unitModel); }
+                            unitModel.pieceIcon.GetComponent<MeshRenderer>().material.color = Color.black;
+                        }
+                        else
+                        {
+                            if (unit.isKing) { playerKing = unitModel; }
+                            else { playerPieces.Add(unitModel); }
+
+                            unitModel.pieceIcon.GetComponent<MeshRenderer>().material.color = Color.white;
+                            unitModel.Model.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(-90, 180, 0);
+                        }
                     }
                 }
             }
@@ -239,13 +240,14 @@ public class Grid : MonoBehaviour
                         if (unitModel.Unit.isKing) { botKing = unitModel; }
                         else { botPieces.Add(unitModel); }
 
-                        unitModel.Model.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+                        unitModel.pieceIcon.GetComponent<MeshRenderer>().material.color = Color.black;
                     }
                     else
                     {
                         if (unitModel.Unit.isKing) { playerKing = unitModel; }
                         else { playerPieces.Add(unitModel); }
-                        unitModel.Model.GetComponentInChildren<MeshRenderer>().material.color = Color.white;
+
+                        unitModel.pieceIcon.GetComponent<MeshRenderer>().material.color = Color.white;
                         unitModel.Model.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(-90, 180, 0);
                     }
                 }
@@ -469,26 +471,25 @@ public class Grid : MonoBehaviour
     /// Adds killed piece to camp.
     /// </summary>
     /// <param name="piece">killed piece GameObject</param>
-    public void AddToCamp(GameObject piece)
+    public void AddToCamp(UnitModel piece)
     {
-        throw new NotImplementedException();
-        //Piece p = piece.GetComponent<Piece>();
-        //if (p.GetIsBlack())
-        //{
-        //    p.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 180, 0);
-        //    p.MovePiece(new(100, 100));
-        //    playerPieces.Add(p);
-        //    botPieces.Remove(p);
-        //    pCamp.AddToCamp(piece);
-        //}
-        //else
-        //{
-        //    p.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 0, 0);
-        //    p.MovePiece(new(200, 200));
-        //    botPieces.Add(p);
-        //    playerPieces.Remove(p);
-        //    eCamp.AddToCamp(piece);
-        //}
+        //throw new NotImplementedException();
+        if (piece.Unit.GetIsBlack())
+        {
+            piece.Model.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 180, 0);
+            piece.Unit.MovePiece(new(100, 100));
+            playerPieces.Add(piece);
+            botPieces.Remove(piece);
+            pCamp.AddToCamp(piece);
+        }
+        else
+        {
+            piece.Model.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 0, 0);
+            piece.Unit.MovePiece(new(200, 200));
+            botPieces.Add(piece);
+            playerPieces.Remove(piece);
+            eCamp.AddToCamp(piece);
+        }
     }
 
     /// <summary>
@@ -522,7 +523,7 @@ public class Grid : MonoBehaviour
 
     public void SetWinner(bool isBlack)
     {
-        if(isBlack)
+        if (isBlack)
         {
             var units = new List<Unit>();
 
@@ -563,11 +564,11 @@ public class Grid : MonoBehaviour
         }
         for (int y = 0; y < 3; y++)
         {
-            //for (int x = 0; x < width; x++)
-            //{
-            //    pCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = defaultColor;
-            //    eCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = defaultColor;
-            //}
+            for (int x = 0; x < width; x++)
+            {
+                pCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = defaultColor;
+                eCamp.campGrid[x, y].GetComponentInChildren<SpriteRenderer>().material.color = defaultColor;
+            }
         }
     }
 

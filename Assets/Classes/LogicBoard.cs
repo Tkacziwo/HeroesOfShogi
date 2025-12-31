@@ -18,10 +18,6 @@ public class LogicBoard
 
     private readonly LogicKingManager kingManager = new();
 
-    public bool kingInDanger;
-
-    public Position attackerPos = null;
-
     public LogicCell[,] dropCells = new LogicCell[9, 3];
 
     private readonly int battleWidth = StaticData.battleMapWidth;
@@ -34,12 +30,8 @@ public class LogicBoard
     /// The clone is virtually the same as the real counterpart.
     /// </summary>
     /// <param name="grid">Real board</param>
-    /// <param name="kingInDanger">state of King</param>
-    /// <param name="attackerPos">optional attacker position</param>
-    public void CloneFromReal(Grid grid, bool kingInDanger, Position attackerPos)
+    public void CloneFromReal(Grid grid)
     {
-        this.kingInDanger = kingInDanger;
-        this.attackerPos = new(attackerPos);
         pieces.Clear();
         allPieces.Clear();
         enemyPieces.Clear();
@@ -97,10 +89,8 @@ public class LogicBoard
     /// <param name="grid">LogicBoard instance</param>
     /// <param name="kingInDanger">King's state</param>
     /// <param name="attackerPos">optional attacker position</param>
-    public void CloneFromLogic(LogicBoard grid, bool kingInDanger, Position attackerPos)
+    public void CloneFromLogic(LogicBoard grid)
     {
-        this.kingInDanger = kingInDanger;
-        this.attackerPos = new(attackerPos);
         pieces.Clear();
         allPieces.Clear();
         enemyPieces.Clear();

@@ -606,11 +606,11 @@ public class LogicBoardManager
         return betterDrops;
     }
 
-    public List<Position> CalculatePossibleDrops(LogicCell[,] cells, Unit piece)
+    public List<Position> CalculatePossibleDrops(Unit unit, LogicCell[,] cells)
     {
         List<Position> moves = new();
 
-        if (piece.GetName() == "Pawn")
+        if (unit.GetName() == "Pawn")
         {
             List<int> badX = new();
             for (int y = 0; y < 9; y++)
@@ -620,7 +620,7 @@ public class LogicBoardManager
                     if (!IsCellFree(x, y, cells))
                     {
                         var gridPiece = cells[x, y].unit;
-                        if (gridPiece.GetName() == "Pawn" && gridPiece.GetIsBlack() != piece.GetIsBlack())
+                        if (gridPiece.GetName() == "Pawn" && gridPiece.GetIsBlack() == unit.GetIsBlack())
                         {
                             badX.Add(x);
                         }
@@ -628,20 +628,36 @@ public class LogicBoardManager
                 }
             }
 
-            for (int y = 0; y < 9; y++)
+            if (unit.GetIsBlack())
             {
-                for (int x = 0; x < 9; x++)
+                for (int y = 2; y < 9; y++)
                 {
-                    if (IsCellFree(x, y, cells) && !badX.Contains(x))
+                    for (int x = 0; x < 9; x++)
                     {
-                        moves.Add(new(x, y));
+                        if (IsCellFree(x, y, cells) && !badX.Contains(x))
+                        {
+                            moves.Add(new(x, y));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (int y = 0; y < 7; y++)
+                {
+                    for (int x = 0; x < 9; x++)
+                    {
+                        if (IsCellFree(x, y, cells) && !badX.Contains(x))
+                        {
+                            moves.Add(new(x, y));
+                        }
                     }
                 }
             }
         }
         else
         {
-            for (int y = 0; y < 9; y++)
+            for (int y = 2; y < 7; y++)
             {
                 for (int x = 0; x < 9; x++)
                 {

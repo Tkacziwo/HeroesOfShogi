@@ -18,6 +18,10 @@ public class UnitModel : MonoBehaviour
 
     public GameObject promotionEffect;
 
+    public GameObject healthBar;
+
+    public GameObject pieceIcon;
+
     public void InitUnit(string name, int[] moveset, int x, int y, bool isSpecial, float movementSpeed, Unit template)
     {
         Unit.InitPiece(name, moveset, x, y, isSpecial);
@@ -28,6 +32,11 @@ public class UnitModel : MonoBehaviour
         promotionEffect.transform.position = this.transform.position;
         promotionEffect.GetComponent<ParticleSystem>().Stop();
         promotionEffect.GetComponent<ParticleSystem>().Clear();
+        this.healthBar = Instantiate(Resources.Load("Prefabs/Units/HealthBar") as GameObject);
+        //healthBar.transform.SetParent(this.Model.transform);
+        UpdateHealthBarPosition();
+        var healthBarController = healthBar.GetComponent<HealthBarController>();
+        healthBarController.InitHealthBar(template.HealthPoints);
     }
 
     public void SetPath(List<Vector3> path)
@@ -74,5 +83,9 @@ public class UnitModel : MonoBehaviour
     {
         Model.transform.position = Vector3.MoveTowards(Model.transform.position, targetPosition, step);
         promotionEffect.transform.position = Model.transform.position;
+        UpdateHealthBarPosition();
     }
+
+    public void UpdateHealthBarPosition()
+        => healthBar.transform.SetPositionAndRotation(new(Model.transform.position.x + 0.8f, Model.transform.position.y + 0.5f, Model.transform.position.z), Quaternion.Euler(45, -90, 0));
 }

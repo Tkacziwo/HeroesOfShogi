@@ -56,6 +56,8 @@ public class OverworldMapController : MonoBehaviour
 
     public static event System.Action BotsEndTurn;
 
+    [SerializeField] private BuildingController buildingController;
+
     private void OnEnable()
     {
         PlayerCharacterController.OnPlayerOverTile += ClearTile;
@@ -63,7 +65,6 @@ public class OverworldMapController : MonoBehaviour
         PlayerEvents.OnPlayerBeginMove += MovePlayer;
         PlayerEvents.OnPlayerEndMove += HandlePlayerEndMove;
         PlayerController.TurnEnded += HandleUpdateUIResources;
-        PlayerController.CameraChanged += HandleCameraChanged;
         CityEvents.OnPlayerInCity += HandleOnPlayerInCity;
         PanelController.CityOpened += HandleCityOpened;
         GameOverController.OnBackToMap += HandleBackToMap;
@@ -78,7 +79,6 @@ public class OverworldMapController : MonoBehaviour
         PlayerEvents.OnPlayerBeginMove -= MovePlayer;
         PlayerEvents.OnPlayerEndMove -= HandlePlayerEndMove;
         PlayerController.TurnEnded -= HandleUpdateUIResources;
-        PlayerController.CameraChanged -= HandleCameraChanged;
         CityEvents.OnPlayerInCity -= HandleOnPlayerInCity;
         PanelController.CityOpened -= HandleCityOpened;
         GameOverController.OnBackToMap -= HandleBackToMap;
@@ -91,8 +91,10 @@ public class OverworldMapController : MonoBehaviour
         playerController.SpawnPlayers(tilemap, 1);
 
         var playerCamera = playerController.player.GetCameraController().GetComponentInChildren<Camera>();
-        playerCamera.enabled = false;
-        currentCamera = topCamera;
+        playerCamera.enabled = true;
+        topCamera.enabled = false;
+        currentCamera = playerCamera;
+        buildingController.SetCamera(playerCamera);
     }
 
     private void HandleBackToMap()
@@ -201,12 +203,6 @@ public class OverworldMapController : MonoBehaviour
 
     private void HandleOnPlayerInCity(bool res)
         => isPlayerInCity = res;
-
-    private void HandleCameraChanged(Camera changedCamera)
-    {
-        topCamera.enabled = !topCamera.enabled;
-        currentCamera = topCamera.enabled ? topCamera : changedCamera;
-    }
 
     private void HandleUpdateUIResources()
     {
@@ -347,8 +343,7 @@ public class OverworldMapController : MonoBehaviour
             }
         }
 
-        var t = tilemap.GetTile<MapTile>(bestEndPosition);
-        SetEndPoint(bestEndPosition, t);
+        SetEndPoint(bestEndPosition);
         pathfindingResult = bestPath;
         DisplayPath(pathfindingResult);
         TileInfo endTile = new()
@@ -404,17 +399,9 @@ public class OverworldMapController : MonoBehaviour
         }
     }
 
-    private MapTile start;
-
     private Vector3Int previousStartPos;
 
-    private MapTile end;
-
     private Vector3Int previousEndPos;
-
-    private TileBase previousTile;
-
-    private Vector3Int previousTilePos;
 
     private bool isPlayerInBattle = false;
 
@@ -449,7 +436,7 @@ public class OverworldMapController : MonoBehaviour
 
                 if (t.IsTraversable || (!playerCharacterStartPoint.Equals(cellPos) && playerController.IsPlayerOverTile(cellPos)))
                 {
-                    SetEndPoint(cellPos, t);
+                    SetEndPoint(cellPos);
                     FindPath();
                 }
             }
@@ -459,13 +446,7 @@ public class OverworldMapController : MonoBehaviour
         {
             EndTurn();
         }
-
-        //if (Input.GetKeyDown(KeyCode.Tab))
-        //{
-        //    HandleCharacterDefeated(playerController.GetBot().GetComponent<PlayerModel>().GetCurrentPlayerCharacter());
-        //}
     }
-
 
     private void StartBattle(PlayerModel playerOverTile, PlayerCharacterController character)
     {
@@ -516,10 +497,10 @@ public class OverworldMapController : MonoBehaviour
 
         var cellPos = pathfindingResult[pathfindingResult.Count - 1].position;
 
-        var tile = tilemap.GetTile<MapTile>(cellPos);
+        //var tile = tilemap.GetTile<MapTile>(cellPos);
 
         tilemap.SetTile(botModel.GetCurrentPlayerCharacter().characterPosition, PathTile);
-        SetEndPoint(cellPos, tile);
+        SetEndPoint(cellPos);
         DisplayPath(pathfindingResult);
         //tilemap.SetTile(npcCharacterStartPoint, StartTile);
         MovePlayer(botModel.GetCurrentPlayerCharacter());
@@ -592,7 +573,7 @@ public class OverworldMapController : MonoBehaviour
         tilemap.SetTile(npcCharacterStartPoint, StartTile);
     }
 
-    private void SetEndPoint(Vector3Int cellPos, MapTile t)
+    private void SetEndPoint(Vector3Int cellPos)
     {
         if (!previousEndPos.Equals(Vector3Int.zero))
         {

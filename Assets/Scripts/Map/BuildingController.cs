@@ -1,6 +1,4 @@
-using System.Linq;
 using UnityEngine;
-
 public class BuildingController : MonoBehaviour
 {
     private Camera currentCamera;
@@ -9,32 +7,23 @@ public class BuildingController : MonoBehaviour
 
     private void OnEnable()
     {
-        PlayerController.CameraChanged += HandleCameraChanged;
         CityEvents.OnPlayerInCity += HandleOnPlayerInCity;
     }
 
     private void OnDisable()
     {
-        PlayerController.CameraChanged -= HandleCameraChanged;
         CityEvents.OnPlayerInCity -= HandleOnPlayerInCity;
     }
 
     private void HandleOnPlayerInCity(bool res)
         => PlayerInCity = res;
-
-    private void HandleCameraChanged(Camera changedCamera)
-    {
-        currentCamera = changedCamera;
-    }
-
-    private void Start()
-    {
-        currentCamera = Camera.main;
-    }
+    public void SetCamera(Camera camera)
+        => currentCamera = camera;
 
     private void Update()
     {
-        if (PlayerInCity) { return; }
+        if (currentCamera == null) return;
+        if (PlayerInCity) return;
 
         if (Input.GetMouseButtonDown(0))
         {

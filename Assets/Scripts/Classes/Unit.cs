@@ -8,10 +8,6 @@ using static UnityEditor.PlayerSettings;
 /// Unit class symbolizes one unit during battle. 
 /// Extension of LogicPiece with additional HealthPoints, AttackPower, SpecialAbilitiesList, ArmorPenetrationModifier.
 /// Prepared to be cloned and copied for use withing MinMaxAlgorithm.
-/// 
-/// <param name="ArmorPenetrationModifier">Bypasses armor if the value is higher than attacked unit's ArmorPower resulting in dealing full damage. 
-/// If attacked unit's ArmorPower is greater than attacking unit PenetrationModifier + AttackPower the attacked unit sustains fraction of the damage</param>"
-/// <param name="ArmorPower">Reduces incoming damage. If AttackPower + PenetrationModifier is greater than attacked unit ArmorPower, the unit sustains full damage. Else it sustains fraction of the damage</param>
 /// </summary>
 public class Unit : LogicPiece
 {
@@ -19,11 +15,11 @@ public class Unit : LogicPiece
 
     public int HealthPoints { get; set; }
 
+    private int maxHealthPoints;
+
     public int AttackPower { get; set; }
 
     public List<string> SpecialAbilities { get; set; }
-
-    //public int ArmorPenetrationModifier { get; set; }
 
     public int SizeInArmy { get; set; }
 
@@ -37,6 +33,7 @@ public class Unit : LogicPiece
     {
         this.UnitName = template.UnitName;
         this.HealthPoints = template.HealthPoints;
+        this.maxHealthPoints = template.HealthPoints;
         this.AttackPower = template.AttackPower;
     }
 
@@ -76,6 +73,8 @@ public class Unit : LogicPiece
         isDrop = other.isDrop;
         isBlack = other.isBlack;
     }
+    public void RestoreMaxHP()
+        => HealthPoints = maxHealthPoints;
 
     public bool ReduceHP(int hp)
     {
@@ -87,60 +86,5 @@ public class Unit : LogicPiece
         }
 
         return false;
-    }
-
-    public void IncreaseHP()
-    {
-
-    }
-
-    public void SetHP()
-    {
-
-    }
-
-    public void ReduceArmor()
-    {
-
-    }
-
-    public void IncreaseArmor()
-    {
-
-    }
-
-    public void SetArmor()
-    {
-
-    }
-
-    public void ReduceAttackPower(int val)
-    {
-
-    }
-
-    public void IncreaseAttackPower(int val)
-    {
-
-    }
-
-    public void SetAttackPower(int val)
-    {
-
-    }
-
-    public void ReducePenetrationModifier()
-    {
-
-    }
-
-    public void IncreasePenetrationModifier()
-    {
-
-    }
-
-    public void SetPenetrationModifier()
-    {
-
     }
 }

@@ -23,10 +23,6 @@ public class PlayerController : MonoBehaviour
 
     public static event System.Action TurnEnded;
 
-    public static event Action<Tuple<Vector3Int, Vector3Int>> PlayerCharacterChanged;
-
-    public static event Action<Camera> CameraChanged;
-
     public static event Action<PlayerModel> PlayerSpawned;
 
     [SerializeField] private GameObject botGM;
@@ -37,7 +33,6 @@ public class PlayerController : MonoBehaviour
     {
         WorldBuilding.AddResourcesToCapturer += HandleAddResources;
         DoubleClickHandler.OnDoubleClick += HandleDoubleClick;
-        PanelController.PlayerChanged += HandleCharacterChanged;
         OverworldMapController.onTurnEnd += HandleEndTurn;
         ReturnControlToPlayerControllerAction.OnReturnControlToController += RunNextAI;
     }
@@ -46,7 +41,6 @@ public class PlayerController : MonoBehaviour
     {
         WorldBuilding.AddResourcesToCapturer -= HandleAddResources;
         DoubleClickHandler.OnDoubleClick -= HandleDoubleClick;
-        PanelController.PlayerChanged -= HandleCharacterChanged;
         OverworldMapController.onTurnEnd -= HandleEndTurn;
         ReturnControlToPlayerControllerAction.OnReturnControlToController -= RunNextAI;
     }
@@ -60,12 +54,6 @@ public class PlayerController : MonoBehaviour
 
     private void HandleDoubleClick(DoubleClickHandler handler)
         => OnPlayerBeginMove();
-
-    private void HandleCharacterChanged(PlayerCharacterController character)
-    {
-        OnPlayerCharacterChanged(character.characterId);
-    }
-
 
     private void HandleAddResources(InteractibleBuilding building)
     {
@@ -135,30 +123,6 @@ public class PlayerController : MonoBehaviour
         {
             OnPlayerBeginMove();
         }
-
-        if (Input.GetKeyDown(KeyCode.C))
-        {
-            OnCameraChanged();
-        }
-    }
-
-    public void OnCameraChanged()
-    {
-        var playerCamera = this.player.GetCameraController().GetComponentInChildren<Camera>();
-        playerCamera.enabled = !playerCamera.enabled;
-        CameraChanged?.Invoke(playerCamera);
-    }
-
-    public void OnPlayerCharacterChanged(int characterId)
-    {
-        this.player.ChangeCharacters(characterId);
-        var playerStartingPosition = this.player.GetPlayerPositionById(characterId);
-        var vec = new Vector3Int((int)playerStartingPosition.x, (int)playerStartingPosition.y, (int)playerStartingPosition.z);
-        player.SetCharacterPosition(vec, characterId);
-
-        var previousStartPosition = this.player.GetCharacterPosition(characterId);
-        PlayerCharacterChanged?.Invoke(new(previousStartPosition, vec));
-        Debug.Log($"Changed character to: {characterId}");
     }
 
     private readonly List<Vector3Int> playerStartingPositions = new()

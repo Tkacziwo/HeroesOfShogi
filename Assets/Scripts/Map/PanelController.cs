@@ -1,6 +1,7 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PanelController : MonoBehaviour
 {
@@ -8,11 +9,11 @@ public class PanelController : MonoBehaviour
 
     City city;
 
+    [SerializeField] private Button focusButton;
+
     private int MaxMovementPoints { get; set; }
 
     private int PlayerId { get; set; }
-
-    public static Action<PlayerCharacterController> PlayerChanged;
 
     public static Action<City> CityOpened;
 
@@ -59,31 +60,19 @@ public class PanelController : MonoBehaviour
         this.city = city;
         var cityName = city.cityName;
         this.GetComponentInChildren<TextMeshProUGUI>().text = cityName;
+        focusButton.gameObject.SetActive(false);
     }
 
     public void OnClick()
     {
-        if (character != null)
-        {
-            OnPlayerPanelClicked();
-        }
-        else
+        if(character == null)
         {
             OnCityPanelClicked();
         }
     }
 
-
     public void FocusOnPlayer()
         => OnFocusOnPlayer?.Invoke(character.transform);
-
-    public void OnPlayerPanelClicked()
-    {
-        if (character != null)
-        {
-            PlayerChanged?.Invoke(character);
-        }
-    }
 
     public void OnCityPanelClicked()
     {

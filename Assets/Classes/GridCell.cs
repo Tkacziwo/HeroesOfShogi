@@ -68,10 +68,11 @@ public class GridCell : MonoBehaviour
     /// </summary>
     /// <param name="piece">piece to move</param>
     /// <param name="position">destination position</param>
-    public void SetAndMovePieceLinear(GameObject piece, Vector3 position)
+    public void SetAndMovePieceLinear(UnitModel piece, Vector3 position)
     {
-        objectInThisGridSpace = piece;
-        objectInThisGridSpace.GetComponent<Piece>().LinearTransformation(new Vector3(position.x, 11.2f, position.z));
+        unitInGridCell = piece;
+        unitInGridCell.transform.position = new(position.x, 11.2f, position.z);
+        //unitInGridCell.GetComponent<Unit>().LinearTransformation(new Vector3(position.x, 11.2f, position.z));
     }
 
     public Position GetPosition()
