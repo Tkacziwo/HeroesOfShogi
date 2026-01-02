@@ -60,7 +60,7 @@ public class GridCell : MonoBehaviour
         var path = TransformationCalculator.QuadraticTransformation(unitInGridCell.Model.transform.position, new Vector3(position.x, 11.2f, position.z));
 
         unitInGridCell.SetPath(path);
-        
+        unit.Unit.MovedInTurn = true;
     }
 
     /// <summary>

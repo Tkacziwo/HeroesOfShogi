@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 /// <summary>
 /// Camp which holds killed pieces for dropping back onto the board.
@@ -76,6 +77,9 @@ public class Camp : MonoBehaviour
             pieceScript.SetIsDrop();
 
             var cell = campGrid[posX, posY].GetComponent<GridCell>();
+            cell.unitInGridCell = pieceObject;
+            var cellWorldPosition = cell.GetWorldPosition();
+            cell.unitInGridCell.transform.position = new(cellWorldPosition.x, 11.2f, cellWorldPosition.z);
             cell.SetAndMovePieceLinear(pieceObject, cell.GetWorldPosition());
             posX++;
             numberOfPieces++;
@@ -93,6 +97,7 @@ public class Camp : MonoBehaviour
     /// <param name="unitModel">Killed unit</param>
     public void AddToCamp(UnitModel unitModel)
     {
+        unitModel.promotionEffect.GetComponent<ParticleSystem>().Stop();
         if (capturedPieceObjects.Count == 27)
         {
             Destroy(unitModel);
@@ -124,14 +129,15 @@ public class Camp : MonoBehaviour
         unitModel.Model.transform.position = aboveCellPosition;
         if(pieceScript.GetIsBlack())
         {
-            unitModel.Model.transform.SetPositionAndRotation(aboveCellPosition, Quaternion.Euler(0,0,0));
+            unitModel.Model.transform.SetPositionAndRotation(aboveCellPosition, Quaternion.Euler(-90,0,0));
         }
         else
         {
-            unitModel.Model.transform.rotation = Quaternion.Euler(-90,-180,0);
-            //piece.Model.transform.SetPositionAndRotation(aboveCellPosition, Quaternion.Euler(-90, -180, 0));
+            //unitModel.Model.transform.rotation = Quaternion.Euler(-90,-180,0);
+            unitModel.Model.transform.SetPositionAndRotation(aboveCellPosition, Quaternion.Euler(-90, -180, 0));
         }
         unitModel.UpdateHealthBarPosition();
+        unitModel.UpdateParticleSystemPosition();
         cell.unitInGridCell = unitModel;
 
         unitModel.Unit.RestoreMaxHP();

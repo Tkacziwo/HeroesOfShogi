@@ -62,16 +62,6 @@ public class LogicBoardManager
         var pos = unit.GetPosition();
         var isBlack = unit.GetIsBlack();
 
-        // [ToDo] review suggestion
-        //int[,] newMoveset = new int[3, 3];
-        //for (int i = 0; i < 3; i++)
-        //{
-        //    for (int j = 0; j < 3; j++)
-        //    {
-        //        newMoveset[i,j] = moveset[i * 3 + j];
-        //    }
-        //}
-
         int row = 1;
         int col = -1;
         List<Position> possibleMoves = new();
@@ -83,10 +73,12 @@ public class LogicBoardManager
                 int destX = col + pos.x;
                 int destY = row + pos.y;
 
-                if (!IsInBoard(destY, destX)) continue;
-                else if (IsCellFree(destX, destY, cells) || IsEnemy(destX, destY, isBlack, cells))
+                if (IsInBoard(destY, destX))
                 {
-                    possibleMoves.Add(new(destX, destY));
+                    if (IsCellFree(destX, destY, cells) || IsEnemy(destX, destY, isBlack, cells))
+                    {
+                        possibleMoves.Add(new(destX, destY));
+                    }
                 }
             }
             //Horse
@@ -121,7 +113,6 @@ public class LogicBoardManager
         LogicPiece piece,
         LogicCell[,] cells,
         bool unrestricted = false)
-
     {
         var moveset = piece.GetMoveset();
         var pos = piece.GetPosition();

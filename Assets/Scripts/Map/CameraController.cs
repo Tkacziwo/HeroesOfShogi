@@ -30,6 +30,13 @@ public class CameraController : MonoBehaviour
 
     public bool battleStarted = false;
 
+    private int maxX = 60;
+    private int minX = -3;
+    private int maxZ = 50;
+    private int minZ = -10;
+
+    [SerializeField] private float cameraSpeed = 50f;
+
     private void OnEnable()
     {
         BattleDeploymentController.OnBattleStarted += HandleBattleStarted;
@@ -110,28 +117,44 @@ public class CameraController : MonoBehaviour
 
         var radians = Mathf.Deg2Rad * rotationForMoving;
 
-        var offsetX = Mathf.Sin(radians) * 0.2f;
-        var offsetZ = Mathf.Cos(radians) * 0.2f;
+        var offsetX = Mathf.Sin(radians) * cameraSpeed * Time.deltaTime;
+        var offsetZ = Mathf.Cos(radians) * cameraSpeed * Time.deltaTime;
 
         if (Input.GetKey(KeyCode.W))
         {
             isCameraFocusedOnPlayer = false;
-            cam.transform.position = new Vector3(cam.transform.position.x + offsetX, cam.transform.position.y, cam.transform.position.z + offsetZ);
+            var newPositionX = cam.transform.position.x + offsetX;
+            var newPositionZ = cam.transform.position.z + offsetZ;
+            newPositionX = Math.Clamp(newPositionX, minX, maxX);
+            newPositionZ = Math.Clamp(newPositionZ, minZ, maxZ);
+            cam.transform.position = new Vector3(newPositionX, cam.transform.position.y, newPositionZ);
         }
         else if (Input.GetKey(KeyCode.S))
         {
             isCameraFocusedOnPlayer = false;
-            cam.transform.position = new Vector3(cam.transform.position.x - offsetX, cam.transform.position.y, cam.transform.position.z - offsetZ);
+            var newPositionX = cam.transform.position.x - offsetX;
+            var newPositionZ = cam.transform.position.z - offsetZ;
+            newPositionX = Math.Clamp(newPositionX, minX, maxX);
+            newPositionZ = Math.Clamp(newPositionZ, minZ, maxZ);
+            cam.transform.position = new Vector3(newPositionX, cam.transform.position.y, newPositionZ);
         }
         if (Input.GetKey(KeyCode.A))
         {
             isCameraFocusedOnPlayer = false;
-            cam.transform.position = new Vector3(cam.transform.position.x - offsetZ, cam.transform.position.y, cam.transform.position.z + offsetX);
+            var newPositionX = cam.transform.position.x - offsetZ;
+            var newPositionZ = cam.transform.position.z + offsetX;
+            newPositionX = Math.Clamp(newPositionX, minX, maxX);
+            newPositionZ = Math.Clamp(newPositionZ, minZ, maxZ);
+            cam.transform.position = new Vector3(newPositionX, cam.transform.position.y, newPositionZ);
         }
         else if (Input.GetKey(KeyCode.D))
         {
             isCameraFocusedOnPlayer = false;
-            cam.transform.position = new Vector3(cam.transform.position.x + offsetZ, cam.transform.position.y, cam.transform.position.z - offsetX);
+            var newPositionX = cam.transform.position.x + offsetZ;
+            var newPositionZ = cam.transform.position.z - offsetX;
+            newPositionX = Math.Clamp(newPositionX, minX, maxX);
+            newPositionZ = Math.Clamp(newPositionZ, minZ, maxZ);
+            cam.transform.position = new Vector3(newPositionX, cam.transform.position.y, newPositionZ);
         }
     }
 

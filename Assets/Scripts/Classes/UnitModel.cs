@@ -88,4 +88,7 @@ public class UnitModel : MonoBehaviour
 
     public void UpdateHealthBarPosition()
         => healthBar.transform.SetPositionAndRotation(new(Model.transform.position.x + 0.8f, Model.transform.position.y + 0.5f, Model.transform.position.z), Quaternion.Euler(45, -90, 0));
+
+    public void UpdateParticleSystemPosition()
+        => promotionEffect.transform.SetPositionAndRotation(new(Model.transform.position.x, Model.transform.position.y, Model.transform.position.z), Quaternion.identity);
 }

@@ -31,7 +31,7 @@ public static class TransformationCalculator
             maxHeight,
             (startPosition.z + endPosition.z) * 0.5f);
 
-        int steps = (int)Math.Ceiling((double)distance) * 20;
+        int steps = (int)Math.Ceiling((double)distance) * 5;
         float stepsMultiplier = 1f / (float)steps;
         if (distance >= 4.0)
         {

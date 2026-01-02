@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UIElements;
 
 /// <summary>
 /// Manager which handles all input in the game.
@@ -96,8 +98,6 @@ public class InputManager : MonoBehaviour
         UnitModel.UnitFinishedMoving -= OnUnitFinishedMoving;
         GameOverController.OnBackToMap -= HandleBackToMap;
     }
-
-
     private async void HandleBackToMap()
     {
         Destroy(gameOver);
@@ -290,8 +290,7 @@ public class InputManager : MonoBehaviour
         if ((playerTurn && !unit.GetIsBlack()) || (!playerTurn && unit.GetIsBlack()))
         {
             if (chosenPiece) RemovePossibleMoves();
-
-            PossibleMovesCalculation(hoveredCell);
+            if (!unit.MovedInTurn) PossibleMovesCalculation(hoveredCell);
         }
     }
 
@@ -346,12 +345,18 @@ public class InputManager : MonoBehaviour
     {
         isUnitMoving = true;
         Unit unit = CellWhichHoldsPiece.unitInGridCell.Unit;
-        if (CheckForPromotion(hoveredCell, unit.GetIsBlack()))
+        if (!unit.GetIsDrop())
         {
-            var changedMoveset = boardController.GetPromotedUnitMoveset(unit);
-            CellWhichHoldsPiece.unitInGridCell.PromoteUnit(changedMoveset);
+            if (CheckForPromotion(hoveredCell, unit.GetIsBlack()))
+            {
+                var changedMoveset = boardController.GetPromotedUnitMoveset(unit);
+                CellWhichHoldsPiece.unitInGridCell.PromoteUnit(changedMoveset);
+            }
         }
-
+        else
+        {
+            HandleDropCheck(unit);
+        }
         if (hoveredCell.unitInGridCell != null)
         {
             var enemyUnit = hoveredCell.unitInGridCell.Unit;
@@ -437,10 +442,8 @@ public class InputManager : MonoBehaviour
         }
 
         RequestLogicCellsUpdate?.Invoke();
-        unit.MovedInTurn = true;
         doneMoves++;
 
-        HandleDropCheck(unit);
 
         RemovePossibleMoves();
         chosenPiece = false;
@@ -451,6 +454,18 @@ public class InputManager : MonoBehaviour
             doneMoves = 0;
             ResetUnitMoved?.Invoke();
         }
+    }
+
+    public void DropUnit(GridCell hoveredCell)
+    {
+        hoveredCell.unitInGridCell = CellWhichHoldsPiece.unitInGridCell;
+        hoveredCell.unitInGridCell.Unit.MovePiece(hoveredCell.GetPosition());
+        hoveredCell.unitInGridCell.Unit.MovedInTurn = true;
+        var hoveredCellPos = hoveredCell.GetWorldPosition();
+        var path = TransformationCalculator.QuadraticTransformation(hoveredCell.unitInGridCell.Model.transform.position, new Vector3(hoveredCellPos.x, 11.2f, hoveredCellPos.z));
+
+        hoveredCell.unitInGridCell.SetPath(path);
+        //hoveredCell.unitInGridCell.transform.SetPositionAndRotation(path.Last(), Quaternion.identity);
     }
 
     private void ShowGameOverScreen(string text, Color color)
@@ -475,24 +490,17 @@ public class InputManager : MonoBehaviour
     /// <param name="unit">Checked unit</param>
     public void HandleDropCheck(Unit unit)
     {
-        if (unit.GetIsDrop())
+        if (unit.GetIsBlack())
         {
-            if (unit.GetIsBlack())
-            {
-                grid.eCamp.capturedPieceObjects.Remove(CellWhichHoldsPiece.unitInGridCell);
-                grid.eCamp.Reshuffle();
-            }
-            else
-            {
-                grid.pCamp.capturedPieceObjects.Remove(CellWhichHoldsPiece.unitInGridCell);
-                grid.pCamp.Reshuffle();
-            }
-            unit.ResetIsDrop();
+            grid.eCamp.capturedPieceObjects.Remove(CellWhichHoldsPiece.unitInGridCell);
+            //grid.eCamp.Reshuffle();
         }
         else
         {
-            CellWhichHoldsPiece.objectInThisGridSpace = null;
+            grid.pCamp.capturedPieceObjects.Remove(CellWhichHoldsPiece.unitInGridCell);
+            //grid.pCamp.Reshuffle();
         }
+        unit.ResetIsDrop();
 
         if (playerTurn)
         {
