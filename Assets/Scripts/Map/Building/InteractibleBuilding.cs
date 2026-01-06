@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class InteractibleBuilding : MonoBehaviour
 {
+    [SerializeField] private GameObject indicator;
+
     public bool isCaptured;
 
     public int capturerId;
@@ -22,7 +24,7 @@ public class InteractibleBuilding : MonoBehaviour
 
         if (capturerColor != null)
         {
-            this.GetComponent<MeshRenderer>().material.color = capturerColor.Value;
+            indicator.GetComponent<MeshRenderer>().material.color = capturerColor.Value;
         }
 
         isCaptured = true;
@@ -53,9 +55,6 @@ public class InteractibleBuilding : MonoBehaviour
 
     public void OnTurnEnd()
        => AddResourcesToCapturer?.Invoke(this);
-
-    public bool GetIsCaptured()
-       => isCaptured;
 }
 
 public static class BuildingEvents

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 /// <summary>
 /// Camp which holds killed pieces for dropping back onto the board.
@@ -46,7 +45,7 @@ public class Camp : MonoBehaviour
             {
                 campGrid[x, y] = Instantiate(gridCell, new Vector4(x * gridCellSize, 11.2f, y * gridCellSize + spacing), Quaternion.identity);
                 GridCell cell = campGrid[x, y].GetComponent<GridCell>();
-                cell.InitializeGridCell(x, y, gridCellSize);
+                cell.InitializeGridCell(x, y);
                 cell.SetPosition(x, y);
                 campGrid[x, y].transform.parent = transform;
                 campGrid[x, y].transform.rotation = Quaternion.Euler(90, 0, 0);
@@ -67,7 +66,7 @@ public class Camp : MonoBehaviour
         {
             for (int y = 0; y < 3; y++)
             {
-                campGrid[x, y].GetComponent<GridCell>().objectInThisGridSpace = null;
+                campGrid[x, y].GetComponent<GridCell>().unitInCell = null;
             }
         }
 
@@ -77,9 +76,9 @@ public class Camp : MonoBehaviour
             pieceScript.SetIsDrop();
 
             var cell = campGrid[posX, posY].GetComponent<GridCell>();
-            cell.unitInGridCell = pieceObject;
+            cell.unitInCell = pieceObject;
             var cellWorldPosition = cell.GetWorldPosition();
-            cell.unitInGridCell.transform.position = new(cellWorldPosition.x, 11.2f, cellWorldPosition.z);
+            cell.unitInCell.transform.position = new(cellWorldPosition.x, 11.2f, cellWorldPosition.z);
             cell.SetAndMovePieceLinear(pieceObject, cell.GetWorldPosition());
             posX++;
             numberOfPieces++;
@@ -138,7 +137,7 @@ public class Camp : MonoBehaviour
         }
         unitModel.UpdateHealthBarPosition();
         unitModel.UpdateParticleSystemPosition();
-        cell.unitInGridCell = unitModel;
+        cell.unitInCell = unitModel;
 
         unitModel.Unit.RestoreMaxHP();
         unitModel.healthBar.GetComponent<HealthBarController>().UpdateHealthBar(unitModel.Unit.HealthPoints);

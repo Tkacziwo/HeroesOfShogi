@@ -13,9 +13,9 @@ public class UnitAssignController : MonoBehaviour
 
     private Unit unit;
 
-    int amount = 0;
+    private int amount = 0;
 
-    int maxAmount = 0;
+    private int maxAmount = 0;
 
     public static Action<int, Unit> UnitAmountChanged;
 

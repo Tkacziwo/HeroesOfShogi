@@ -11,7 +11,7 @@ public class ResourceUIController : MonoBehaviour
 
     [SerializeField] private TextMeshProUGUI turnText;
 
-    [SerializeField] private UnityEngine.Canvas canvasRef;
+    [SerializeField] private Canvas canvasRef;
 
     [SerializeField] private PanelController playerCharacterPanel;
 
@@ -21,8 +21,9 @@ public class ResourceUIController : MonoBehaviour
 
     [SerializeField] private GameObject gameOver;
 
-
     private CityViewController cityView;
+
+    private uint turnNumber = 1;
 
     private void OnEnable()
     {
@@ -39,18 +40,6 @@ public class ResourceUIController : MonoBehaviour
         BattleDeploymentController.OnBattleStarted -= HandleOnBattleStarted;
         GameOverController.OnBackToMap -= HandleOnBattleEnded;
     }
-
-    private void HandleOnBattleStarted(bool state)
-    {
-        UIRef.SetActive(state);
-    }
-
-    private void HandleOnBattleEnded()
-    {
-        UIRef.SetActive(true);
-    }
-
-    private uint turnNumber = 1;
 
     private void Start()
     {
@@ -124,4 +113,10 @@ public class ResourceUIController : MonoBehaviour
         this.gameOver.GetComponent<RectTransform>().anchoredPosition = new(0, 0);
         gameOver.GetComponent<GameEndController>().SetScore(score.ToString());
     }
+
+    private void HandleOnBattleStarted(bool state)
+        => UIRef.SetActive(state);
+
+    private void HandleOnBattleEnded()
+        => UIRef.SetActive(true);
 }

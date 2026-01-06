@@ -44,15 +44,14 @@ public class Grid : MonoBehaviour
 
     private void OnEnable()
     {
-        InputManager.RequestLogicCellsUpdate += UpdateLogicCells;
-        InputManager.ResetUnitMoved += ResetMovedInTurn;
+        BattleController.RequestLogicCellsUpdate += UpdateLogicCells;
+        BattleController.ResetUnitMoved += ResetMovedInTurn;
     }
 
     private void OnDisable()
     {
-        InputManager.RequestLogicCellsUpdate -= UpdateLogicCells;
-        InputManager.ResetUnitMoved -= ResetMovedInTurn;
-
+        BattleController.RequestLogicCellsUpdate -= UpdateLogicCells;
+        BattleController.ResetUnitMoved -= ResetMovedInTurn;
     }
 
     private void ResetMovedInTurn()
@@ -87,9 +86,9 @@ public class Grid : MonoBehaviour
             {
                 var cell = this.GetGridCell(x, y);
                 logicCells[x, y] = new LogicCell(cell);
-                if (cell.unitInGridCell != null)
+                if (cell.unitInCell != null)
                 {
-                    Unit p = new(cell.unitInGridCell.Unit);
+                    Unit p = new(cell.unitInCell.Unit);
                     logicCells[x, y].unit = p;
                 }
             }
@@ -106,7 +105,7 @@ public class Grid : MonoBehaviour
 
         var units = BattleDeploymentStaticData.playerFormation;
 
-        InitializePieces(units);
+        InitializeUnits(units);
         if (BattleDeploymentStaticData.enemyCharacter != null)
         {
             var enemyUnits = BattleDeploymentStaticData.enemyCharacter.AssignedUnits;
@@ -124,7 +123,6 @@ public class Grid : MonoBehaviour
         pCamp.GenerateCamp();
 
         float campSpacing = 1.0F + gridCellSize * 3;
-        Scene activeScene = SceneManager.GetSceneByName("Game");
         gameGrid = new GameObject[width, height];
         for (int y = 0; y < height; y++)
         {
@@ -133,7 +131,7 @@ public class Grid : MonoBehaviour
                 gameGrid[x, y] = Instantiate(gridCell, new Vector4(x * gridCellSize, 11.2f, y * gridCellSize + campSpacing), Quaternion.identity);
 
                 GridCell cell = gameGrid[x, y].GetComponent<GridCell>();
-                cell.InitializeGridCell(x, y, gridCellSize);
+                cell.InitializeGridCell(x, y);
                 cell.SetPosition(x, y);
                 gameGrid[x, y].transform.parent = transform;
                 gameGrid[x, y].transform.rotation = Quaternion.Euler(90, 0, 0);
@@ -147,7 +145,7 @@ public class Grid : MonoBehaviour
     /// <summary>
     /// Loads pieces from resource files and initializes them as Piece objects.
     /// </summary>
-    public void InitializePieces(Unit[,] units = null)
+    public void InitializeUnits(Unit[,] units = null)
     {
         var unitTemplates = StaticData.unitTemplates;
         if (units != null)
@@ -171,9 +169,9 @@ public class Grid : MonoBehaviour
 
                         Position unitPos = cell.GetPosition();
                         var template = unitTemplates.Single(o => o.UnitName == unit.UnitName);
-                        cell.unitInGridCell.InitUnit(unit.UnitName.ToString(), moveset, unitPos.x, unitPos.y, false, movementSpeed, template);
+                        cell.unitInCell.InitUnit(unit.UnitName.ToString(), moveset, unitPos.x, unitPos.y, false, movementSpeed, template);
 
-                        var unitModel = cell.unitInGridCell;
+                        var unitModel = cell.unitInCell;
 
                         if (unit.GetIsBlack())
                         {
@@ -196,8 +194,6 @@ public class Grid : MonoBehaviour
         else
         {
             var piecesPositions = fileManager.PiecesPositions.boardPositions;
-
-
 
             foreach (var p in piecesPositions)
             {
@@ -229,11 +225,11 @@ public class Grid : MonoBehaviour
                         }
                     }
 
-                    cell.unitInGridCell.InitUnit(p.piece, moveset, unitPos.x, unitPos.y, false, movementSpeed, template);
+                    cell.unitInCell.InitUnit(p.piece, moveset, unitPos.x, unitPos.y, false, movementSpeed, template);
 
 
 
-                    var unitModel = cell.unitInGridCell;
+                    var unitModel = cell.unitInCell;
 
                     if (unitModel.Unit.GetIsBlack())
                     {
@@ -272,9 +268,6 @@ public class Grid : MonoBehaviour
             int pawnCount = dict[UnitEnum.Pawn];
 
             int pawnCol = 0;
-
-
-
 
             if (pawnCount != 0)
             {
@@ -375,13 +368,13 @@ public class Grid : MonoBehaviour
         cell.SetUnit(resource);
 
         Position unitPos = cell.GetPosition();
-        cell.unitInGridCell.InitUnit(unitName, moveset, unitPos.x, unitPos.y, false, movementSpeed, template);
-        var unitModel = cell.unitInGridCell;
+        cell.unitInCell.InitUnit(unitName, moveset, unitPos.x, unitPos.y, false, movementSpeed, template);
+        var unitModel = cell.unitInCell;
 
         if (unitModel.Unit.isKing) { botKing = unitModel; }
         else { botPieces.Add(unitModel); }
 
-        unitModel.Model.GetComponentInChildren<MeshRenderer>().material.color = Color.black;
+        unitModel.pieceIcon.GetComponent<MeshRenderer>().material.color = Color.black;
     }
 
 
@@ -400,54 +393,6 @@ public class Grid : MonoBehaviour
             }
         }
         return dict;
-    }
-
-    /// <summary>
-    /// Check if checked piece is special.
-    /// </summary>
-    /// <returns>bool</returns>
-    private bool SpecialPieceCheck(string name)
-    {
-        if (name == "Rook" || name == "Bishop")
-        {
-            return true;
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Returns piece GameObject in grid.
-    /// </summary>
-    /// <param name="x">x position</param>
-    /// <param name="y">y position</param>
-    /// <returns>GameObject</returns>
-    public GameObject GetPieceInGrid(int x, int y)
-    {
-        if (gameGrid[x, y].GetComponent<GridCell>().objectInThisGridSpace != null)
-        {
-            return gameGrid[x, y].GetComponentInChildren<GridCell>().objectInThisGridSpace;
-        }
-        else
-        {
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Returns piece GameObject in grid.
-    /// </summary>
-    /// <param name="pos">Position class</param>
-    /// <returns>GameObject</returns>
-    public GameObject GetPieceInGrid(Position pos)
-    {
-        if (gameGrid[pos.x, pos.y].GetComponent<GridCell>().objectInThisGridSpace != null)
-        {
-            return gameGrid[pos.x, pos.y].GetComponentInChildren<GridCell>().objectInThisGridSpace;
-        }
-        else
-        {
-            return null;
-        }
     }
 
     /// <summary>
@@ -470,25 +415,24 @@ public class Grid : MonoBehaviour
     /// <summary>
     /// Adds killed piece to camp.
     /// </summary>
-    /// <param name="piece">killed piece GameObject</param>
-    public void AddToCamp(UnitModel piece)
+    /// <param name="unit">killed piece GameObject</param>
+    public void AddToCamp(UnitModel unit)
     {
-        //throw new NotImplementedException();
-        if (piece.Unit.GetIsBlack())
+        if (unit.Unit.GetIsBlack())
         {
-            piece.Model.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 180, 0);
-            piece.Unit.MovePiece(new(100, 100));
-            playerPieces.Add(piece);
-            botPieces.Remove(piece);
-            pCamp.AddToCamp(piece);
+            unit.Model.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 180, 0);
+            unit.Unit.MovePiece(new(100, 100));
+            playerPieces.Add(unit);
+            botPieces.Remove(unit);
+            pCamp.AddToCamp(unit);
         }
         else
         {
-            piece.Model.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 0, 0);
-            piece.Unit.MovePiece(new(200, 200));
-            botPieces.Add(piece);
-            playerPieces.Remove(piece);
-            eCamp.AddToCamp(piece);
+            unit.Model.GetComponentInChildren<Transform>().rotation = Quaternion.Euler(0, 0, 0);
+            unit.Unit.MovePiece(new(200, 200));
+            botPieces.Add(unit);
+            playerPieces.Remove(unit);
+            eCamp.AddToCamp(unit);
         }
     }
 
@@ -503,24 +447,7 @@ public class Grid : MonoBehaviour
     /// </summary>
     public List<UnitModel> GetBotPieces()
         => botPieces;
-
-    /// <summary>
-    /// Gets player (white) king.
-    /// </summary>
-    public UnitModel GetPlayerKing()
-        => playerKing;
-
-    /// <summary>
-    /// Gets bot (black) king.
-    /// </summary>
-    public UnitModel GetBotKing()
-        => botKing;
-
-    /// <summary>
-    /// Restores default color of GridCell on mouse hover exit.
-    /// </summary>
-    ///
-
+    
     public void SetWinner(bool isBlack)
     {
         if (isBlack)
@@ -551,6 +478,9 @@ public class Grid : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Restores default color of GridCell on mouse hover exit.
+    /// </summary>
     public void OnHoverExitRestoreDefaultColor()
     {
         Color defaultColor = new(0.04f, 0.43f, 0.96f);

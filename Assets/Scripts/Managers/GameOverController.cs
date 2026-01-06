@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class GameOverController : MonoBehaviour
 {
-    [SerializeField] TextMeshProUGUI text;
+    [SerializeField] private TextMeshProUGUI text;
 
     public static Action OnBackToMap;
 

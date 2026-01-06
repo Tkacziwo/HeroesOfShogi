@@ -1,8 +1,6 @@
-using NUnit.Framework.Constraints;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.ShaderGraph;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -34,11 +32,6 @@ public class TileInfo
     {
         hCost = Mathf.Sqrt(Mathf.Pow(Mathf.Abs(this.position.x - endPos.x), 2) + Mathf.Pow(Mathf.Abs(this.position.y - endPos.y), 2));
     }
-
-    public void CalculateFCost()
-    {
-        fCost = gCost + hCost;
-    }
 }
 
 public class PathingController
@@ -49,7 +42,7 @@ public class PathingController
 
     private TileInfo[,] MapTiles { get; set; }
 
-    private List<TileInfo> closedList = new();
+    private readonly List<TileInfo> closedList = new();
 
     private TileInfo start;
 

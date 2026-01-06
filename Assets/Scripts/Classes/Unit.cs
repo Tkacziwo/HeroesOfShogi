@@ -1,15 +1,11 @@
-using System;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
 
 /// <summary>
 /// Unit class symbolizes one unit during battle. 
 /// Extension of LogicPiece with additional HealthPoints, AttackPower, SpecialAbilitiesList, ArmorPenetrationModifier.
 /// Prepared to be cloned and copied for use withing MinMaxAlgorithm.
 /// </summary>
-public class Unit : LogicPiece
+public class Unit : ShogiPiece
 {
     public UnitEnum UnitName { get; set; }
 
@@ -19,13 +15,9 @@ public class Unit : LogicPiece
 
     public int AttackPower { get; set; }
 
-    public List<string> SpecialAbilities { get; set; }
-
     public int SizeInArmy { get; set; }
 
     public Sprite UnitSprite { get; set; }
-
-    public static Action OnDeath;
 
     public bool MovedInTurn { get; set; } = false;
 
@@ -46,7 +38,6 @@ public class Unit : LogicPiece
         UnitName = other.UnitName;
         HealthPoints = other.HealthPoints;
         AttackPower = other.AttackPower;
-        SpecialAbilities = other.SpecialAbilities;
         SizeInArmy = other.SizeInArmy;
         UnitSprite = other.UnitSprite;
         MovedInTurn = other.MovedInTurn;

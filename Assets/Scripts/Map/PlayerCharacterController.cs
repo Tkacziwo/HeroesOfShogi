@@ -1,14 +1,12 @@
- using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
 public class PlayerCharacterController : MonoBehaviour
 {
     public int characterId;
 
-    [SerializeField]
-    private string Name;
+    [SerializeField] private string Name;
 
     public int movementPoints;
 
@@ -22,8 +20,7 @@ public class PlayerCharacterController : MonoBehaviour
 
     private Vector3 targetPosition;
 
-    [SerializeField]
-    private float movementSpeed;
+    [SerializeField] private float movementSpeed;
 
     private bool isMoving;
 
@@ -39,12 +36,6 @@ public class PlayerCharacterController : MonoBehaviour
 
     public event Action<Transform> OnPlayerMoveUpdateCameraPosition;
 
-    public Vector3Int unreachedBotDestination;
-
-    public InteractibleBuilding unreachedBuilding;
-    public void SetPlayerTransform(Vector3 newTransform)
-        => this.transform.position = newTransform;
-
     public void OnEnable()
     {
         OverworldMapController.onTurnEnd += HandleEndTurn;
@@ -54,69 +45,6 @@ public class PlayerCharacterController : MonoBehaviour
     {
         OverworldMapController.onTurnEnd -= HandleEndTurn;
     }
-
-
-    public void SetPlayerPosition(Vector3Int newPos)
-    {
-        characterPosition = newPos;
-    }
-
-    public void HandleEndTurn()
-    {
-        ClearPath();
-        ResetUsedMovementPoints();
-        targetPosition = transform.position;
-    }
-
-    public void SetPath(List<Vector3> path)
-    {
-        if (path.Count == 0) return;
-        pathIterator = 0;
-        this.path = new(path);
-        isMoving = true;
-        SetTargetPosition(path[0]);
-    }
-
-    public void SetTargetPosition(Vector3 p)
-    {
-        targetPosition = p;
-    }
-
-    public Vector3 GetTargetPosition()
-        => targetPosition;
-
-    public void MakeStep(float step)
-    {
-        transform.position = Vector3.MoveTowards(transform.position, targetPosition, step);
-        OnPlayerMoveUpdateCameraPosition?.Invoke(transform);
-    }
-
-    public void SetIsMoving(bool isMoving)
-        => this.isMoving = isMoving;
-
-    public int GetMovementPoints()
-        => this.movementPoints;
-
-    public void ResetUsedMovementPoints()
-        => this.usedMovementPointsForCurrentTurn = 0;
-
-    public int GetRemainingMovementPoints()
-        => movementPoints - usedMovementPointsForCurrentTurn;
-
-    public int GetPathIterator()
-        => pathIterator;
-
-    public void ClearPath()
-        => path.Clear();
-
-    public void ReduceAvailableMovementPoints(int amount)
-        => usedMovementPointsForCurrentTurn += Math.Abs(amount);
-
-    public List<Unit> GetAssignedUnits()
-        => AssignedUnits;
-
-    public void SetUnits(List<Unit> units)
-        => AssignedUnits = units;
 
     void Update()
     {
@@ -146,4 +74,59 @@ public class PlayerCharacterController : MonoBehaviour
             }
         }
     }
+
+    public void SetPlayerTransform(Vector3 newTransform)
+        => this.transform.position = newTransform;
+
+    public void MakeStep(float step)
+    {
+        transform.position = Vector3.MoveTowards(transform.position, targetPosition, step);
+        OnPlayerMoveUpdateCameraPosition?.Invoke(transform);
+    }
+
+    public void HandleEndTurn()
+    {
+        ClearPath();
+        ResetUsedMovementPoints();
+        targetPosition = transform.position;
+    }
+
+    public void SetPath(List<Vector3> path)
+    {
+        if (path.Count == 0) return;
+        pathIterator = 0;
+        this.path = new(path);
+        isMoving = true;
+        SetTargetPosition(path[0]);
+    }
+
+    public void SetPlayerPosition(Vector3Int newPos)
+        => characterPosition = newPos;
+
+    public void SetTargetPosition(Vector3 p)
+        => targetPosition = p;
+
+    public Vector3 GetTargetPosition()
+        => targetPosition;
+
+    public int GetMovementPoints()
+        => this.movementPoints;
+
+    public void ResetUsedMovementPoints()
+        => this.usedMovementPointsForCurrentTurn = 0;
+
+    public int GetRemainingMovementPoints()
+        => movementPoints - usedMovementPointsForCurrentTurn;
+
+    public void ClearPath()
+        => path.Clear();
+
+    public void ReduceAvailableMovementPoints(int amount)
+        => usedMovementPointsForCurrentTurn += Math.Abs(amount);
+
+    public List<Unit> GetAssignedUnits()
+        => AssignedUnits;
+
+    public void SetUnits(List<Unit> units)
+        => AssignedUnits = units;
 }

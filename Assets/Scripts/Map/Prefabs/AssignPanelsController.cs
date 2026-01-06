@@ -202,7 +202,6 @@ public class AssignPanelsController : MonoBehaviour
 
     private int CountCurrentSize(List<Unit> units)
         => units.Select(o => o.SizeInArmy).Sum();
-    
 
     private void OnEnable()
     {

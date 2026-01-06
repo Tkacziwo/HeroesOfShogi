@@ -30,10 +30,10 @@ public class CameraController : MonoBehaviour
 
     public bool battleStarted = false;
 
-    private int maxX = 60;
-    private int minX = -3;
-    private int maxZ = 50;
-    private int minZ = -10;
+    private readonly int maxX = 60;
+    private readonly int minX = -3;
+    private readonly int maxZ = 50;
+    private readonly int minZ = -10;
 
     [SerializeField] private float cameraSpeed = 50f;
 

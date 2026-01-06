@@ -1,9 +1,11 @@
+using UnityEngine;
+
 /// <summary>
 /// Cloneable cell used in minimax;
 /// </summary>
 public class LogicCell
 {
-    private Position pos;
+    private readonly Position pos;
 
     public Unit unit = null;
 
@@ -17,7 +19,6 @@ public class LogicCell
         pos = new(cell.GetPosition());
     }
 
-   
     public Position GetPosition()
         => pos;
 }

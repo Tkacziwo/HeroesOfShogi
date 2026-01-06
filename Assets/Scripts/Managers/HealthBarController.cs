@@ -13,13 +13,5 @@ public class HealthBarController : MonoBehaviour
     }
 
     public void UpdateHealthBar(float health)
-    {
-        healthBarSlider.value = health;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+        => healthBarSlider.value = health;
 }

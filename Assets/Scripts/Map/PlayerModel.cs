@@ -21,7 +21,7 @@ public class PlayerModel : MonoBehaviour
 
     private CameraController cameraController;
 
-    [SerializeField] uint maxCharacters = 3;
+    [SerializeField] private uint maxCharacters = 3;
 
     public static Action<PlayerResources> UpdateResourceUI;
 
@@ -155,39 +155,8 @@ public class PlayerModel : MonoBehaviour
         Destroy(character.gameObject);
     }
 
-    public void ChangeCharacters(int characterId)
-    {
-        character = playerCharacters[characterId - 1];
-        character.OnPlayerMoveUpdateCameraPosition += UpdateCameraPosition;
-        cameraController.SetCameraPosition(character.transform);
-    }
-
-    public Vector3Int GetCharacterPosition(int characterIndex = 0)
-    {
-        return playerCharacters[characterIndex - 1].characterPosition;
-    }
-
-    public void SetCharacterPosition(Vector3Int newPosition, int characterIndex = 0)
-    {
-        playerCharacters[characterIndex - 1].characterPosition = newPosition;
-    }
-
     public PlayerCharacterController GetCurrentPlayerCharacter()
         => character;
-
-    public List<PlayerCharacterController> GetPlayerCharacters()
-        => playerCharacters;
-
-    public void SetCharacterPath(List<Vector3> positions)
-        => character.SetPath(positions);
-
-    public PlayerCharacterController GetCharacterById(int id)
-    {
-        return playerCharacters.Single(o => o.characterId == id);
-    }
-
-    public Vector3 GetPlayerPositionById(int characterId)
-        => playerCharacters[characterId - 1].characterPosition;
 
     public void HandleAddResourcesFromCity(City city)
     {

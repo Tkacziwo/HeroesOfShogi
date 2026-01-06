@@ -19,17 +19,12 @@ public class BattleDeploymentController : MonoBehaviour
 
     private UnitSlot[,] unitSlots;
 
-    private DragDropController[,] availableUnits;
-
     [SerializeField] private int tileSize = 80;
-
-    private Dictionary<UnitEnum, int> unitDict;
 
     private List<Sprite> unitIcons;
 
     public static Action<bool> OnBattleStarted;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         this.unitIcons = StaticData.unitIcons;

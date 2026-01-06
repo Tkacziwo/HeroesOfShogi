@@ -5,9 +5,9 @@ using UnityEngine.UI;
 
 public class PanelController : MonoBehaviour
 {
-    PlayerCharacterController character;
+    public PlayerCharacterController character;
 
-    City city;
+    public City city;
 
     [SerializeField] private Button focusButton;
 

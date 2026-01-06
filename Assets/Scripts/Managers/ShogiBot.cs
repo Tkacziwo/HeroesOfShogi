@@ -7,10 +7,6 @@ using System.Collections.Generic;
 /// </summary>
 public class ShogiBot : MonoBehaviour
 {
-    [SerializeField] private BoardManager boardManager;
-
-    [SerializeField] private KingManager kingManager;
-
     [SerializeField] private int depth = 3;
 
     public List<Tuple<int, int>> allPossibleMoves = new();
@@ -19,11 +15,7 @@ public class ShogiBot : MonoBehaviour
 
     private LogicBoard logicBoard = new();
 
-    private int MovesRemaining { get; set; } = 3;
-
     private int botDifficulty;
-
-    //[ToDo] add many moves per bot
 
     /// <summary>
     /// Clones board state from real board into logic representation - LogicBoard.

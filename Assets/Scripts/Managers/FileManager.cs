@@ -18,7 +18,6 @@ public class FileManager : MonoBehaviour
 
     private readonly List<Tuple<string, string>> tutorialMessages = new();
 
-
     [Serializable]
     public class PieceInfo
     {

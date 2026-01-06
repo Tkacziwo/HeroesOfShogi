@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 /// <summary>
 /// Logic counterpart of the Grid class. Holds all cells, pieces and camps for drops.
@@ -14,10 +13,6 @@ public class LogicBoard
 
     public List<Unit> enemyPieces = new();
 
-    private readonly LogicBoardManager manager = new();
-
-    private readonly LogicKingManager kingManager = new();
-
     public LogicCell[,] dropCells = new LogicCell[9, 3];
 
     private readonly int battleWidth = StaticData.battleMapWidth;
@@ -25,6 +20,7 @@ public class LogicBoard
     private readonly int battleHeight = StaticData.battleMapHeight;
 
     public LogicCell[,] cells = new LogicCell[StaticData.battleMapWidth, StaticData.battleMapHeight];
+    
     /// <summary>
     /// Clones board from Grid instance to LogicBoard instance and sets all data inside LogicBoard.
     /// The clone is virtually the same as the real counterpart.
@@ -45,9 +41,9 @@ public class LogicBoard
             {
                 var cell = grid.GetGridCell(x, y);
                 cells[x, y] = new LogicCell(cell);
-                if (cell.unitInGridCell != null)
+                if (cell.unitInCell != null)
                 {
-                    Unit unit = new(cell.unitInGridCell.Unit);
+                    Unit unit = new(cell.unitInCell.Unit);
                     if (unit.GetIsBlack())
                     {
                         pieces.Add(unit);
@@ -64,22 +60,22 @@ public class LogicBoard
         }
 
         //[ToDo] rethink drops
-        //var campGrid = grid.eCamp.campGrid;
+        var campGrid = grid.eCamp.campGrid;
 
-        //for (int i = 0; i < 3; i++)
-        //{
-        //    for (int j = 0; j < 9; j++)
-        //    {
-        //        var cell = campGrid[j, i].GetComponent<GridCell>();
-        //        dropCells[j, i] = new(cell);
-        //        if (cell.objectInThisGridSpace != null)
-        //        {
-        //            dropCells[j, i].piece = new(cell.objectInThisGridSpace.GetComponent<Piece>());
-        //            var dropPiecePos = dropCells[j, i].piece.GetPosition();
-        //            dropCells[j, i].piece.SetPosition(new(dropPiecePos.x + j, dropPiecePos.y + i));
-        //        }
-        //    }
-        //}
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                var cell = campGrid[j, i].GetComponent<GridCell>();
+                dropCells[j, i] = new(cell);
+                if (cell.unitInCell != null)
+                {
+                    dropCells[j, i].unit = new(cell.unitInCell.Unit);
+                    var dropPiecePos = dropCells[j, i].unit.GetPosition();
+                    dropCells[j, i].unit.MovePiece(new(dropPiecePos.x + j, dropPiecePos.y + i));
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -119,21 +115,21 @@ public class LogicBoard
             }
         }
 
-        //var campGrid = grid.dropCells;
+        var campGrid = grid.dropCells;
 
-        //for (int i = 0; i < 3; i++)
-        //{
-        //    for (int j = 0; j < 9; j++)
-        //    {
-        //        dropCells[j, i] = new(campGrid[j, i]);
-        //        if (campGrid[j, i].piece != null)
-        //        {
-        //            LogicPiece logicPiece = new(campGrid[j, i].piece);
-        //            dropCells[j, i].piece = new();
-        //            dropCells[j, i].piece = logicPiece;
-        //        }
-        //    }
-        //}
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                dropCells[j, i] = new(campGrid[j, i]);
+                if (campGrid[j, i].unit != null)
+                {
+                    Unit unit = new(campGrid[j, i].unit);
+                    dropCells[j, i].unit = new();
+                    dropCells[j, i].unit = unit;
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -156,7 +152,7 @@ public class LogicBoard
             {
                 score -= 1000000000;
             }
-            else if (kingManager.IsThreatened(king.GetPosition(), enemyPieces, cells))
+            else if (BoardOperations.IsKingThreatened(king.GetPosition(), enemyPieces, cells))
             {
                 score -= 1000000;
             }
@@ -176,11 +172,11 @@ public class LogicBoard
     {
         if (src.x > battleWidth || src.y > battleHeight)
         {
-            //var movedPiece = dropCells[src.x - 200, src.y - 200].piece;
-            //dropCells[src.x - 200, src.y - 200].piece = null;
-            //movedPiece.MovePiece(dst);
-            //movedPiece.ResetIsDrop();
-            //cells[dst.x, dst.y].piece = new(movedPiece);
+            var movedPiece = dropCells[src.x - 200, src.y - 200].unit;
+            dropCells[src.x - 200, src.y - 200].unit = null;
+            movedPiece.MovePiece(dst);
+            movedPiece.ResetIsDrop();
+            cells[dst.x, dst.y].unit = new(movedPiece);
         }
         else
         {
@@ -216,7 +212,7 @@ public class LogicBoard
                         {
                             for (int col = -1; col <= 1; col++)
                             {
-                                destination = manager.FindPositionBeforeEnemy(row, col, unitPos, cells, defender.GetPosition());
+                                destination = BoardOperations.FindPositionBeforeEnemy(row, col, unitPos, defender.GetPosition());
                             }
                         }
 
@@ -230,16 +226,6 @@ public class LogicBoard
                 }
             }
             movedUnit.MovedInTurn = true;
-
-            //remainingMoves--;
-
-            //if(remainingMoves <= 0)
-            //{
-            //    remainingMoves = 3;
-            //    isPlayerTurn = !isPlayerTurn;
-
-            //    ResetMovedFlagsForSide(isPlayerTurn ? pieces : enemyPieces);
-            //}
         }
 
         //rebuild state
@@ -276,54 +262,13 @@ public class LogicBoard
         List<Tuple<Position, Position>> logicSrcDstMoves = new();
         List<Unit> usedPieces = maximizing ? new(pieces) : new(enemyPieces);
 
-        //if (kingInDanger)
-        //{
-        //return HandleKingInDanger();
-        //}
-        //else
-        //{
-        //if (maximizing)
-        //{
-        //    for (int y = 0; y < 3; y++)
-        //    {
-        //        for (int x = 0; x < 9; x++)
-        //        {
-        //            if (dropCells[x, y] != null && dropCells[x, y].piece != null)
-        //            {
-        //                var piece = dropCells[x, y].piece;
-        //                var dropsMoves = manager.CalculatePossibleDrops(cells, piece);
-        //                dropsMoves = manager.MultiplyDropsByWeight(dropsMoves);
-        //                if (dropsMoves != null || dropsMoves.Count != 0)
-        //                {
-        //                    Position src = piece.GetPosition();
-        //                    foreach (var m in dropsMoves)
-        //                    {
-        //                        if (m != null)
-        //                        {
-        //                            Position dst = m;
-        //                            logicSrcDstMoves.Add(new(src, dst));
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
-
         foreach (var p in usedPieces)
         {
             if (p.MovedInTurn) continue;
 
             List<Position> moves = new();
-            //if (p.isKing)
-            //{
-            //    moves = kingManager.ValidMovesScan(p, enemyPieces, cells);
-            //}
-            //else
-            //{
-            moves = manager.CalculatePossibleMoves(p, cells);
-            //manager.CheckIfMovesAreLegal(ref moves, p, allPieces, cells);
-            //}
+           
+            moves = BoardOperations.CalculatePossibleMoves(p, cells);
             if (moves != null)
             {
                 Position src = p.GetPosition();
@@ -337,117 +282,32 @@ public class LogicBoard
                 }
             }
         }
-        //}
+
+        for (int y = 0; y < 3; y++)
+        {
+            for (int x = 0; x < 9; x++)
+            {
+                if (dropCells[x, y] != null && dropCells[x, y].unit != null)
+                {
+                    var unit = dropCells[x, y].unit;
+                    var dropsMoves = BoardOperations.CalculatePossibleDrops(unit, cells);
+                    dropsMoves = BoardOperations.MultiplyDropsByWeight(dropsMoves);
+                    if (dropsMoves != null || dropsMoves.Count != 0)
+                    {
+                        Position src = unit.GetPosition();
+                        foreach (var m in dropsMoves)
+                        {
+                            if (m != null)
+                            {
+                                Position dst = m;
+                                logicSrcDstMoves.Add(new(src, dst));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         return logicSrcDstMoves;
-    }
-
-    /// <summary>
-    /// Handler for when King is in danger. Behaves similarly to InputManager handler counterpart.
-    /// </summary>
-    /// <returns>List of source and destination positions</returns>
-    private List<Tuple<Position, Position>> HandleKingInDanger()
-    {
-        throw new NotImplementedException();
-        //List<Tuple<Position, Position>> logicSrcDstMoves = new();
-
-        //var endangeredMoves = new List<Position>();
-
-        //foreach (var p in pieces)
-        //{
-        //    if (p.isKing)
-        //    {
-        //        var attacker = cells[attackerPos.x, attackerPos.y].piece;
-        //        endangeredMoves = kingManager.CalculateEndangeredMoves(attacker, p.GetPosition());
-        //    }
-        //}
-
-        //foreach (var p in pieces)
-        //{
-        //    if (p.isKing && p.GetIsBlack())
-        //    {
-        //        var moves = kingManager.ValidMovesScan(p, enemyPieces, cells);
-        //        var attacker = cells[attackerPos.x, attackerPos.y].piece;
-
-        //        bool attackerProtected = kingManager.IsAttackerProtected(attacker, enemyPieces, cells);
-        //        if (attackerProtected && moves.Contains(attacker.GetPosition()))
-        //        {
-        //            moves.Remove(attacker.GetPosition());
-        //        }
-
-        //        var attackerPossibleMovesUnrestricted = manager.ScanMovesUnrestricted(attacker);
-        //        if (attackerPossibleMovesUnrestricted != null)
-        //        {
-        //            moves = manager.CalculateOverlappingMoves(moves, attackerPossibleMovesUnrestricted, false);
-        //        }
-
-        //        var additionalDangerMoves = kingManager.KingDangerMovesScan(moves, p.GetIsBlack(), cells);
-        //        if (additionalDangerMoves != null && additionalDangerMoves.Count != 0)
-        //        {
-        //            moves = manager.CalculateOverlappingMoves(moves, additionalDangerMoves, false);
-        //        }
-
-        //        // calculate all possible valid moves
-        //        Position src = p.GetPosition();
-        //        foreach (var m in moves)
-        //        {
-        //            if (m != null)
-        //            {
-        //                Position dst = m;
-        //                logicSrcDstMoves.Add(new(src, dst));
-        //            }
-        //        }
-        //    }
-        //}
-
-        ////bodyguard checking
-        //var bodyguards = kingManager.FindGuards(attackerPos, pieces, cells);
-        //if (bodyguards != null)
-        //{
-        //    foreach (var b in bodyguards)
-        //    {
-        //        logicSrcDstMoves.Add(new(b.GetPosition(), attackerPos));
-        //    }
-        //}
-
-        ////drop checking
-        //for (int y = 0; y < 3; y++)
-        //{
-        //    for (int x = 0; x < 9; x++)
-        //    {
-        //        if (dropCells[x, y] != null && dropCells[x, y].piece != null)
-        //        {
-        //            var piece = dropCells[x, y].piece;
-        //            var dropsMoves = manager.CalculatePossibleDrops(cells, piece);
-        //            if (dropsMoves != null)
-        //            {
-        //                Position src = piece.GetPosition();
-        //                foreach (var dangerMove in endangeredMoves)
-        //                {
-        //                    if (!dangerMove.Equals(attackerPos))
-        //                    {
-        //                        logicSrcDstMoves.Add(new(src, dangerMove));
-        //                    }
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
-
-        ////sacrifice checking
-        //var sacrifices = kingManager.FindSacrifices(endangeredMoves, pieces, cells);
-        //if (sacrifices != null && endangeredMoves != null)
-        //{
-        //    foreach (var s in sacrifices)
-        //    {
-        //        var sacrificeMoves = kingManager.CalculateProtectionMoves(s, endangeredMoves, cells);
-        //        var sacrificePosition = s.GetPosition();
-        //        foreach (var dst in sacrificeMoves)
-        //        {
-        //            logicSrcDstMoves.Add(new(sacrificePosition, dst));
-        //        }
-        //    }
-        //}
-
-        //return logicSrcDstMoves;
     }
 }

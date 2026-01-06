@@ -11,23 +11,17 @@ using UnityEngine.UIElements;
 /// <summary>
 /// Manager which handles all input in the game.
 /// </summary>
-public class InputManager : MonoBehaviour
+public class BattleController : MonoBehaviour
 {
     [SerializeField] private Grid grid;
-
-    [SerializeField] private BoardManager boardManager;
-
-    [SerializeField] private KingManager kingManager;
 
     [SerializeField] private Camera mainCamera;
 
     private List<Position> possibleMoves;
 
-    public List<Position> endangeredMoves;
-
     private bool chosenPiece = false;
 
-    private GridCell CellWhichHoldsPiece = null;
+    private GridCell cellHoldingUnit = null;
 
     [SerializeField] private bool playerTurn;
 
@@ -53,8 +47,6 @@ public class InputManager : MonoBehaviour
 
     [SerializeField] private GameObject dieAnimation;
 
-    private readonly LogicBoardManager boardController = new();
-
     private LogicCell[,] logicCells = new LogicCell[9, 9];
 
     public static Action RequestLogicCellsUpdate;
@@ -67,6 +59,8 @@ public class InputManager : MonoBehaviour
 
     private bool isUnitMoving = false;
 
+    private int maxPossibleMovesForBot = 0;
+
     void Start()
     {
         botEnabled = StaticData.botEnabled;
@@ -75,7 +69,7 @@ public class InputManager : MonoBehaviour
         Scene activeScene = SceneManager.GetSceneByName("Game");
         SceneManager.SetActiveScene(activeScene);
 
-        string mapName = StaticData.map == "GrasslandsImage" ? "Grasslands" : "Desert";
+        string mapName = "Grasslands";
         GameObject terrain = Resources.Load($"Terrains/{mapName}") as GameObject;
 
         if (terrain != null)
@@ -137,8 +131,6 @@ public class InputManager : MonoBehaviour
         botThread.Start();
     }
 
-    private int botMoves = 3;
-
     /// <summary>
     /// Sets parameters to minimax algorithm. Shows text when Minimax is running.
     /// </summary>
@@ -158,24 +150,19 @@ public class InputManager : MonoBehaviour
     {
         if (botResult.Item1.x > 9 || botResult.Item1.y > 9)
         {
-            CellWhichHoldsPiece = grid.eCamp.campGrid[botResult.Item1.x - 200, botResult.Item1.y - 200].GetComponent<GridCell>();
+            cellHoldingUnit = grid.eCamp.campGrid[botResult.Item1.x - 200, botResult.Item1.y - 200].GetComponent<GridCell>();
         }
         else
         {
-            CellWhichHoldsPiece = grid.GetGridCell(botResult.Item1.x, botResult.Item1.y);
+            cellHoldingUnit = grid.GetGridCell(botResult.Item1.x, botResult.Item1.y);
         }
         var cell = grid.GetGridCell(botResult.Item2.x, botResult.Item2.y);
-        //playerTurn = true;
         botFinishedCalculating = false;
         duringBotMove = false;
         duringBotText.gameObject.SetActive(false);
-        botMoves--;
-        //doneMoves = 0; 
         ExecutePieceMove(cell);
         botResult = null;
     }
-
-    int maxPossibleMovesForBot = 0;
 
     /// <summary>
     /// Checks bot status and executes Minimax. Also checks bot result and ends game when bot doesn't have any moves left.
@@ -186,8 +173,6 @@ public class InputManager : MonoBehaviour
         {
             if (botResult == null)
             {
-                //ShowGameOverScreen("YOU WIN", Color.green);
-                //botFinishedCalculating = false;
                 EndTurn();
             }
             else
@@ -270,11 +255,11 @@ public class InputManager : MonoBehaviour
         {
             ExecutePieceMove(hoveredCell);
         }
-        else if (CellWhichHoldsPiece != null && CellWhichHoldsPiece.GetPosition().Equals(hoveredCell.GetPosition()))
+        else if (cellHoldingUnit != null && cellHoldingUnit.GetPosition().Equals(hoveredCell.GetPosition()))
         {
             HandleUnclickPiece();
         }
-        else if (hoveredCell.unitInGridCell != null)
+        else if (hoveredCell.unitInCell != null)
         {
             HandlePieceClicked(hoveredCell);
         }
@@ -285,7 +270,7 @@ public class InputManager : MonoBehaviour
     /// </summary>
     public void HandlePieceClicked(GridCell hoveredCell)
     {
-        var unit = hoveredCell.unitInGridCell.Unit;
+        var unit = hoveredCell.unitInCell.Unit;
 
         if ((playerTurn && !unit.GetIsBlack()) || (!playerTurn && unit.GetIsBlack()))
         {
@@ -300,18 +285,18 @@ public class InputManager : MonoBehaviour
     /// <param name="hoveredCell">currently hovered cell</param>
     public void PossibleMovesCalculation(GridCell hoveredCell)
     {
-        Unit unit = hoveredCell.unitInGridCell.Unit;
+        Unit unit = hoveredCell.unitInCell.Unit;
         if (unit.GetIsDrop())
         {
-            possibleMoves = boardController.CalculatePossibleDrops(unit, logicCells);
+            possibleMoves = BoardOperations.CalculatePossibleDrops(unit, logicCells);
         }
         else
         {
-            possibleMoves = boardController.NewCalculatePossibleMoves(unit, logicCells);
+            possibleMoves = BoardOperations.CalculatePossibleMoves(unit, logicCells);
         }
 
         PossibleMovesDisplayLoop();
-        CellWhichHoldsPiece = hoveredCell;
+        cellHoldingUnit = hoveredCell;
         chosenPiece = true;
     }
 
@@ -333,7 +318,7 @@ public class InputManager : MonoBehaviour
     /// </summary>
     public void HandleUnclickPiece()
     {
-        CellWhichHoldsPiece = null;
+        cellHoldingUnit = null;
         RemovePossibleMoves();
         chosenPiece = false;
     }
@@ -341,25 +326,25 @@ public class InputManager : MonoBehaviour
     /// <summary>
     /// Executes piece move from stored in CellWhichHoldsPiece cell to hoveredCell destination.
     /// </summary>
-    public void ExecutePieceMove(GridCell hoveredCell, bool registerMove = true)
+    public void ExecutePieceMove(GridCell hoveredCell)
     {
         isUnitMoving = true;
-        Unit unit = CellWhichHoldsPiece.unitInGridCell.Unit;
+        Unit unit = cellHoldingUnit.unitInCell.Unit;
         if (!unit.GetIsDrop())
         {
             if (CheckForPromotion(hoveredCell, unit.GetIsBlack()))
             {
-                var changedMoveset = boardController.GetPromotedUnitMoveset(unit);
-                CellWhichHoldsPiece.unitInGridCell.PromoteUnit(changedMoveset);
+                var changedMoveset = BoardOperations.GetPromotedUnitMoveset(unit);
+                cellHoldingUnit.unitInCell.PromoteUnit(changedMoveset);
             }
         }
         else
         {
             HandleDropCheck(unit);
         }
-        if (hoveredCell.unitInGridCell != null)
+        if (hoveredCell.unitInCell != null)
         {
-            var enemyUnit = hoveredCell.unitInGridCell.Unit;
+            var enemyUnit = hoveredCell.unitInCell.Unit;
             var isDead = enemyUnit.ReduceHP(unit.AttackPower);
             if (isDead)
             {
@@ -376,16 +361,16 @@ public class InputManager : MonoBehaviour
                     }
                 }
                 KillPiece(hoveredCell);
-                hoveredCell.unitInGridCell = null;
+                hoveredCell.unitInCell = null;
                 Instantiate(dieAnimation, hoveredCell.GetWorldPosition(), Quaternion.identity);
                 unit.MovePiece(hoveredCell.GetPosition());
-                hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, hoveredCell.GetWorldPosition());
+                hoveredCell.SetAndMovePiece(cellHoldingUnit.unitInCell, hoveredCell.GetWorldPosition());
 
-                CellWhichHoldsPiece.unitInGridCell = null;
+                cellHoldingUnit.unitInCell = null;
             }
             else
             {
-                var enemyHealthBar = hoveredCell.unitInGridCell.healthBar;
+                var enemyHealthBar = hoveredCell.unitInCell.healthBar;
                 enemyHealthBar.GetComponent<HealthBarController>().UpdateHealthBar(enemyUnit.HealthPoints);
                 if (unit.UnitName == UnitEnum.Bishop || unit.UnitName == UnitEnum.Rook || unit.UnitName == UnitEnum.Lance)
                 {
@@ -397,7 +382,7 @@ public class InputManager : MonoBehaviour
                     {
                         for (int col = -1; col <= 1; col++)
                         {
-                            destination = boardController.FindPositionBeforeEnemy(row, col, unitPos, logicCells, enemyUnit.GetPosition());
+                            destination = BoardOperations.FindPositionBeforeEnemy(row, col, unitPos, enemyUnit.GetPosition());
                             if (destination != null)
                             {
                                 break;
@@ -414,31 +399,31 @@ public class InputManager : MonoBehaviour
                     {
                         unit.MovePiece(destination);
                         var beforeEnemyCell = grid.GetGridCell(destination);
-                        beforeEnemyCell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, beforeEnemyCell.GetWorldPosition());
-                        CellWhichHoldsPiece.unitInGridCell = null;
+                        beforeEnemyCell.SetAndMovePiece(cellHoldingUnit.unitInCell, beforeEnemyCell.GetWorldPosition());
+                        cellHoldingUnit.unitInCell = null;
                     }
                     else
                     {
-                        var cell = grid.GetGridCell(CellWhichHoldsPiece.GetPosition());
+                        var cell = grid.GetGridCell(cellHoldingUnit.GetPosition());
                         unit.MovePiece(cell.GetPosition());
-                        cell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, cell.GetWorldPosition());
+                        cell.SetAndMovePiece(cellHoldingUnit.unitInCell, cell.GetWorldPosition());
                     }
                 }
                 else
                 {
-                    var cell = grid.GetGridCell(CellWhichHoldsPiece.GetPosition());
+                    var cell = grid.GetGridCell(cellHoldingUnit.GetPosition());
                     unit.MovePiece(cell.GetPosition());
-                    cell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, cell.GetWorldPosition());
-                    var attackPath = TransformationCalculator.LinearAttackTransformation(CellWhichHoldsPiece.GetWorldPosition(), hoveredCell.GetWorldPosition());
-                    CellWhichHoldsPiece.unitInGridCell.SetPath(attackPath);
+                    cell.SetAndMovePiece(cellHoldingUnit.unitInCell, cell.GetWorldPosition());
+                    var attackPath = TransformationCalculator.LinearAttackTransformation(cellHoldingUnit.GetWorldPosition(), hoveredCell.GetWorldPosition());
+                    cellHoldingUnit.unitInCell.SetPath(attackPath);
                 }
             }
         }
         else
         {
             unit.MovePiece(hoveredCell.GetPosition());
-            hoveredCell.SetAndMovePiece(CellWhichHoldsPiece.unitInGridCell, hoveredCell.GetWorldPosition());
-            CellWhichHoldsPiece.unitInGridCell = null;
+            hoveredCell.SetAndMovePiece(cellHoldingUnit.unitInCell, hoveredCell.GetWorldPosition());
+            cellHoldingUnit.unitInCell = null;
         }
 
         RequestLogicCellsUpdate?.Invoke();
@@ -454,18 +439,6 @@ public class InputManager : MonoBehaviour
             doneMoves = 0;
             ResetUnitMoved?.Invoke();
         }
-    }
-
-    public void DropUnit(GridCell hoveredCell)
-    {
-        hoveredCell.unitInGridCell = CellWhichHoldsPiece.unitInGridCell;
-        hoveredCell.unitInGridCell.Unit.MovePiece(hoveredCell.GetPosition());
-        hoveredCell.unitInGridCell.Unit.MovedInTurn = true;
-        var hoveredCellPos = hoveredCell.GetWorldPosition();
-        var path = TransformationCalculator.QuadraticTransformation(hoveredCell.unitInGridCell.Model.transform.position, new Vector3(hoveredCellPos.x, 11.2f, hoveredCellPos.z));
-
-        hoveredCell.unitInGridCell.SetPath(path);
-        //hoveredCell.unitInGridCell.transform.SetPositionAndRotation(path.Last(), Quaternion.identity);
     }
 
     private void ShowGameOverScreen(string text, Color color)
@@ -492,12 +465,12 @@ public class InputManager : MonoBehaviour
     {
         if (unit.GetIsBlack())
         {
-            grid.eCamp.capturedPieceObjects.Remove(CellWhichHoldsPiece.unitInGridCell);
+            grid.eCamp.capturedPieceObjects.Remove(cellHoldingUnit.unitInCell);
             //grid.eCamp.Reshuffle();
         }
         else
         {
-            grid.pCamp.capturedPieceObjects.Remove(CellWhichHoldsPiece.unitInGridCell);
+            grid.pCamp.capturedPieceObjects.Remove(cellHoldingUnit.unitInCell);
             //grid.pCamp.Reshuffle();
         }
         unit.ResetIsDrop();
@@ -518,8 +491,8 @@ public class InputManager : MonoBehaviour
     /// <param name="hoveredCell">currently hovered cell</param>
     public void KillPiece(GridCell hoveredCell)
     {
-        grid.AddToCamp(hoveredCell.unitInGridCell);
-        hoveredCell.unitInGridCell = null;
+        grid.AddToCamp(hoveredCell.unitInCell);
+        hoveredCell.unitInCell = null;
         Instantiate(dieAnimation, hoveredCell.GetWorldPosition(), Quaternion.identity);
     }
 

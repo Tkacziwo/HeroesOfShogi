@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
+using Unity.AppUI.UI;
 using Unity.Behavior;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -34,8 +36,6 @@ public class OverworldMapController : MonoBehaviour
 
     public static System.Action onTurnEnd;
 
-    public List<InteractibleBuilding> worldBuildings;
-
     private InteractibleBuilding chosenWorldBuilding;
 
     private bool isPlayerMoving;
@@ -57,6 +57,12 @@ public class OverworldMapController : MonoBehaviour
     public static event System.Action BotsEndTurn;
 
     [SerializeField] private BuildingController buildingController;
+
+    [SerializeField] private GameObject mapRootRef;
+
+    private bool duringBotMove;
+
+    [SerializeField] private TextMeshProUGUI duringBotMoveText;
 
     private void OnEnable()
     {
@@ -99,6 +105,10 @@ public class OverworldMapController : MonoBehaviour
 
     private void HandleBackToMap()
     {
+        foreach (var r in mapRootRef.GetComponentsInChildren<Renderer>(true))
+        {
+            r.enabled = true;
+        }
         isPlayerInBattle = false;
         var playerModel = playerController.GetCurrentPlayer();
         var playerCamera = playerModel.GetCameraController().GetComponentInChildren<Camera>();
@@ -204,8 +214,10 @@ public class OverworldMapController : MonoBehaviour
     private void HandleOnPlayerInCity(bool res)
         => isPlayerInCity = res;
 
+
     private void HandleUpdateUIResources()
     {
+
         resourceUIController.UpdateResourcesUI(playerController.player.playerResources);
 
         resourceUIController.IncrementTurnNumber();
@@ -219,10 +231,17 @@ public class OverworldMapController : MonoBehaviour
         var t = tilemap.GetTile<MapTile>(cellPos);
         character.SetPlayerPosition(cellPos);
 
+
+
         var playerOverTile = playerController.GetPlayerOverTile(converted, character.playerId);
 
         if (playerOverTile != null && playerOverTile.playerId != character.playerId)
         {
+            foreach (var r in mapRootRef.GetComponentsInChildren<Renderer>(true))
+            {
+                r.enabled = false;
+            }
+
             StartBattle(playerOverTile, character);
         }
         else if (converted == previousEndPos && chosenWorldBuilding != null)
@@ -258,7 +277,7 @@ public class OverworldMapController : MonoBehaviour
 
         pathfindingResult.Clear();
         character.ClearPath();
-        SetStartPoint(cellPos, t);
+        SetStartPoint(cellPos);
 
         bool isRealPlayer = PlayerRegistry.Instance.GetAllPlayers().Single(o => o.playerId == character.playerId).isRealPlayer;
 
@@ -268,8 +287,10 @@ public class OverworldMapController : MonoBehaviour
         }
         else
         {
+            duringBotMove = false;
+            duringBotMoveText.gameObject.SetActive(false);
             BotsEndTurn?.Invoke();
-            SetStartPoint(playerCharacterStartPoint, tilemap.GetTile<MapTile>(playerCharacterStartPoint));
+            SetStartPoint(playerCharacterStartPoint);
             npcCharacterStartPoint = character.characterPosition;
         }
 
@@ -361,11 +382,7 @@ public class OverworldMapController : MonoBehaviour
 
         playerCharacterStartPoint = players.Single(o => o.isRealPlayer).GetCurrentPlayerCharacter().characterPosition;
 
-        var t = tilemap.GetTile<MapTile>(playerCharacterStartPoint);
-        if (t != null)
-        {
-            SetStartPoint(playerCharacterStartPoint, t);
-        }
+        SetStartPoint(playerCharacterStartPoint);
 
         npcCharacterStartPoint = playerController.GetBot().GetComponent<NPCModel>().GetCurrentPlayerCharacter().characterPosition;
         tilemap.SetTile(playerCharacterStartPoint, StartTile);
@@ -415,6 +432,8 @@ public class OverworldMapController : MonoBehaviour
 
         if (isPlayerInBattle) return;
 
+        if (duringBotMove) return;
+
         Ray ray = currentCamera.ScreenPointToRay(Input.mousePosition);
 
         Plane ground = new(Vector3.up, Vector3.zero);
@@ -444,7 +463,10 @@ public class OverworldMapController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Return))
         {
-            EndTurn();
+            if (!duringBotMove)
+            {
+                EndTurn();
+            }
         }
     }
 
@@ -591,7 +613,7 @@ public class OverworldMapController : MonoBehaviour
         }
     }
 
-    private void SetStartPoint(Vector3Int cellPos, MapTile t)
+    private void SetStartPoint(Vector3Int cellPos)
     {
         tilemap.SetTile(cellPos, StartTile);
         previousStartPos = cellPos;
@@ -614,15 +636,19 @@ public class OverworldMapController : MonoBehaviour
 
     public void EndTurn()
     {
-        playerController.OnTilemapShared(tilemap);
-        onTurnEnd?.Invoke();
-        RemoveEndPoint();
-        turns++;
-
-        ClearTiles();
-        if (turns % 7 == 0)
+        if (!duringBotMove)
         {
-            OnWeekEnd?.Invoke();
+            duringBotMove = true;
+            duringBotMoveText.gameObject.SetActive(true);
+            playerController.OnTilemapShared(tilemap);
+            onTurnEnd?.Invoke();
+            RemoveEndPoint();
+            turns++;
+            ClearTiles();
+            if (turns % 7 == 0)
+            {
+                OnWeekEnd?.Invoke();
+            }
         }
     }
 

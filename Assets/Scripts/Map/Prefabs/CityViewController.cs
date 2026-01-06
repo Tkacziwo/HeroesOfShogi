@@ -19,11 +19,11 @@ public class CityViewController : MonoBehaviour
 
     [SerializeField] private GameObject recruitPanelPrefab;
 
-    [SerializeField] private UnityEngine.Canvas canvasRef;
+    [SerializeField] private Canvas canvasRef;
 
     private GameObject recruitPanel;
 
-    private City? currentCity;
+    private City currentCity;
 
     private Dictionary<int, string> CityBuildings { get; } = new()
     {
@@ -34,9 +34,9 @@ public class CityViewController : MonoBehaviour
         {5, "Tower Of Mages" }
     };
 
-    private CityBuilding? chosenBuilding;
+    private CityBuilding chosenBuilding;
 
-    private PlayerResources? playerResources;
+    private PlayerResources playerResources;
 
     private RequiredResources requiredResources;
 
@@ -45,7 +45,6 @@ public class CityViewController : MonoBehaviour
     private int buildingIndex;
 
     private BuildingUpgradeInfo upgradeInfo;
-
 
     public static Action<int, RequiredResources> OnTakePlayerResources;
 

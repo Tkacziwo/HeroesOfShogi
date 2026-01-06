@@ -15,10 +15,6 @@ public class PlayerController : MonoBehaviour
 
     private int buildingsCount;
 
-    private int cityCount;
-
-    private int cityEventFires;
-
     private int eventFires;
 
     public static event System.Action TurnEnded;
@@ -28,6 +24,21 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject botGM;
 
     private readonly Unit kingTemplate = StaticData.unitTemplates.SingleOrDefault(o => o.UnitName == UnitEnum.King) ?? null;
+
+    private readonly List<Vector3Int> playerStartingPositions = new()
+    {
+        new(7,3,0),
+        new(36,15,0),
+        new(15,40,0),
+        new(43,49,0),
+        new(53,3,0)
+    };
+
+    private readonly List<Vector3Int> playerChosenStartingPositions = new();
+
+    private readonly System.Random rnd = new();
+
+    private Tilemap tilemap;
 
     private void OnEnable()
     {
@@ -44,8 +55,6 @@ public class PlayerController : MonoBehaviour
         OverworldMapController.onTurnEnd -= HandleEndTurn;
         ReturnControlToPlayerControllerAction.OnReturnControlToController -= RunNextAI;
     }
-
-    private Tilemap tilemap;
 
     public void OnTilemapShared(Tilemap incoming)
     {
@@ -77,9 +86,8 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-        eventFires = cityEventFires = 0;
+        eventFires = 0;
         buildingsCount = FindObjectsByType<InteractibleBuilding>(FindObjectsSortMode.InstanceID).ToList().Count();
-        cityCount = FindObjectsByType<City>(FindObjectsSortMode.InstanceID).ToList().Count();
     }
 
     public PlayerModel GetPlayerOverTile(Vector3Int position, int myPlayerId)
@@ -124,19 +132,6 @@ public class PlayerController : MonoBehaviour
             OnPlayerBeginMove();
         }
     }
-
-    private readonly List<Vector3Int> playerStartingPositions = new()
-    {
-        new(7,3,0),
-        new(36,15,0),
-        new(15,40,0),
-        new(43,49,0),
-        new(53,3,0)
-    };
-
-    private readonly List<Vector3Int> playerChosenStartingPositions = new();
-
-    private readonly System.Random rnd = new();
 
     public void SpawnPlayers(Tilemap tilemap, int botCount)
     {
@@ -201,49 +196,6 @@ public class PlayerController : MonoBehaviour
         bot.GetComponent<NPCModel>().InitBot(nextId);
         bot.GetComponent<NPCModel>().SpawnBotPlayer(targetPosition, positionInWorld, kingTemplate);
         bots.Add(bot);
-    }
-
-    public Dictionary<int, Dictionary<int, Vector3Int>> GetBotsCharacterPositions()
-    {
-        Dictionary<int, Dictionary<int, Vector3Int>> positions = new();
-
-        foreach (var bot in bots)
-        {
-            var model = bot.GetComponent<NPCModel>();
-
-            var characters = model.GetPlayerCharacters();
-
-            Dictionary<int, Vector3Int> botCharacterPositions = new();
-            foreach (var character in characters)
-            {
-                botCharacterPositions.Add(character.characterId, character.characterPosition);
-            }
-
-            positions.Add(model.playerId, botCharacterPositions);
-        }
-
-        return positions;
-    }
-
-    public List<PlayerCharacterController> GetCharactersForPlayer(int playerId)
-    {
-        if (playerId == player.playerId)
-        {
-            return player.GetPlayerCharacters();
-        }
-        else
-        {
-            foreach (var bot in bots)
-            {
-                var model = bot.GetComponent<PlayerModel>();
-                if (model.playerId == playerId)
-                {
-                    return model.GetPlayerCharacters();
-                }
-            }
-        }
-
-        return null;
     }
 
     public void OnPlayerBeginMove()

@@ -33,14 +33,6 @@ public partial class CaptureBuildingAction : Action
         if (chosenBuilding == null) { result.Value = 0; }
         else
         {
-            if (character.unreachedBuilding != null)
-            {
-                chosenBuilding = character.unreachedBuilding;
-                character.unreachedBuilding = null;
-                character.unreachedBotDestination = new Vector3Int(0, 0, 0);
-            }
-
-
             var path = FindPathToBuilding(chosenBuilding, character);
             TileInfo end = new() { position = bestEndPos };
             path.Add(end);
@@ -125,17 +117,4 @@ public partial class CaptureBuildingAction : Action
         bestEndPos = bestEndPosition;
         return bestPath;
     }
-}
-
-
-
-public class BotCaptureInfo
-{
-    public PlayerCharacterController character;
-
-    public InteractibleBuilding chosenBuilding;
-
-    public List<TileInfo> pathToBuilding;
-
-    public Vector3Int endPos;
 }
